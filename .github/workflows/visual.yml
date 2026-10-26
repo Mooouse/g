@@ -1,0 +1,39 @@
+name: Visual browser QA
+on:
+  push:
+    paths: ['.github/workflows/visual.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  screenshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Render desktop and mobile gameplay in headless Chrome
+        shell: bash
+        run: |
+          set -e
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/server.log 2>&1 &
+          sleep 2
+          CHROME=$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)
+          echo "Chrome: $CHROME"
+          test -n "$CHROME"
+          timeout 60s "$CHROME" --headless --no-sandbox --disable-dev-shm-usage --disable-gpu --hide-scrollbars --virtual-time-budget=1700 --window-size=1650,928 --screenshot=/tmp/desktop.png http://127.0.0.1:8765/ > /tmp/chrome.log 2>&1
+          timeout 60s "$CHROME" --headless --no-sandbox --disable-dev-shm-usage --disable-gpu --hide-scrollbars --virtual-time-budget=1700 --window-size=430,850 --screenshot=/tmp/mobile.png http://127.0.0.1:8765/ >> /tmp/chrome.log 2>&1
+          echo "Screenshots:"
+          file /tmp/desktop.png /tmp/mobile.png
+          if command -v ffmpeg >/dev/null; then
+            ffmpeg -v error -y -i /tmp/desktop.png -vf scale=1100:-1 -q:v 9 -frames:v 1 /tmp/qa-desktop.jpg
+            ffmpeg -v error -y -i /tmp/mobile.png -q:v 10 -frames:v 1 /tmp/qa-mobile.jpg
+          else
+            cp /tmp/desktop.png /tmp/qa-desktop.jpg
+            cp /tmp/mobile.png /tmp/qa-mobile.jpg
+          fi
+          base64 -w0 /tmp/qa-desktop.jpg > QA_DESKTOP.b64
+          base64 -w0 /tmp/qa-mobile.jpg > QA_MOBILE.b64
+          printf '# Visual QA\n\nDesktop image bytes: %s\nMobile image bytes: %s\n' "$(wc -c < /tmp/qa-desktop.jpg)" "$(wc -c < /tmp/qa-mobile.jpg)" > QA_VISUAL.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add QA_DESKTOP.b64 QA_MOBILE.b64 QA_VISUAL.md
+          if ! git diff --cached --quiet; then git commit -m "Save temporary browser visual verification"; git push; fi
