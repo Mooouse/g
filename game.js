@@ -1,7 +1,7 @@
 /* Melody Scanner — original canvas recreation of the observed grid-based gameplay. */
 (()=>{'use strict';
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d'),$=id=>document.getElementById(id),ART=window.GridMusicArt;
-const KEY='melody-scanner-actual-gameplay-v1';
+const KEY='melody-scanner-video-reference-v3';
 const I={
 ru:{title:'НАСТРОЙКИ',shop:'УЛУЧШЕНИЯ',volume:'ГРОМКОСТЬ',music:'МУЗЫКА',language:'ЯЗЫК',shopText:'Прокачивай звук, монеты и скорость сканера',power:'Сила звука',powerDesc:'Больше урона от инструментов',speed:'Скорость сканера',speedDesc:'Луч проходит чаще',wealth:'Заработок',wealthDesc:'Больше монет от урона',max:'МАКС',paused:'ПАУЗА',time:'ВРЕМЯ ВЫШЛО',retry:'ПОВТОРИТЬ',win:'УРОВЕНЬ ПРОЙДЕН!',next:'ДАЛЕЕ',help:'Перетаскивай одинаковые инструменты друг на друга. Луч запускает музыку и наносит урон. Зелёная кнопка создаёт инструменты.',charge:'Нажми на зелёную кнопку, чтобы получить инструмент!',noRoom:'Нет свободного места!',noCharge:'Недостаточно заряда',merged:'НОВЫЙ ИНСТРУМЕНТ!',money:'МОНЕТЫ',save:'Прогресс сохраняется',restart:'Enter — новый раунд',secret:'ЗОЛОТАЯ ЦЕЛЬ ПОВЕРЖЕНА!',hint:'Объединяй одинаковые инструменты!'},
 en:{title:'SETTINGS',shop:'UPGRADES',volume:'VOLUME',music:'MUSIC',language:'LANGUAGE',shopText:'Improve your music, money and scanner speed',power:'Sound power',powerDesc:'Instruments deal more damage',speed:'Scan speed',speedDesc:'The beam moves faster',wealth:'Income',wealthDesc:'Earn more coins from damage',max:'MAX',paused:'PAUSED',time:"TIME'S UP",retry:'RETRY',win:'LEVEL COMPLETE!',next:'NEXT',help:'Drag matching instruments together to merge them. The scanning beam plays music and damages blocks. Use the green button to create instruments.',charge:'Press the green button to spawn an instrument!',noRoom:'No room for an instrument!',noCharge:'Not enough charge',merged:'NEW INSTRUMENT!',money:'COINS',save:'Progress is saved',restart:'Enter — restart round',secret:'GOLDEN TARGET DEFEATED!',hint:'Merge matching instruments!'},
@@ -20,7 +20,8 @@ const configs=[
 const starting=[
 {tier:0,c:0,r:2},{tier:0,c:0,r:3},{tier:0,c:2,r:2},{tier:1,c:1,r:3},{tier:1,c:2,r:3},
 {tier:2,c:3,r:3},{tier:2,c:4,r:4},{tier:3,c:4,r:2},{tier:4,c:5,r:4},
-{tier:0,c:0,r:4},{tier:2,c:2,r:4},{tier:1,c:3,r:5}
+{tier:0,c:0,r:4},{tier:2,c:2,r:4},{tier:1,c:3,r:5},
+{tier:0,c:2,r:5},{tier:0,c:0,r:5},{tier:2,c:6,r:3}
 ];
 const startState=()=>({stage:1,coins:241,time:192,charge:16,chargeFill:.62,highest:4,upgrades:{power:0,speed:0,wealth:0},units:[],blocks:[],volume:.7,music:.46,lang:/^ru/i.test(navigator.language)?'ru':/^es/i.test(navigator.language)?'es':'en',tutorialSeen:false,finished:false});
 let state=startState(),selected=null,dragging=null,hovered=null,paused=false,showResult='',scanner=-50,pass=0,frameLast=performance.now(),fx=[],hints=0,toast=null,checkpoint=0,portrait=false,LAY=null,imgs=[],booted=false,sdkReady=false,store=null,chargeHitBox=null,settingsHot=null,shopHot=null,pauseHot=null;
@@ -177,12 +178,26 @@ function gradient(x,y,w,h,stops){const g=ctx.createLinearGradient(x,y,x+w,y+h);s
 function textStroke(text,x,y,size,fill='#fff',align='center',stroke='#2c294c',line=3){
  ctx.textAlign=align;ctx.textBaseline='middle';ctx.font='700 '+size+'px Fredoka, Arial Black, sans-serif';ctx.lineJoin='round';ctx.lineWidth=line;ctx.strokeStyle=stroke;ctx.strokeText(text,x,y);ctx.fillStyle=fill;ctx.fillText(text,x,y);
 }
-const rnd=random(8908),sparkle=Array.from({length:220},()=>({x:rnd(),y:rnd(),r:4+rnd()*25,a:.035+rnd()*.08,angle:rnd()*3})),imgFilter=()=>{};
+const rnd=random(8908),sparkle=Array.from({length:470},()=>({x:rnd(),y:rnd(),r:4+rnd()*25,a:.035+rnd()*.08,angle:rnd()*3})),imgFilter=()=>{};
 function drawBackground(t){
- const {W,H}=LAY;let g=ctx.createLinearGradient(0,H*.1,W,H*.9);g.addColorStop(0,'#8460ed');g.addColorStop(.24,'#ae74e0');g.addColorStop(.58,'#c590d8');g.addColorStop(.81,'#a875ea');g.addColorStop(1,'#9066d8');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
- let glow=ctx.createRadialGradient(W*.91,0,0,W*.91,0,W*.58);glow.addColorStop(0,'#ffe279');glow.addColorStop(.55,'#fbd28155');glow.addColorStop(1,'#ffba6600');ctx.fillStyle=glow;ctx.fillRect(0,0,W,H);
- glow=ctx.createRadialGradient(0,H*.93,0,0,H*.93,W*.55);glow.addColorStop(0,'#ffe78c');glow.addColorStop(1,'#ffe78c00');ctx.fillStyle=glow;ctx.fillRect(0,0,W,H);
- for(const v of sparkle){ctx.save();ctx.translate(v.x*W,v.y*H);ctx.rotate(v.angle);ctx.fillStyle='rgba(252,220,255,'+v.a+')';ctx.fillRect(-v.r/2,-v.r/2,v.r,v.r);ctx.restore();}
+ const {W,H}=LAY;
+ const g=ctx.createLinearGradient(0,0,W,H);
+ g.addColorStop(0,'#7154f0');g.addColorStop(.28,'#ac75db');g.addColorStop(.54,'#c894c5');g.addColorStop(.77,'#ac79dd');g.addColorStop(1,'#9569ea');
+ ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+ let warm=ctx.createRadialGradient(0,H*.91,0,0,H*.91,W*.73);
+ warm.addColorStop(0,'#fff29d');warm.addColorStop(.32,'#ffe7a477');warm.addColorStop(1,'#ffe6aa00');
+ ctx.fillStyle=warm;ctx.fillRect(0,0,W,H);
+ let sun=ctx.createRadialGradient(W*.94,0,0,W*.94,0,W*.76);
+ sun.addColorStop(0,'#ffe991');sun.addColorStop(.37,'#ffe39f88');sun.addColorStop(1,'#ffdaa000');
+ ctx.fillStyle=sun;ctx.fillRect(0,0,W,H);
+ for(const o of sparkle){
+  const x=o.x*W+Math.sin(animClock*.23+o.angle*3)*8,y=o.y*H+Math.cos(animClock*.18+o.angle*4)*7;
+  const radius=o.r*.72+4;
+  ctx.save();ctx.translate(x,y);ctx.rotate(Math.PI*.22+o.angle*.14);
+  ctx.fillStyle='rgba(255,239,255,'+(.048+o.a*.5)+')';
+  ctx.fillRect(-radius*.5,-radius*.5,radius,radius);
+  ctx.restore();
+ }
 }
 function drawCells(){
  const cols=LAY.portrait?7:13,rows=6;
@@ -255,6 +270,7 @@ function drawBlock(b){
   textStroke(value,x+w*.5,y+h*.52,size,'#f9faff','center','#272538',Math.max(4,size*.07));
   ctx.shadowBlur=0;
  }
+ if(!b.boss&&b.hp/b.max<.27){ctx.globalAlpha=.5+.19*Math.sin(animClock*5+b.id);strokeRound(x+7,y+7,w-14,h-19,6,'#bcffa6',4);ctx.globalAlpha=1;}
  if(factor>0){
   ctx.globalAlpha=Math.min(.68,factor*.53);
   fillRound(x+13,y+12,w-26,h-29,7,b.boss?'#fffaad':'#a3f9ff');
@@ -267,7 +283,7 @@ function drawUnit(u,ghost=false){
  let scale=1;
  if(anim){const t=clamp(anim.age/anim.duration,0,1);scale=.27+.73*easeOutBack(t);}
  // Keep grounded illustrations static enough to read; the scanner gives them a soft bounce.
- const float=Math.sin(animClock*2.8+u.id*.73)*2.2+(beatVisual>.3?-.5:0);
+ const float=Math.sin(animClock*2.8+u.id*.73)*3.4+(beatVisual>.3?-1:0);
  ctx.save();
  if(selected===u.id){
    const glow=ctx.createRadialGradient(cx,cy,10,cx,cy,Math.max(p.w,p.h)*.68);
@@ -343,7 +359,7 @@ function drawFx(dt){
    ctx.textAlign='center';ctx.fillStyle='#fffbc1';ctx.fillText('✦',p.x,p.y);
   }else{
    p.x+=(p.vx||0)*dt;p.y+=(p.vy||-70)*dt;
-   ctx.fillStyle=p.color;ctx.shadowColor='#4b2b61';ctx.shadowBlur=8;
+   ctx.fillStyle=p.kind==='damage'?'#ff43b0':p.color;ctx.shadowColor='#4b2b61';ctx.shadowBlur=8;
    ctx.textAlign='center';ctx.lineWidth=5;ctx.strokeStyle=p.kind==='damage'?'#5f2b7a':'#755221';
    ctx.font='800 '+(p.kind==='damage'?31:p.kind==='coin'?35:43)+'px Fredoka, Arial';
    ctx.strokeText(p.text,p.x,p.y);ctx.fillText(p.text,p.x,p.y);
@@ -397,7 +413,7 @@ function mainStep(dt){
  if(!paused&&!showResult&&!state.finished){
  state.time=Math.max(0,state.time-dt);
  const max=LAY.step*13+80;
- const speed=(LAY.step*13/3.8)*(1+state.upgrades.speed*.13);
+ const speed=(LAY.step*13/5.5)*(1+state.upgrades.speed*.13);
  const old=scanner;scanner+=speed*dt;
  const first=Math.floor(old/LAY.step),last=Math.floor(scanner/LAY.step);
  for(let c=first+1;c<=last;c++)if(c>=0&&c<13)onScanColumn(c);
