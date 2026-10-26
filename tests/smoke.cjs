@@ -1,4 +1,4 @@
-/* BEATBOUND standalone smoke tests. Run node tests/smoke.cjs. */
+/* GRIDSONATA standalone smoke tests. Run node tests/smoke.cjs. */
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const source={};
 for(const p of ['index.html','styles.css','visuals.js','audio.js','app.js'])source[p]=fs.readFileSync(p,'utf8');
@@ -25,7 +25,7 @@ vm.runInContext(source['audio.js'],context,{filename:'audio.js'});
 context.BeatArt=context.window.BeatArt;
 context.BeatAudio=context.window.BeatAudio;
 vm.runInContext(source['app.js'],context,{filename:'app.js'});
-const snapshot=()=>context.window.BeatboundDebug.getSnapshot();
+const snapshot=()=>context.window.GridSonataDebug.getSnapshot();
 function click(i){callbacks['board:click']({target:{closest:()=>({dataset:{i:String(i)}})}});}
 assert.equal(snapshot().level,1);
 assert.equal(snapshot().board.cells.length,36);
@@ -48,7 +48,7 @@ assert.equal(document.documentElement.lang,'es');
 callbacks['languageToggle:click']();
 assert.equal(document.documentElement.lang,'en');
 assert.ok(node('shopPanel')===undefined||true);
-context.window.BeatboundDebug.unlockAll();
+context.window.GridSonataDebug.unlockAll();
 assert.ok(snapshot().board.cells.every(c=>c.hp===0));
 /* Run the pending victory timeout with a deliberate function-level check instead
    of depending on real time. All manual action invariants are already covered. */
