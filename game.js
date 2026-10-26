@@ -1,7 +1,8 @@
 /* Melody Scanner — original canvas recreation of the observed grid-based gameplay. */
 (()=>{'use strict';
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d'),$=id=>document.getElementById(id),ART=window.GridMusicArt;
-const KEY='melody-scanner-video-reference-v3';
+const KEY='melody-scanner-approved-assets-v1';
+const OLD_KEY='melody-scanner-video-reference-v3';
 const I={
 ru:{title:'НАСТРОЙКИ',shop:'УЛУЧШЕНИЯ',volume:'ГРОМКОСТЬ',music:'МУЗЫКА',language:'ЯЗЫК',shopText:'Прокачивай звук, монеты и скорость сканера',power:'Сила звука',powerDesc:'Больше урона от инструментов',speed:'Скорость сканера',speedDesc:'Луч проходит чаще',wealth:'Заработок',wealthDesc:'Больше монет от урона',max:'МАКС',paused:'ПАУЗА',time:'ВРЕМЯ ВЫШЛО',retry:'ПОВТОРИТЬ',win:'УРОВЕНЬ ПРОЙДЕН!',next:'ДАЛЕЕ',help:'Перетаскивай одинаковые инструменты друг на друга. Луч запускает музыку и наносит урон. Зелёная кнопка создаёт инструменты.',charge:'Нажми на зелёную кнопку, чтобы получить инструмент!',noRoom:'Нет свободного места!',noCharge:'Недостаточно заряда',merged:'НОВЫЙ ИНСТРУМЕНТ!',money:'МОНЕТЫ',save:'Прогресс сохраняется',restart:'Enter — новый раунд',secret:'ЗОЛОТАЯ ЦЕЛЬ ПОВЕРЖЕНА!',hint:'Объединяй одинаковые инструменты!'},
 en:{title:'SETTINGS',shop:'UPGRADES',volume:'VOLUME',music:'MUSIC',language:'LANGUAGE',shopText:'Improve your music, money and scanner speed',power:'Sound power',powerDesc:'Instruments deal more damage',speed:'Scan speed',speedDesc:'The beam moves faster',wealth:'Income',wealthDesc:'Earn more coins from damage',max:'MAX',paused:'PAUSED',time:"TIME'S UP",retry:'RETRY',win:'LEVEL COMPLETE!',next:'NEXT',help:'Drag matching instruments together to merge them. The scanning beam plays music and damages blocks. Use the green button to create instruments.',charge:'Press the green button to spawn an instrument!',noRoom:'No room for an instrument!',noCharge:'Not enough charge',merged:'NEW INSTRUMENT!',money:'COINS',save:'Progress is saved',restart:'Enter — restart round',secret:'GOLDEN TARGET DEFEATED!',hint:'Merge matching instruments!'},
@@ -17,13 +18,22 @@ const configs=[
 {c:6,r:4,w:2,h:2,hp:3000},{c:8,r:4,w:2,h:2,hp:5000},{c:9,r:3,w:2,h:1,hp:800},
 {c:11,r:3,w:1,h:2,hp:4000},{c:12,r:3,w:1,h:2,hp:3000},{c:11,r:5,w:1,h:1,hp:1000},{c:12,r:5,w:1,h:1,hp:2000}
 ];
+// Only the seven individually approved instrument sprites appear in this build.
+// Positions fit the actual 13x6 game grid and its obstacle layout.
 const starting=[
-{tier:0,c:0,r:2},{tier:0,c:0,r:3},{tier:0,c:2,r:2},{tier:1,c:1,r:3},{tier:1,c:2,r:3},
-{tier:2,c:3,r:3},{tier:2,c:4,r:4},{tier:3,c:4,r:2},{tier:4,c:5,r:4},
-{tier:0,c:0,r:4},{tier:2,c:2,r:4},{tier:1,c:3,r:5},
-{tier:0,c:2,r:5},{tier:0,c:0,r:5},{tier:2,c:6,r:3}
+ {tier:5,c:0,r:2},  // Electric guitar 1 (1x2)
+ {tier:6,c:6,r:2},  // Electric guitar 2 (1x2)
+ {tier:4,c:4,r:4},  // Full drums 2 (2x2)
+ {tier:0,c:1,r:2},{tier:0,c:2,r:2},
+ {tier:1,c:3,r:2},{tier:1,c:4,r:2},
+ {tier:2,c:5,r:2},  // Ukulele 1
+ {tier:3,c:1,r:3},{tier:3,c:2,r:3}, // Compact drums 1
+ {tier:2,c:3,r:3},{tier:2,c:4,r:3},
+ {tier:0,c:5,r:3},{tier:0,c:0,r:4},
+ {tier:2,c:1,r:4},{tier:3,c:2,r:4},
+ {tier:0,c:3,r:4}
 ];
-const startState=()=>({stage:1,coins:241,time:192,charge:16,chargeFill:.62,highest:4,upgrades:{power:0,speed:0,wealth:0},units:[],blocks:[],volume:.7,music:.46,lang:/^ru/i.test(navigator.language)?'ru':/^es/i.test(navigator.language)?'es':'en',tutorialSeen:false,finished:false});
+const startState=()=>({stage:1,coins:241,time:192,charge:16,chargeFill:.62,highest:6,upgrades:{power:0,speed:0,wealth:0},units:[],blocks:[],volume:.7,music:.46,lang:/^ru/i.test(navigator.language)?'ru':/^es/i.test(navigator.language)?'es':'en',tutorialSeen:false,finished:false});
 let state=startState(),selected=null,dragging=null,hovered=null,hoveredChrome=false,paused=false,showResult='',scanner=-50,pass=0,frameLast=performance.now(),fx=[],hints=0,toast=null,checkpoint=0,portrait=false,LAY=null,imgs=[],booted=false,sdkReady=false,store=null,chargeHitBox=null,settingsHot=null,shopHot=null,pauseHot=null;
 function clone(x){return JSON.parse(JSON.stringify(x));}
 function initWorld(reset=false){
@@ -44,11 +54,29 @@ function animateUnit(id,kind='spawn'){unitMotion.set(id,{kind,age:0,duration:kin
 function animateHit(id,strength=1){blockMotion.set(id,{time:.36,force:Math.min(5,1+strength/600)});screenShake=Math.min(4,screenShake+.13);}
 
 function read(){
- try{const raw=(store||localStorage).getItem(KEY);if(!raw)return;const obj=JSON.parse(raw);if(!obj||!Number.isInteger(obj.stage)||obj.stage<1||obj.stage>500)return;
- const base=startState();state={...base,...obj,upgrades:{...base.upgrades,...obj.upgrades}};state.coins=clamp(Number(state.coins)||0,0,1e12);state.charge=clamp(Number(state.charge)||0,0,500);state.time=clamp(Number(state.time)||192,0,192);state.volume=clamp(Number(state.volume)||0,0,1);state.music=clamp(Number(state.music)||0,0,1);
- if(!I[state.lang])state.lang='en';if(!Array.isArray(state.units)||!Array.isArray(state.blocks)||!state.blocks.length){state.blocks=[];state.units=[];}
- state.units=state.units.filter(u=>Number.isInteger(u.tier)&&u.tier>=0&&u.tier<16);state.units.forEach(u=>u.id=uid++);
- state.blocks=state.blocks.filter(b=>b&&Number.isFinite(b.hp));
+ try{
+  // The visual/merge overhaul changes the meaning of tiers. Keep resources,
+  // stage, and settings from older saves, but rebuild the incompatible grid.
+  const saveStore=store||localStorage;
+  const raw=saveStore.getItem(KEY),legacy=!raw?saveStore.getItem(OLD_KEY):null;
+  if(!raw&&!legacy)return;
+  const obj=JSON.parse(raw||legacy);
+  if(!obj||!Number.isInteger(obj.stage)||obj.stage<1||obj.stage>500)return;
+  const base=startState();
+  state={...base,...obj,upgrades:{...base.upgrades,...obj.upgrades}};
+  state.coins=clamp(Number(state.coins)||0,0,1e12);
+  state.charge=clamp(Number(state.charge)||0,0,500);
+  state.time=clamp(Number(state.time)||192,0,192);
+  state.volume=clamp(Number(state.volume)||0,0,1);
+  state.music=clamp(Number(state.music)||0,0,1);
+  if(!I[state.lang])state.lang='en';
+  if(legacy){state.units=[];state.blocks=[];state.highest=6;state.finished=false;}
+  if(!Array.isArray(state.units)||!Array.isArray(state.blocks)||!state.blocks.length){
+    state.units=[];state.blocks=[];
+  }
+  state.units=state.units.filter(u=>Number.isInteger(u.tier)&&u.tier>=0&&u.tier<ART.total);
+  state.units.forEach(u=>u.id=uid++);
+  state.blocks=state.blocks.filter(b=>b&&Number.isFinite(b.hp));
  }catch(e){console.warn('Save unavailable',e);}
 }
 let saveTimer=0;
@@ -123,19 +151,37 @@ function onScanColumn(c){
 }
 function spawn(){
  if(state.finished||showResult||paused)return;
- const cost=5;if(state.charge<cost){popup(txt('noCharge'));return;}
- const tier=Math.random()<.11?1:0;
+ const cost=5;
+ if(state.charge<cost){popup(txt('noCharge'));return;}
+ const pool=ART.spawnTiers||[0,2,3,5];
+ // Draw one of the independently levelled instrument families.
+ const candidate=pool[Math.floor(Math.random()*pool.length)];
+ const tier=Number.isInteger(candidate)?candidate:0;
  const pos=findFree(tier);if(!pos){popup(txt('noRoom'));return;}
- const freshUnit={...pos,tier,id:uid++};state.units.push(freshUnit);animateUnit(freshUnit.id);state.tutorialSeen=true;state.charge-=cost;state.coins=Math.max(0,state.coins-8);sound.note(tier);scatter(cellRect(pos.c,pos.r).x+45,cellRect(pos.c,pos.r).y+47,'#adfff1',12);save();
+ const freshUnit={...pos,tier,id:uid++};
+ state.units.push(freshUnit);animateUnit(freshUnit.id);state.tutorialSeen=true;
+ state.charge-=cost;state.coins=Math.max(0,state.coins-8);
+ sound.note(tier);scatter(cellRect(pos.c,pos.r).x+45,cellRect(pos.c,pos.r).y+47,'#adfff1',12);save();
 }
-function merge(a,b){if(!a||!b||a.id===b.id||a.tier!==b.tier||a.tier>=15)return false;
- state.tutorialSeen=true;const t=a.tier+1;
+function merge(a,b){
+ if(!a||!b||a.id===b.id||a.tier!==b.tier)return false;
+ const t=ART.nextTier?.(a.tier);
+ if(!Number.isInteger(t))return false; // no approved next sprite in that family
+ state.tutorialSeen=true;
  state.units=state.units.filter(u=>u.id!==a.id&&u.id!==b.id);
- const candidates=[{c:b.c,r:b.r},{c:a.c,r:a.r}];let location=candidates.find(p=>canPlace(p.c,p.r,t));
+ const candidates=[{c:b.c,r:b.r},{c:a.c,r:a.r}];
+ let location=candidates.find(p=>canPlace(p.c,p.r,t));
  if(!location)location=findFree(t);
  if(!location){state.units.push(a,b);popup(txt('noRoom'));return false;}
- const u={...location,tier:t,id:uid++};state.units.push(u);animateUnit(u.id,'merge');selected=u.id;state.highest=Math.max(state.highest,t);state.charge=Math.min(999,state.charge+2);state.coins+=10*t;
- const p=rectOfUnit(u);scatter(p.x+p.w*.5,p.y+p.h*.5,'#fff0a4',22);fx.push({kind:'merge',x:p.x+p.w*.5,y:p.y+p.h*.5,life:.8,max:.8});sound.merge(t);popup(txt('merged'));save();return true;
+ const u={...location,tier:t,id:uid++};
+ state.units.push(u);animateUnit(u.id,'merge');selected=u.id;
+ state.highest=Math.max(state.highest,t);
+ state.charge=Math.min(999,state.charge+2);
+ state.coins+=10*(ART.approved[t]?.level||1);
+ const p=rectOfUnit(u);
+ scatter(p.x+p.w*.5,p.y+p.h*.5,'#fff0a4',22);
+ fx.push({kind:'merge',x:p.x+p.w*.5,y:p.y+p.h*.5,life:.8,max:.8});
+ sound.merge(t);popup(txt('merged'));save();return true;
 }
 function moveUnit(a,c,r){if(!a||!canPlace(c,r,a.tier,a.id))return false;a.c=c;a.r=r;selected=a.id;save();return true;}
 function burst(x,y,value,color){
@@ -446,10 +492,10 @@ function pointerMove(e){const p=worldPoint(e);hoveredChrome=!LAY.portrait&&p.x<2
 function pointerUp(e){
  const p=worldPoint(e);
  if(dragging){let drag=dragging;dragging=null;let a=state.units.find(u=>u.id===drag.id);if(!a)return;
- if(drag.moved){let target=unitAt(p.x,p.y);if(target&&target.id!==a.id&&target.tier===a.tier){merge(a,target);return;}
+ if(drag.moved){let target=unitAt(p.x,p.y);if(target&&target.id!==a.id&&target.tier===a.tier&&ART.nextTier?.(a.tier)!=null){merge(a,target);return;}
  const tile=pointCell(p.x,p.y);if(tile&&moveUnit(a,tile.c,tile.r))return;
  popup(txt('noRoom'));return;
- }else{let b=selected?state.units.find(u=>u.id===selected):null;if(b&&b.id!==a.id&&a.tier===b.tier){merge(b,a);return;}selected=a.id;sound.note(a.tier);scatter(p.x,p.y,'#b3ffff',5);return;}}
+ }else{let b=selected?state.units.find(u=>u.id===selected):null;if(b&&b.id!==a.id&&a.tier===b.tier&&ART.nextTier?.(a.tier)!=null){merge(b,a);return;}selected=a.id;sound.note(a.tier);scatter(p.x,p.y,'#b3ffff',5);return;}}
  if(showResult){if(state.finished){state.stage++;initWorld(false);}else{state.time=192;showResult='';}
  gameEvent('gameplayStart');save();return;}
  if(inside(p,chargeHitBox)){spawn();return;}
@@ -457,7 +503,7 @@ function pointerUp(e){
  if(inside(p,shopHot)){openPanel('shop');return;}
  if(inside(p,pauseHot)){paused=!paused;gameEvent(paused?'gameplayStop':'gameplayStart');return;}
  const b=blockAt(p.x,p.y);if(b){popup(makeBlockText(b.hp));return;}
- const tile=pointCell(p.x,p.y);if(tile){const u=occupiedUnit(tile.c,tile.r);if(u){if(selected){const a=state.units.find(v=>v.id===selected);if(a&&a.id!==u.id&&a.tier===u.tier){merge(a,u);return;}}selected=u.id;sound.note(u.tier);}else if(state.charge>=5){spawn();}}
+ const tile=pointCell(p.x,p.y);if(tile){const u=occupiedUnit(tile.c,tile.r);if(u){if(selected){const a=state.units.find(v=>v.id===selected);if(a&&a.id!==u.id&&a.tier===u.tier&&ART.nextTier?.(u.tier)!=null){merge(a,u);return;}}selected=u.id;sound.note(u.tier);}else if(state.charge>=5){spawn();}}
 }
 function openPanel(name){
  paused=true;gameEvent('gameplayStop');$('panel').classList.remove('hidden');$('panelTitle').textContent=txt(name==='shop'?'shop':'title');$('settingsContent').classList.toggle('hidden',name!=='settings');$('shopContent').classList.toggle('hidden',name!=='shop');fillPanel();
@@ -586,12 +632,12 @@ class AudioEngine{
   const roots=[60,57,65,62],root=roots[Math.floor(this.step/16)%4],scale=[0,2,4,7,9,12,14,16,19];
   const midi=root+scale[(tier*2+this.noteCount)%scale.length]+(tier>=9?12:0);
   this.noteCount++;
-  this.instrumentPatch(tier,midi,t,.22+Math.min(.06,tier*.005));
+  this.instrumentPatch(ART.approved[tier]?.family==='drums'?13:tier,midi,t,.22+Math.min(.06,tier*.005));
  }
  merge(tier){
   this.unlock();if(!this.ctx)return;
   const t=this.ctx.currentTime+.006,root=60+(state.stage%3)*2;
-  [0,4,7,12,19].forEach((interval,i)=>this.instrumentPatch(Math.min(15,tier+4),root+interval,t+i*.075,.2));
+  [0,4,7,12,19].forEach((interval,i)=>this.instrumentPatch(ART.approved[tier]?.family==='drums'?13:Math.min(15,tier+4),root+interval,t+i*.075,.2));
  }
  hit(damage,boss){
   if(!this.ctx||state.volume<=0)return;
