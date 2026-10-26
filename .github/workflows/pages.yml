@@ -23,6 +23,11 @@ jobs:
     steps:
       - name: Checkout game
         uses: actions/checkout@v4
+      - name: Verify game scripts and gameplay
+        run: |
+          node --check art.js
+          node --check game.js
+          node tests/smoke.cjs
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
       - name: Upload static game
