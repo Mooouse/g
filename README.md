@@ -1,4 +1,4 @@
-# BEATBOUND — Sonic Merge
+# GRIDSONATA — Sonic Merge
 
 **A new musical merge puzzle** built as a responsive HTML5 game. This repository was rebuilt from scratch; the earlier Melody Forge source was removed.
 
