@@ -24,7 +24,7 @@ const starting=[
 {tier:0,c:2,r:5},{tier:0,c:0,r:5},{tier:2,c:6,r:3}
 ];
 const startState=()=>({stage:1,coins:241,time:192,charge:16,chargeFill:.62,highest:4,upgrades:{power:0,speed:0,wealth:0},units:[],blocks:[],volume:.7,music:.46,lang:/^ru/i.test(navigator.language)?'ru':/^es/i.test(navigator.language)?'es':'en',tutorialSeen:false,finished:false});
-let state=startState(),selected=null,dragging=null,hovered=null,paused=false,showResult='',scanner=-50,pass=0,frameLast=performance.now(),fx=[],hints=0,toast=null,checkpoint=0,portrait=false,LAY=null,imgs=[],booted=false,sdkReady=false,store=null,chargeHitBox=null,settingsHot=null,shopHot=null,pauseHot=null;
+let state=startState(),selected=null,dragging=null,hovered=null,hoveredChrome=false,paused=false,showResult='',scanner=-50,pass=0,frameLast=performance.now(),fx=[],hints=0,toast=null,checkpoint=0,portrait=false,LAY=null,imgs=[],booted=false,sdkReady=false,store=null,chargeHitBox=null,settingsHot=null,shopHot=null,pauseHot=null;
 function clone(x){return JSON.parse(JSON.stringify(x));}
 function initWorld(reset=false){
  const factor=1+Math.max(0,state.stage-1)*.14;
@@ -381,7 +381,7 @@ function drawChrome(){
  const min=Math.floor(Math.max(0,state.time)/60),sec=Math.floor(Math.max(0,state.time)%60);
  textStroke(min+':'+String(sec).padStart(2,'0'),W*.5,LAY.portrait?61:54,LAY.portrait?56:62,'#ddf9ff','center','#353450',5);
  settingsHot={x:16,y:14,w:58,h:58};shopHot={x:80,y:14,w:58,h:58};pauseHot={x:145,y:14,w:58,h:58};
- for(const [hit,icon] of [[settingsHot,'⚙'],[shopHot,'✦'],[pauseHot,paused?'▶':'Ⅱ']]){fillRound(hit.x,hit.y,hit.w,hit.h,15,'#49327694');strokeRound(hit.x,hit.y,hit.w,hit.h,15,'#e8c6ec80',2);textStroke(icon,hit.x+hit.w/2,hit.y+hit.h/2,31,'#fff0ff','center','#604778',2);}
+ if(hoveredChrome){for(const [hit,icon] of [[settingsHot,'⚙'],[shopHot,'✦'],[pauseHot,paused?'▶':'Ⅱ']]){fillRound(hit.x,hit.y,hit.w,hit.h,15,'#493276c9');strokeRound(hit.x,hit.y,hit.w,hit.h,15,'#e8c6ecb0',2);textStroke(icon,hit.x+hit.w/2,hit.y+hit.h/2,31,'#fff0ff','center','#604778',2);}}
  const bx=W*.5-(LAY.portrait?210:160),by=LAY.portrait?1446:764,bw=LAY.portrait?420:325,bh=LAY.portrait?84:126;
  chargeHitBox={x:bx,y:by,w:bw,h:bh};
  const outer=gradient(bx,by,bw,bh,[[0,'#ffffff'],[.24,'#b9aeb8'],[.47,'#fffdfd'],[.75,'#8d8394'],[1,'#f6eef5']]);
@@ -406,9 +406,10 @@ function drawResult(){
 function render(dt){
  drawBackground(performance.now());drawCells();
  for(const b of state.blocks)drawBlock(b);
+ drawScan(performance.now());
  for(const u of state.units)if(!dragging||dragging.id!==u.id)drawUnit(u);
  if(dragging){let u=state.units.find(u=>u.id===dragging.id);if(u){const p=rectOfUnit(u);ctx.save();ctx.translate(dragging.dx-p.x-p.w/2,dragging.dy-p.y-p.h/2);drawUnit(u,true);ctx.restore();}}
- drawScan(performance.now());drawFx(dt);drawChrome();drawResult();
+ drawFx(dt);drawChrome();drawResult();
 }
 function mainStep(dt){
  animClock+=dt;
@@ -441,7 +442,7 @@ function pointerDown(e){
  sound.unlock();if(showResult)return;const p=worldPoint(e);let unit=unitAt(p.x,p.y);
  if(unit){dragging={id:unit.id,sx:p.x,sy:p.y,dx:p.x,dy:p.y,moved:false};canvas.setPointerCapture?.(e.pointerId);}
 }
-function pointerMove(e){const p=worldPoint(e);if(dragging){dragging.dx=p.x;dragging.dy=p.y;if(Math.hypot(p.x-dragging.sx,p.y-dragging.sy)>15)dragging.moved=true;}}
+function pointerMove(e){const p=worldPoint(e);hoveredChrome=!LAY.portrait&&p.x<215&&p.y<81;if(dragging){dragging.dx=p.x;dragging.dy=p.y;if(Math.hypot(p.x-dragging.sx,p.y-dragging.sy)>15)dragging.moved=true;}}
 function pointerUp(e){
  const p=worldPoint(e);
  if(dragging){let drag=dragging;dragging=null;let a=state.units.find(u=>u.id===drag.id);if(!a)return;
@@ -480,6 +481,9 @@ function bind(){
  window.addEventListener('pagehide',save);
  window.addEventListener('keydown',e=>{if(e.code==='Enter'&&showResult){if(state.finished)state.stage++;initWorld(false);gameEvent('gameplayStart');save();}
  if(e.code==='Space'&&!e.repeat){e.preventDefault();spawn();}
+ if(e.code==='KeyS')openPanel('settings');
+ if(e.code==='KeyU')openPanel('shop');
+ if(e.code==='KeyP'){paused=!paused;gameEvent(paused?'gameplayStop':'gameplayStart');}
  if(e.code==='Escape')closePanel();
  });
 }
