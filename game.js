@@ -142,7 +142,7 @@ function burst(x,y,value,color){
 }
 function scatter(x,y,color,n){for(let i=0;i<n;i++)fx.push({kind:'particle',x,y,vx:(Math.random()-.5)*310,vy:(Math.random()-.5)*310,life:.45+Math.random()*.47,max:.9,size:2+Math.random()*4,color});}
 function popup(t){toast={t,time:2.3};}
-function setView(){portrait=window.innerHeight>window.innerWidth*1.08;if(portrait){canvas.width=900;canvas.height=1560;LAY={W:900,H:1560,x:76,y:175,step:104,size:99,portrait:true}}else{canvas.width=1650;canvas.height=928;LAY={W:1650,H:928,x:160,y:105,step:103,size:97,portrait:false}}layoutMobile();}
+function setView(){portrait=window.innerHeight>window.innerWidth*1.08;if(portrait){canvas.width=900;canvas.height=1560;LAY={W:900,H:1560,x:76,y:145,step:104,size:99,portrait:true}}else{canvas.width=1650;canvas.height=928;LAY={W:1650,H:928,x:160,y:105,step:103,size:97,portrait:false}}layoutMobile();}
 let mobilePos=[];
 function layoutMobile(){
  mobilePos=[];const used=new Set(['4:0','5:0','4:1','5:1']);
@@ -162,7 +162,7 @@ function cellRect(c,r){const L=LAY;if(L.portrait){if(c<=6)return{x:L.x+c*L.step,
  return{x:L.x+c*L.step,y:L.y+r*L.step,w:L.size,h:L.size};}
 function rectOfUnit(u){const a=cellRect(u.c,u.r),s=ART.spans(u.tier);return{x:a.x,y:a.y,w:a.w+(s.w-1)*LAY.step,h:a.h+(s.h-1)*LAY.step};}
 function rectOfBlock(b){
- if(LAY.portrait){const m=mobilePos[b.id];const size=100,step=104;return{x:76+m.x*step,y:895+m.y*step,w:size+(m.w-1)*step,h:size+(m.h-1)*step};}
+ if(LAY.portrait){const m=mobilePos[b.id];const size=100,step=104;return{x:76+m.x*step,y:789+m.y*step,w:size+(m.w-1)*step,h:size+(m.h-1)*step};}
  const p=cellRect(b.c,b.r);return{x:p.x,y:p.y,w:p.w+(b.w-1)*LAY.step,h:p.h+(b.h-1)*LAY.step};
 }
 function pointCell(x,y){if(LAY.portrait){const c=Math.floor((x-LAY.x)/LAY.step),r=Math.floor((y-LAY.y)/LAY.step);if(c>=0&&c<7&&r>=0&&r<6)return{c,r};return null;}
@@ -277,12 +277,12 @@ function drawUnit(u,ghost=false){
    ctx.shadowBlur=0;
  }
  if(ghost)ctx.globalAlpha=.58;
- ctx.translate(cx,cy+float);ctx.scale(scale,scale);
+ ctx.translate(cx,cy+float);ctx.scale(scale,scale);ctx.rotate(Math.sin(animClock*1.8+u.id*.71)*.012);
  const aura=ctx.createRadialGradient(0,0,5,0,0,Math.max(p.w,p.h)*.53);
  aura.addColorStop(0,'#1df9ff2d');aura.addColorStop(.6,'#63e7fa13');aura.addColorStop(1,'#43daea00');
  ctx.fillStyle=aura;ctx.beginPath();ctx.ellipse(0,0,Math.max(p.w,85)*.56,Math.max(p.h,85)*.53,0,0,Math.PI*2);ctx.fill();
  if(im?.complete&&im.naturalWidth>0){
-   const ratio=im.naturalWidth/im.naturalHeight,maxW=p.w*.98,maxH=p.h*.98;
+   const ratio=im.naturalWidth/im.naturalHeight,maxW=p.w*1.16,maxH=p.h*1.14;
    let drawW=Math.min(maxW,maxH*ratio),drawH=drawW/ratio;
    if(drawH>maxH){drawH=maxH;drawW=drawH*ratio;}
    ctx.shadowColor='#281b3899';ctx.shadowBlur=7;ctx.shadowOffsetY=3;
@@ -292,7 +292,7 @@ function drawUnit(u,ghost=false){
 }
 function drawScan(t){
  const x=LAY.portrait?LAY.x+((scanner+LAY.step*7)%(LAY.step*7)):LAY.x+scanner;
- const top=LAY.portrait?165:0,bottom=LAY.portrait?LAY.step*6+25:LAY.H;
+ const top=LAY.portrait?145:0,bottom=LAY.portrait?LAY.step*6+25:LAY.H;
  ctx.save();ctx.globalCompositeOperation='screen';
  const phase=.5+.5*Math.sin(animClock*6);
  const g=ctx.createLinearGradient(x-62,0,x+62,0);
@@ -358,7 +358,7 @@ function drawChrome(){
  textStroke(min+':'+String(sec).padStart(2,'0'),W*.5,LAY.portrait?61:54,LAY.portrait?56:62,'#ddf9ff','center','#353450',5);
  settingsHot={x:16,y:14,w:58,h:58};shopHot={x:80,y:14,w:58,h:58};pauseHot={x:145,y:14,w:58,h:58};
  for(const [hit,icon] of [[settingsHot,'⚙'],[shopHot,'✦'],[pauseHot,paused?'▶':'Ⅱ']]){fillRound(hit.x,hit.y,hit.w,hit.h,15,'#49327694');strokeRound(hit.x,hit.y,hit.w,hit.h,15,'#e8c6ec80',2);textStroke(icon,hit.x+hit.w/2,hit.y+hit.h/2,31,'#fff0ff','center','#604778',2);}
- const bx=W*.5-(LAY.portrait?210:160),by=LAY.portrait?1510:764,bw=LAY.portrait?420:325,bh=LAY.portrait?84:126;
+ const bx=W*.5-(LAY.portrait?210:160),by=LAY.portrait?1446:764,bw=LAY.portrait?420:325,bh=LAY.portrait?84:126;
  chargeHitBox={x:bx,y:by,w:bw,h:bh};
  const outer=gradient(bx,by,bw,bh,[[0,'#ffffff'],[.24,'#b9aeb8'],[.47,'#fffdfd'],[.75,'#8d8394'],[1,'#f6eef5']]);
  fillRound(bx-7,by-7,bw+14,bh+13,18,'#393349af');fillRound(bx,by,bw,bh,17,outer);
