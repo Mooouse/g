@@ -1,4 +1,4 @@
-name: Verify and deploy BEATBOUND
+name: Verify and deploy GRIDSONATA
 on:
   push:
     branches: [main]
