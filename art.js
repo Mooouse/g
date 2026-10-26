@@ -153,5 +153,16 @@ const svg=tier=>{
 const cache=new Map();
 const src=tier=>{tier=Math.max(0,Math.min(15,tier|0));if(!cache.has(tier))cache.set(tier,'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg(tier)));return cache.get(tier);};
 const spans=tier=>palette[Math.max(0,Math.min(15,tier|0))].type==='synthwide'?{w:2,h:1}:['guitar'].includes(palette[tier]?.type)?{w:1,h:2}:['synthdouble','harp','drums','organ','orchestra'].includes(palette[tier]?.type)?{w:2,h:2}:{w:1,h:1};
-window.GridMusicArt={src,svg,spans,total:16};
+// Cropped and cleaned sprite art from the user-supplied gameplay reference video.
+const videoFrames=[
+ [24,38,102,105], [174,36,102,108], [316,48,114,98], [456,56,139,68],
+ [36,188,83,164], [186,188,80,161], [348,187,57,169], [456,239,139,63],
+ [6,384,139,133], [159,387,131,126], [305,383,136,135], [456,384,139,133]
+];
+const tierToVideo=[0,1,2,3,4,5,6,7,4,9,6,8,10,11,9,11];
+window.GridMusicArt={
+ src,svg,spans,total:16,
+ atlasUrl:'sprites/video-instruments.webp',
+ frameForTier(tier){return videoFrames[tierToVideo[Math.max(0,Math.min(15,tier|0))]];}
+};
 })();

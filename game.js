@@ -298,7 +298,14 @@ function drawUnit(u,ghost=false){
  const aura=ctx.createRadialGradient(0,0,5,0,0,Math.max(p.w,p.h)*.53);
  aura.addColorStop(0,'#1df9ff2d');aura.addColorStop(.6,'#63e7fa13');aura.addColorStop(1,'#43daea00');
  ctx.fillStyle=aura;ctx.beginPath();ctx.ellipse(0,0,Math.max(p.w,85)*.56,Math.max(p.h,85)*.53,0,0,Math.PI*2);ctx.fill();
- if(im?.complete&&im.naturalWidth>0){
+ if(instrumentAtlas?.complete&&instrumentAtlas.naturalWidth>0&&ART.frameForTier){
+   const [sx,sy,sw,sh]=ART.frameForTier(u.tier);
+   const ratio=sw/sh,maxW=p.w*1.2,maxH=p.h*1.18;
+   let drawW=Math.min(maxW,maxH*ratio),drawH=drawW/ratio;
+   if(drawH>maxH){drawH=maxH;drawW=drawH*ratio;}
+   ctx.shadowColor='#26123199';ctx.shadowBlur=5;ctx.shadowOffsetY=3;
+   ctx.drawImage(instrumentAtlas,sx,sy,sw,sh,-drawW*.5,-drawH*.5,drawW,drawH);
+ }else if(im?.complete&&im.naturalWidth>0){
    const ratio=im.naturalWidth/im.naturalHeight,maxW=p.w*1.16,maxH=p.h*1.14;
    let drawW=Math.min(maxW,maxH*ratio),drawH=drawW/ratio;
    if(drawH>maxH){drawH=maxH;drawW=drawH*ratio;}
@@ -476,7 +483,11 @@ function bind(){
  if(e.code==='Escape')closePanel();
  });
 }
-function setupImages(){imgs=Array.from({length:ART.total},(_,tier)=>{const im=new Image();im.src=ART.src(tier);return im;});}
+let instrumentAtlas=null;
+function setupImages(){
+ imgs=Array.from({length:ART.total},(_,tier)=>{const im=new Image();im.src=ART.src(tier);return im;});
+ if(ART.atlasUrl&&ART.frameForTier){instrumentAtlas=new Image();instrumentAtlas.src=ART.atlasUrl;}
+}
 class AudioEngine{
  constructor(){
   this.ctx=null;this.main=null;this.bg=null;this.fx=null;this.reverb=null;this.muted=false;
