@@ -1,4 +1,4 @@
-/* BEATBOUND original instrument illustrations — scalable, local, resolution-independent SVG. */
+/* GRIDSONATA original instrument illustrations — scalable, local, resolution-independent SVG. */
 (() => {
 'use strict';
 const colors=[
