@@ -32,8 +32,8 @@ jobs:
           {
             echo "# BEATBOUND automated test report"
             echo ""
-            echo "Source commit: `$(git rev-parse HEAD)`"
-            echo "Node: `$(node --version)`"
+            printf "Source commit: %s\\n" "$(git rev-parse HEAD)"
+            printf "Node: %s\\n" "$(node --version)"
             echo ""
             echo "| Check | Exit code |"
             echo "| --- | ---: |"
@@ -43,9 +43,9 @@ jobs:
             echo "| Gameplay simulation | $SMOKE |"
             echo ""
             echo "### Game test output"
-            echo "```"
+            printf '%s\\n' '~~~'
             cat /tmp/smoke.txt
-            echo "```"
+            printf '%s\\n' '~~~'
           } > QA_STATUS.md
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
