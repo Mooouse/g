@@ -1,4 +1,4 @@
-/* BEATBOUND — complete original browser game. No build tools required. */
+/* GRIDSONATA — complete original browser game. No build tools required. */
 (() => {
 'use strict';
 const $=id=>document.getElementById(id),ART=window.BeatArt,AUDIO=window.BeatAudio,KEY='beatbound-game-v2';
@@ -255,5 +255,5 @@ function bind(){
 }
 $('seqSteps').innerHTML=Array.from({length:8},(_,i)=>'<span class="'+(i===0?'on':'')+'"></span>').join('');
 bind();initSDK();setInterval(beatTick,75);setInterval(()=>{if(!S.board||S.win)return;const before=S.energy;regen();if(before!==S.energy){renderHud();save();}},900);
-window.BeatboundDebug={getSnapshot:()=>JSON.parse(pack()),unlockAll:()=>{S.board.cells.forEach(c=>c.hp=0);updateFromMove();},merge:(a,b)=>merge(a,b),burst:()=>burst(),nextLevel};
+window.GridSonataDebug={getSnapshot:()=>JSON.parse(pack()),unlockAll:()=>{S.board.cells.forEach(c=>c.hp=0);updateFromMove();},merge:(a,b)=>merge(a,b),burst:()=>burst(),nextLevel};
 })();
