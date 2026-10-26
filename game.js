@@ -10,7 +10,7 @@ es:{
 tagline:'LA AVENTURA MUSICAL DE FUSIÓN',soundOn:'EL ESTUDIO ESTÁ ACTIVO',journey:'TU AVENTURA',currentLevel:'NIVEL ACTUAL',coins:'NOTAS DORADAS',power:'RESONANCIA',create:'CREA MÚSICA',summon:'INVOCAR INSTRUMENTO',asideTip:'Fusiona instrumentos iguales para crear poderosas ondas musicales.',mainQuest:'MISIÓN PRINCIPAL',openAll:'Despierta la melodía',objective:'Rompe todos los cristales para terminar la composición.',unlocked:'DESBLOQUEADAS',magicBoard:'TABLERO DE RESONANCIA',selectInstrument:'ELIGE UN INSTRUMENTO',tapTip:'DOS TOQUES PARA TOCAR',energy:'ENERGÍA',playNote:'TOCAR UNA NOTA',pulseDesc:'Daña cristales cercanos',boardHint:'Selecciona un instrumento, fusiona los iguales o muévelo a una casilla libre.',forge:'EL TALLER',nowPlaying:'SUENA AHORA',damage:'PODER SONORO',range:'ALCANCE',upgrades:'MEJORAS DEL ESTUDIO',discovered:'SONIDOS DESCUBIERTOS',footerText:'CREADO POR AMOR A LA MÚSICA',welcomeKicker:'UNA NUEVA AVENTURA MUSICAL',welcomeText:'Fusiona instrumentos mágicos. Crea melodías hermosas. Devuélvele la música a un mundo silencioso.',beginAdventure:'EMPEZAR AVENTURA',feature1:'FUSIONA',feature2:'CREA',feature3:'DESCUBRE',quickLesson:'TUTORIAL RÁPIDO',skip:'Saltar tutorial',levelComplete:'NIVEL COMPLETADO',beautiful:'¡Una hermosa melodía!',winText:'Tu melodía ha despertado otra parte del mundo.',goldNotes:'NOTAS DORADAS',nextLevel:'SIGUIENTE COMPOSICIÓN',settings:'Configuración',volume:'VOLUMEN GENERAL',volumeHelp:'Música y sonidos de instrumentos',language:'IDIOMA',howToPlay:'CÓMO JUGAR',replayTutorial:'Repetir tutorial',done:'LISTO',tier:'NIVEL',tiles:'casillas',upgradePower:'Amplificador',upgradePowerDesc:'Ondas sonoras más fuertes',upgradeBattery:'Batería',upgradeBatteryDesc:'Más energía máxima',upgradeTempo:'Motor rítmico',upgradeTempoDesc:'Recupera energía más rápido',maxed:'MÁX.',noMoney:'¡No tienes suficientes notas doradas!',noSpace:'¡Libera más casillas primero!',summoned:'¡Ha aparecido un instrumento!',selected:'Elegido: {name}',mergeNeed:'Fusiona instrumentos del mismo nivel.',merged:'¡Nuevo sonido: {name}!',fullPower:'¡Este instrumento ya es legendario!',noEnergy:'¡Poca energía! Se recupera automáticamente.',hit:'¡Onda sonora!',move:'Instrumento movido',locked:'Rompe el cristal con ondas sonoras.',winMoves:'{n} notas tocadas',winMerges:'{n} fusiones',tutorial1Title:'Descubre tu primer sonido',tutorial1:'Elige cualquier instrumento del tablero. Cada uno tiene su propia voz musical.',tutorial2Title:'Fusiona instrumentos iguales',tutorial2:'Toca un instrumento y luego otro del mismo nivel. Se convierten en uno más potente y hermoso.',tutorial3Title:'Libera todas las casillas',tutorial3:'Toca notas para romper los cristales cercanos. Mueve instrumentos a las casillas libres.',tutorial4Title:'Construye tu orquesta',tutorial4:'Gana notas doradas, invoca instrumentos y mejora tu estudio. Descubre nuevos sonidos.',continue:'CONTINUAR',letsPlay:'¡A JUGAR!',next:'SIGUIENTE',chapters:['Bosque Encantado','Cielos de Terciopelo','Jardines Lunares','Palacio de Cristal','Ópera Estelar','Ensueño Dorado'],names:['Campana de Ámbar','Pandereta Lunar','Xilófono Arcoíris','Violín de Terciopelo','Arpa Solar','Trompeta de Bronce','Piano Nocturno','Guitarra Aurora','Celesta de Cristal','Arpa Lunar','Órgano Celestial','Sinfonía Astral'],tapToMove:'Toca una casilla libre para mover el instrumento.',maxRange:'{n} casillas',noSelection:'Primero elige un instrumento.',tapAgain:'Tócalo de nuevo o reproduce una nota.'}
 };
 const MAX_TIER=11, KEY='melody-forge-v1';
-const fresh=()=>({level:1,coins:100,upgrades:{power:0,battery:0,tempo:0},discovered:[0],energy:8,energyTime:Date.now(),volume:0.55,lang: /^ru/i.test(navigator.language)?'ru':/^es/i.test(navigator.language)?'es':'en',intro:false,tutorialDone:false,board:null,moves:0,merges:0});
+const fresh=()=>({level:1,coins:100,upgrades:{power:0,battery:0,tempo:0},discovered:[0],starTier:0,energy:8,energyTime:Date.now(),volume:0.55,lang: /^ru/i.test(navigator.language)?'ru':/^es/i.test(navigator.language)?'es':'en',intro:false,tutorialDone:false,board:null,moves:0,merges:0});
 let s=fresh(),selected=null,won=false,playing=false,step=0,toastTimer=null,gameReady=false,storage=null;
 const t=(key,vars={})=>{let v=DICTS[s.lang]?.[key]??DICTS.en[key]??key;if(typeof v!=='string')return key;return v.replace(/\{(\w+)\}/g,(_,k)=>vars[k]??'');};
 const instrumentName=i=>(DICTS[s.lang].names[i]||DICTS.en.names[i]);
@@ -22,8 +22,9 @@ const board=Array.from({length:n*n},()=>({hp:1+Math.floor(rng()*Math.min(5,1+Mat
 const center=Math.floor(n/2)*n+Math.floor(n/2);
 const opens=[center,center+1,center-n,center+n];
 for(const i of opens){board[i].hp=0;board[i].bonus=false;}
-board[center].tier=0;board[center+1].tier=0;board[center-n].tier=level>6?1:0;
-if(level>=4)board[center+n].tier=1;
+const champion=cap(s.starTier||0,0,MAX_TIER);
+board[center].tier=champion;board[center+1].tier=Math.max(0,champion-1);board[center-n].tier=Math.max(0,champion-1);
+if(level>=4)board[center+n].tier=Math.max(0,champion-2);
 return {n,cells:board};
 }
 function maxEnergy(){return 8+s.upgrades.battery*2;}
@@ -47,7 +48,7 @@ gameReady=true;try{sdk.game.loadingStart();}catch(e){}
 try{sdk.data.getItem(KEY);storage=sdk.data;}catch(e){storage=localStorage;}
 }}catch(e){console.info('Local mode: CrazyGames SDK not active.',e.message);}
 if(!storage)storage=localStorage;
-try{const json=storage.getItem(KEY);if(json){const v=JSON.parse(json);if(v&&Number.isInteger(v.level)&&v.level>0){const d=fresh();s={...d,...v,upgrades:{...d.upgrades,...v.upgrades},discovered:Array.isArray(v.discovered)?v.discovered.filter(x=>Number.isInteger(x)&&x>=0&&x<=MAX_TIER):[0]};s.level=cap(s.level,1,100000);s.coins=cap(Number(s.coins)||0,0,1e10);s.volume=cap(Number(s.volume)||0,0,1);if(!DICTS[s.lang])s.lang='en';if(!s.board||!Array.isArray(s.board.cells)||s.board.cells.length!==s.board.n*s.board.n||s.board.n<5||s.board.n>7)s.board=makeBoard(s.level);}}}catch(e){console.warn('Save corrupted',e);}
+try{const json=storage.getItem(KEY);if(json){const v=JSON.parse(json);if(v&&Number.isInteger(v.level)&&v.level>0){const d=fresh();s={...d,...v,upgrades:{...d.upgrades,...v.upgrades},discovered:Array.isArray(v.discovered)?v.discovered.filter(x=>Number.isInteger(x)&&x>=0&&x<=MAX_TIER):[0]};s.starTier=cap(Math.max(s.starTier||0,...s.discovered),0,MAX_TIER);s.level=cap(s.level,1,100000);s.coins=cap(Number(s.coins)||0,0,1e10);s.volume=cap(Number(s.volume)||0,0,1);if(!DICTS[s.lang])s.lang='en';if(!s.board||!Array.isArray(s.board.cells)||s.board.cells.length!==s.board.n*s.board.n||s.board.n<5||s.board.n>7)s.board=makeBoard(s.level);}}}catch(e){console.warn('Save corrupted',e);}
 s.energyTime=Date.now();s.energy=cap(s.energy,0,maxEnergy());if(!s.board)s.board=makeBoard(s.level);
 syncSDK('loadingStop');renderAll();
 if(s.intro){$('welcomeOverlay').classList.add('hidden');if(s.tutorialDone)startGameplay();else tutorial(0);}
@@ -97,7 +98,7 @@ function merge(a,b){
 const ca=s.board.cells[a],cb=s.board.cells[b];if(!ca||!cb||ca.tier===null||cb.tier!==ca.tier)return;
 if(ca.tier>=MAX_TIER){showToast(t('fullPower'));return;}
 const tier=ca.tier+1;ca.tier=null;cb.tier=tier;selected=b;s.merges++;
-if(!s.discovered.includes(tier))s.discovered.push(tier);
+if(!s.discovered.includes(tier))s.discovered.push(tier);s.starTier=Math.max(s.starTier||0,tier);
 s.coins+=12+tier*7;audio.playMerge(tier);renderBoard([a,b]);renderSelection();renderEconomy();save();showToast(t('merged',{name:instrumentName(tier)}));}
 function playNote(){
 if(won)return;if(selected===null||s.board.cells[selected]?.tier===null){showToast(t('noSelection'));return;}
