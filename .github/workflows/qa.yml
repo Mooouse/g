@@ -1,4 +1,4 @@
-name: BEATBOUND QA report
+name: GRIDSONATA QA report
 on:
   push:
     paths:
@@ -30,7 +30,7 @@ jobs:
           node tests/smoke.cjs > /tmp/smoke.txt 2>&1
           SMOKE=$?
           {
-            echo "# BEATBOUND automated test report"
+            echo "# GRIDSONATA automated test report"
             echo ""
             printf "Source commit: %s\\n" "$(git rev-parse HEAD)"
             printf "Node: %s\\n" "$(node --version)"
@@ -50,6 +50,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add QA_STATUS.md
-          git commit -m "Record automated BEATBOUND smoke test outcome"
+          git commit -m "Record automated GRIDSONATA smoke test outcome"
           git push
           test "$ART" -eq 0 && test "$AUD" -eq 0 && test "$APP" -eq 0 && test "$SMOKE" -eq 0
