@@ -1,0 +1,13 @@
+hint: "Esquiva los gérmenes. WASD, flechas o arrastra."
+best: "Récord: {time}"
+lasted: "Resististe {time}"
+seconds: "{s} s"
+continue: "Continuar (anuncio)"
+ouch: "¡Ay!"
+gameOver: "Fin del juego"
+sound: "Sonido: {state}"
+tipMove: "Arrastra o usa las flechas"
+goal: "Sobrevive {time}"
+listing:
+  description: "Germ Dodge es un pequeño juego de supervivencia: guía una célula entre un enjambre de gérmenes que llegan desde todos los bordes y van más rápido cuanto más aguantas. Un toque o las flechas, sin menús de por medio. Supera tu mejor tiempo. (Un ejemplo de la plataforma, no un juego para publicar.)"
+  controls: "Teclado: WASD o flechas para moverte, P para pausar. Ratón o pantalla táctil: arrastra en cualquier lugar para dirigir."

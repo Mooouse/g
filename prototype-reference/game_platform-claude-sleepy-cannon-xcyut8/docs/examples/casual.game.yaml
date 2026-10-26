@@ -1,0 +1,47 @@
+# yaml-language-server: $schema=../../packages/spec/schema/game.casual.schema.json
+# Example of the casual kit on the CrazyGames channel (not a game for release; CI runs its QA).
+# "Pop Rush" — a 45-second score run for teens and adults.
+# Pop glowing orbs as fast as you can: quick pops build a ×2…×5 combo, golden orbs are worth more,
+# spiky ones take 3 seconds off the clock. Orbs speed up towards the end. Beat your best score.
+
+spec: 0
+id: casual-example
+title: "Pop Rush"
+locale: en-US
+audience: general
+channel: crazygames
+kit: casual
+theme: neon-pop
+# The languages it ships in: the kit's texts are the platform's (translated), the subtitle and the listing are in
+# casual.strings/<code>.yaml (docs/guides/i18n.md). The player's language: CrazyGames' locale, else the browser's
+languages: [en, es, pt-BR, fr, de, ru, tr, it, pl, id]
+# What makes it its own (CrazyGames reviews originality; `gp explain concept`). An example, not a release.
+concept:
+  pitch: "Pop glowing orbs for 45 seconds; quick pops build a combo and golden orbs are worth more."
+  closest: ["Bubble Pop", "Balloon Popping", "Pop It Master"]
+  different: "Spiky orbs take time off the clock, so each tap is a choice between speed and care; the combo only grows while you pop in rhythm."
+# The portal form's texts (`gp submission` writes them into listing.md)
+listing:
+  description: "Pop Rush is a 45-second score run: pop glowing orbs as fast as you can. Quick pops build a combo up to ×5, golden orbs are worth more, and spiky orbs take three seconds off the clock. The orbs speed up towards the end. Beat your best score. (A platform example, not a game for release.)"
+  controls: "Mouse: click the orbs. Touch: tap the orbs."
+  orientation: both
+  tags: [Casual, Arcade]
+
+round:
+  mechanic: tap-score
+  goal: { time: 45 }
+  maxOnScreen: 8
+  spawnEvery: [0.35, 0.7]
+  trajectory: { type: rise, time: [3.2, 4.5], sway: 0.1 }
+  ramp: { speed: 1.6, spawn: 1.4 }
+  targets:
+    - { kind: normal, weight: 88, score: 10 }
+    - { kind: golden, weight: 4, score: 50, speed: 1.3 }
+    - { kind: spiky, weight: 8, penalty: { time: 3, combo: true } }
+  combo: { window: 0.9, steps: [5, 10, 20, 35] }
+
+titleScreen:
+  subtitle: "45 seconds. Pop fast. Avoid spikes!"
+
+result:
+  stats: [pops, combo, accuracy]

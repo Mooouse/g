@@ -1,0 +1,13 @@
+hint: "Weiche den Keimen aus. WASD, Pfeile oder ziehen."
+best: "Rekord: {time}"
+lasted: "Du hast {time} überlebt"
+seconds: "{s} s"
+continue: "Weiter (Werbung)"
+ouch: "Autsch!"
+gameOver: "Spiel vorbei"
+sound: "Ton: {state}"
+tipMove: "Ziehen oder Pfeiltasten nutzen"
+goal: "Überlebe {time}"
+listing:
+  description: "Germ Dodge ist ein kleines Überlebensspiel: Steuere eine Zelle durch einen Schwarm von Keimen, die von allen Rändern kommen und immer schneller werden, je länger du durchhältst. Ein Finger oder die Pfeiltasten, keine Menüs im Weg. Schlag deine Bestzeit. (Ein Beispiel der Plattform, kein Spiel zur Veröffentlichung.)"
+  controls: "Tastatur: WASD oder Pfeiltasten zum Bewegen, P für Pause. Maus oder Touch: irgendwo ziehen, um zu steuern."

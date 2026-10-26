@@ -1,0 +1,13 @@
+hint: "Schiva i germi. WASD, frecce o trascina."
+best: "Record: {time}"
+lasted: "Hai resistito {time}"
+seconds: "{s} s"
+continue: "Continua (pubblicità)"
+ouch: "Ahi!"
+gameOver: "Partita finita"
+sound: "Suono: {state}"
+tipMove: "Trascina o usa le frecce"
+goal: "Sopravvivi {time}"
+listing:
+  description: "Germ Dodge è un piccolo gioco di sopravvivenza: guida una cellula attraverso uno sciame di germi che arrivano da ogni bordo e accelerano più a lungo resisti. Un tocco o le frecce, nessun menu di mezzo. Batti il tuo tempo migliore. (Un esempio della piattaforma, non un gioco da pubblicare.)"
+  controls: "Tastiera: WASD o frecce per muoverti, P per la pausa. Mouse o touch: trascina ovunque per guidare."

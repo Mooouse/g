@@ -1,0 +1,13 @@
+hint: "Mikroplardan kaçın. WASD, oklar veya sürükleyin."
+best: "En iyi: {time}"
+lasted: "{time} dayandınız"
+seconds: "{s} sn"
+continue: "Devam (reklam)"
+ouch: "Ah!"
+gameOver: "Oyun bitti"
+sound: "Ses: {state}"
+tipMove: "Sürükle ya da okları kullan"
+goal: "{time} dayan"
+listing:
+  description: "Germ Dodge küçük bir hayatta kalma oyunu: her kenardan gelen ve dayandıkça hızlanan mikrop sürüsünün içinden bir hücreyi yönlendirin. Tek dokunuş ya da ok tuşları, araya giren menü yok. En iyi sürenizi geçin. (Bir platform örneği, yayınlanacak bir oyun değil.)"
+  controls: "Klavye: hareket için WASD veya ok tuşları, duraklatmak için P. Fare veya dokunmatik: yönlendirmek için herhangi bir yere sürükleyin."

@@ -1,0 +1,36 @@
+# yaml-language-server: $schema=../../packages/spec/schema/game.schema.json
+# The tutorial game (docs/tutorial.md): fruit and counting, own stickers and praise, a slower round for toddlers.
+spec: 0
+id: fruit-pop
+title: "Fruit Pop"
+appId: com.qma.fruitpop
+locale: en-US
+audience: ages-2-5
+channel: android-families
+kit: kids
+theme: sky-balloons
+privacyPolicyUrl: https://qmacyber.github.io/fruit-pop/privacy-policy.html
+
+round:
+  mechanic: tap-collect
+  goal: 12                          # a shorter round
+  maxOnScreen: 5
+  trajectory: { type: rise, time: [6, 8.5] }   # slower balloons
+
+modes:
+  - id: fruit
+    items:
+      - { emoji: "🍎", word: apple }
+      - { emoji: "🍌", word: banana }
+      - { emoji: "🍇", word: grapes }
+      - { emoji: "🍓", word: strawberry }
+      - { emoji: "🍊", word: orange }
+      - { emoji: "🍐", word: pear }
+      - { emoji: "🍉", word: watermelon }
+      - { emoji: "🍒", word: cherries }
+  - id: numbers
+    content: numbers-1-10-en
+
+rewards:
+  stickers: ["🍎", "🍌", "🍇", "🍓", "🍊", "🍐", "🍉", "🍒", "🍍", "🥝", "🥥", "🍋"]
+  praise: ["Yummy!", "Well done!", "Super!"]

@@ -1,0 +1,94 @@
+# yaml-language-server: $schema=../../../packages/spec/schema/game.schema.json
+# ЧЕРНОВИК (гейм-дизайнер). "Times Tables Balloons" — игра №3, ages 6–8 (M2: другой возраст и уровни).
+# Вверху — пример "3 × 4 = ?", его же читает голос. Поднимаются 4 шара с ответами.
+# Верный шар — pop, конфетти, "twelve!". Неверный — мягко качается и отлетает, пример остаётся (без проигрыша).
+# 10 примеров = уровень; уровни открываются по порядку на карте. Звёзды = старание, не скорость.
+# Намеренно переиспользует tap-collect-поле и rise: новая механика = «правило, какой шар верный».
+
+spec: 0
+id: times-tables
+title: "Times Tables Balloons"
+appId: com.babygames.timestables
+locale: en-US
+audience: ages-6-8                # 48 dp, текст ≤ Grade 2, ошибки мягкие
+channel: android-families
+kit: kids
+theme: sky-balloons               # тема уже есть; позже — своя (chalkboard) против Repetitive Content
+saveKey: timestables.save.v1
+privacyPolicyUrl: https://qmacyber.github.io/times-tables/privacy-policy.html
+
+round:
+  mechanic: tap-answer            # NEW: механика tap-answer (вопрос + цели-варианты, одна верная)
+  goal: 10                        # 10 верных ответов = уровень пройден (~2–3 мин)
+  question:                       # NEW
+    from: content                 #   вопрос берётся из генератора мода (ниже)
+    say: true                     #   читать вопрос голосом ("three times four") — не только текст
+    position: top                 #   панель вопроса под safe-area, цели её не перекрывают
+  options:                        # NEW
+    count: 4                      #   3–4 для 6–8 лет; валидатор: count ≤ maxOnScreen
+    present: field                #   field — варианты на плывущих шарах (rise); grid — 2×2 кнопки без движения
+    respawnWrong: true            #   упущенный верный шар возвращается: ответить можно всегда
+  wrong:                          # NEW: реакция на ошибку (только «мягкие» значения для child-аудиторий)
+    feedback: wobble              #   wobble | fade; `buzz`, `red-flash` запрещены профилем
+    hintAfter: 2                  #   после 2 ошибок на одном примере верный шар мягко подсвечивается
+    retrySame: true               #   пример не меняется, пока не отвечен
+  maxOnScreen: 4
+  spawnEvery: [0.3, 0.5]          # все 4 варианта появляются почти сразу
+  prefill: 4
+  trajectory: { type: rise, time: [9, 12], sway: 0.1 }   # медленно: время на счёт, а не на реакцию
+  target: { radius: 0.1, min: 34, max: 80 }
+  hud: { progress: bar, question: panel }   # NEW: полоса 0/10 вместо 10 точек + панель вопроса
+  celebrateSec: 1.4
+
+progression:                      # NEW: блок progression/levels (прогресс сохраняется в save)
+  type: levels
+  unlock: complete                # следующий уровень открывается прохождением (не точностью: без «провала»)
+  replay: any                     # любой открытый уровень можно переиграть
+  stars:                          # звёзды за уровень: всегда ≥ 1 за прохождение
+    by: first-try                 #   доля верных с первой попытки
+    thresholds: [0, 0.7, 0.9]     #   1★ всегда, 2★ ≥ 70%, 3★ ≥ 90%
+  levels:                         # генератор multiplication: какие множители, в каком диапазоне
+    - { tables: [2],        factors: [1, 5] }
+    - { tables: [2],        factors: [1, 10] }
+    - { tables: [10],       factors: [1, 10] }
+    - { tables: [5],        factors: [1, 10] }
+    - { tables: [2, 5, 10], factors: [1, 10] }
+    - { tables: [3],        factors: [1, 10] }
+    - { tables: [4],        factors: [1, 10] }
+    - { tables: [3, 4],     factors: [1, 10] }
+    - { tables: [6],        factors: [1, 10] }
+    - { tables: [7],        factors: [1, 10] }
+    - { tables: [8],        factors: [1, 10] }
+    - { tables: [9],        factors: [1, 10] }
+    - { tables: [6, 7, 8, 9], factors: [1, 10] }
+    - { tables: mixed,      factors: [1, 10], review: weak }   # «повторение»: чаще примеры с ошибками
+
+modes:
+  - id: multiply
+    content:                      # NEW: content = генератор (сейчас content — только id пака-строка)
+      generator: multiplication
+      format: "{a} × {b} = ?"
+      say: "{a} times {b}"
+      answer: "{a*b}"
+      distractors: [neighbor-product, off-by-table, swap-digit]   # 12 → 16 (4×4), 15 (3×5), 21; без повторов и ≤ 0
+      commutative: true           # 3×4 и 4×3 — разные примеры, оба бывают
+    show: label                   # на шаре — число-ответ
+    pop: label
+    say: true                     # после верного — произнести ответ ("twelve")
+
+menu:
+  type: level-map                 # NEW: menu.type: mode-cards (сейчас, единственный) | level-map | none
+  backgroundTargets: 0            # фон без шариков: карту уровней не перекрывать
+
+rewards:
+  stickers: stickers-24           # наклейка за каждый новый пройденный уровень (не за повтор)
+  per: new-level                  # NEW: rewards.per: round (сейчас) | new-level
+  praise: ["Well done!", "Great job!", "You got it!"]
+
+strings:                          # сейчас strings — только тексты kids-kit; нужны тексты раунда
+  back: Back
+  # NEW: level: "Level {n}", tryAgain: "Try again!" (голос), locked: (иконка замка, без текста)
+
+monetization:
+  ads: { appId: auto, interstitial: auto }
+  removeAds: { product: remove_ads }

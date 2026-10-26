@@ -1,0 +1,12 @@
+# Germ Dodge — the game's texts in English: the source every other language is translated from (`gp translate`).
+# The common words (Play, Paused, Resume, Menu, No thanks, New best!) are the platform's own: host.t('gp.play').
+hint: "Dodge the germs. WASD, arrows or drag."
+best: "Best: {time}"
+lasted: "You lasted {time}"
+seconds: "{s} s"
+continue: "Continue (ad)"
+ouch: "Ouch!"
+gameOver: "Game over"
+sound: "Sound: {state}"
+tipMove: "Drag or use arrows to move"
+goal: "Survive {time}"

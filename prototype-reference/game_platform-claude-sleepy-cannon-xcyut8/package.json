@@ -1,0 +1,26 @@
+{
+  "name": "game-platform",
+  "private": true,
+  "type": "module",
+  "description": "A platform of ready-made building blocks, rules and tools for AI agents (and people) to build simple games",
+  "workspaces": [
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "gp": "node packages/cli/src/gp.ts",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.node.json",
+    "test": "vitest run",
+    "check": "npm run typecheck && npm test && node packages/cli/src/gp.ts validate --all && node packages/cli/src/gp.ts docs --check",
+    "test:browser": "vitest run --config vitest.browser.config.ts"
+  },
+  "devDependencies": {
+    "@types/node": "22.18.8",
+    "playwright": "1.56.1",
+    "typescript": "7.0.2",
+    "vite": "8.3.1",
+    "vitest": "5.0.2"
+  }
+}

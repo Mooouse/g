@@ -1,0 +1,8 @@
+{
+  "name": "@gp/blocks",
+  "private": true,
+  "type": "module",
+  "description": "Ready-made building blocks: target fields, trajectories, mechanics, themes and content packs",
+  "exports": { ".": "./src/index.ts", "./meta": "./src/index.meta.ts" },
+  "dependencies": { "@gp/core": "*" }
+}

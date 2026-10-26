@@ -1,0 +1,223 @@
+# What a finished game looks like
+
+This page is a composite picture of a finished `kit: code` game, taken from **all** the games made so far. No single
+game is the reference: each got some things right and some wrong, and most of them were built before a part of the
+platform they needed existed. Take the shape from here, and take the tools from the platform
+([§5](#5-what-the-platform-gives-you-so-you-dont-copy-another-game)). Don't open another game's repository to copy from it.
+
+The sources:
+
+| Game | Repository | What it is | Built |
+|---|---|---|---|
+| Petri Panic | QmaCyber/game2 | survivors-like roguelite with meta upgrades | without the platform; rejected by CrazyGames for its concept |
+| Spin Brawl | QmaCyber/game3 | .io push-out arena with its own Node server | `kit: code`, platform as a git submodule |
+| Yeet the Gnome | QmaCyber/game4 | launch-and-upgrade | `kit: code`, own repository |
+| Brew & Banter | QmaCyber/game5 | clicker with a 12-chapter story | `kit: code`, own repository |
+| Germ Bait | QmaCyber/game6 | swarm luring, 12 dishes, 8 upgrades | `kit: code`, concept search first |
+| Hang the Moon | QmaCyber/game7 | balance puzzle: 30 nights on a hanging mobile | `kit: code`, concept gate, solver-proven levels |
+| Nimbus Drift | QmaCyber/game8 | wind-and-rain slide puzzle, 39 levels | `kit: code`, solver-proven levels |
+| Candle Crypt | QmaCyber/game9 | pixel twin-stick roguelike with a story and dice rules; update 1.2: a branching road of 9 themes, unlocks by deeds | `kit: code`, own story, input and pixel renderer |
+| Dread Throne | QmaCyber/game10 | room-turning tower defense from the villain's side, story, pact tree | `kit: code`, the platform's story blocks, own shop screen |
+| Starsilk | QmaCyber/game11 | maze action: the thread is light, fence and lasso; story; the Loom | `kit: code`, story blocks, `mountUpgradeShop` |
+| Echoflies | QmaCyber/game12 | loop arcade-puzzle: every loop you played flies beside you as an echo; 30 nights, a daily meadow | `kit: code`, the level-star helpers, `Roster`, money designed with `gp forecast` |
+| Frankengun | QmaCyber/game22 | first-person arena roguelite on three.js: robots shot apart limb by limb, their parts snap onto the gun in hand | `kit: code`, the three adapter, voxel models in code, the first 3D game |
+| Germ Dodge | [docs/examples/code/](../examples/code/) | the platform's minimal example (one `main.ts`) | `kit: code` |
+
+In the counts below, "of 10" means the first ten games (not the example); Echoflies and Candle Crypt's update 1.2 are
+in the rows they change. What games 6–11 proved in detail: [retro-games-6-11.md](../team/retro-games-6-11.md); Echoflies and
+the update: [retro-games-12-9.md](../team/retro-games-12-9.md); Frankengun: [retro-frankengun.md](../team/retro-frankengun.md)
+(all in Russian). What a first-person 3D game needs on top of this page: [three-fps.md](three-fps.md).
+
+## 1. A finished game, in one picture
+
+Every game converged on the same layout. A game in its own repository (`gp init` makes it, see §5):
+
+```
+my-game-repo/
+├── README.md                what the game is, how to run it, what was checked
+├── docs/concept.md          the concept search: the closest live games and what this one does that they don't
+├── scripts/, tsconfig.json  the link to the platform (gp init writes them)
+├── tools/                   (level games) the level generator and a level report, run with node
+└── games/<id>/
+    ├── game.yaml            the passport: audience, channel, kit: code, concept (+ twist), listing
+    ├── main.ts              start(): screens and HUD in the DOM, input, the loop, the host (ads, saves, qa, ?cover)
+    ├── data.ts              all tuning: prices, physics, stages, economy; a level game's levels.ts. Launch numbers change these
+    ├── sim.ts               one run (or one level's rules) as pure logic: no DOM, no timers, a fixed step, seeded randomness
+    ├── solver.ts            (level games) proves every level solvable, finds its par, gives the hint
+    ├── bot.ts               plays like an average player (reaction time, aim noise, buys like a player)
+    ├── render.ts            canvas drawing, everything in code (+ art.ts for the sprites if it grows)
+    ├── sound.ts             sounds synthesized with WebAudio through host.audio.out
+    ├── story.ts             (only if the game has a story) scenes for the story engine
+    ├── sim.test.ts          the rules, determinism, the design invariants (every level solvable at its par)
+    ├── balance.test.ts      the bot's progression curve, pinned
+    ├── story.test.ts        (with a story) validateStory clean, one chapter per stage
+    ├── video.mjs            the preview-video scenario for gp video (or host.qa({ demo }) instead)
+    ├── REPORT.md            for the platform team (AGENTS.md §7)
+    ├── quality.md           the second agent's quality review (gp review): no [blocking] finding before gp submission
+    ├── store/               generated by gp covers and gp video
+    └── submission/          generated by gp submission: what goes to the owner and the portal form
+```
+
+| File | Its job | Had it | Where |
+|---|---|---|---|
+| `game.yaml` | audience, channel, kit, rewarded on/off | 9 of 10 | not Petri Panic (off the platform: `package.json`, `index.html`) |
+| `concept` and `listing` in `game.yaml` | the originality gate and the form's texts | 5 of 10 | all five made after the gate (games 7–11); `concept.twist` declared: 2 (Candle Crypt, Dread Throne) |
+| `main.ts` | wiring: screens, input, loop, host | 10 of 10 | 684–2,022 lines; 264 in the example. The longest (Dread Throne 2,022, Candle Crypt 1,537) hold their own shop or story screens |
+| `data.ts` | every tunable number | 10 of 10 | Petri `src/data/` (6 files), Spin `tuning.ts`, the puzzles' levels as data (`nights.ts`, `levels.ts` + a generated `levels.gen.ts`), the others `data.ts` |
+| `sim.ts` | the run without the DOM | 10 of 10 | Petri `run.ts`, Brew `day.ts`, Hang `mobile.ts`, Nimbus `weather.ts`; Candle's is 3,567 lines |
+| `bot.ts` | balance before anyone plays | 10 of 10 | in the puzzles, the "bot" is a solver plus a random player that measures how hard a level feels |
+| `solver.ts` + a generator | every level proven | 2 of 10 | Hang the Moon (a memoized search over the fixed queue), Nimbus Drift (a BFS over swipes); both generate levels in `tools/` and keep them as data |
+| `render.ts` | drawing in code | 10 of 10 | plus `art.ts` (Germ, Starsilk), `sprites.ts` (Candle), `portraits.ts` (Brew), `scene.ts` (the puzzles) |
+| `sound.ts` | synthesized sounds | 10 of 10 | no game has an audio file |
+| `*.test.ts` | rules and balance | 10 of 10 | 11–53 tests each (§3) |
+| a balance test or a level proof | the curve or "every level solvable at par" as a test | 10 of 10 | Spin: a 10-minute bot-only match in a second; the puzzles: every level solved at exactly its par |
+| `story.ts` | a story | 4 of 10 | Brew (own dialogue), Candle (own system), Dread and Starsilk (the platform's story engine and `mountDialogue`) |
+| `video.mjs` | what the preview video shows | 10 of 10 | games 2–6 wrote whole recorders; games 7–11 a scenario of 10–59 lines for `gp video` |
+| `docs/concept.md` | the uniqueness search | 4 of 10 | Germ Bait, Nimbus Drift, Dread Throne, Starsilk; Hang the Moon's is in its REPORT.md, Candle Crypt has none |
+| `REPORT.md` | what the platform lacked | 9 of 10 | every platform game |
+| `store/` or `submission/` | covers, videos, texts, the upload | 10 of 10 | Germ and Candle named it `crazygames/`, Starsilk `builds/crazygames/`, Petri `release/` |
+| own browser checks | what `gp qa` can't do | 3 of 10 | Petri (45 checks, in place of `gp qa`), Spin (a real server and 4 browsers), Candle (layouts at 12 viewports, a smoke run, a perf probe) |
+
+## 2. The patterns the good ones shared
+
+| Pattern | Games | What it gave | When a game didn't |
+|---|---|---|---|
+| **Pure simulation + bot + balance test** | 10 of 10 | Yeet set its zone borders *from* the bot's curve; Germ's test proves every dish is lost without sugar; Dread's bot plays the whole campaign with the pact shop (average bot 111–117 min, a smart one 43–51); Starsilk's pilot pins "depth 1 in 0.6 min, the campaign in 23–44" | the lesson is in the bot: it must be allowed what the player is (Brew's shopped only in the evening). A fuzz is the cheap extra: Dread's reviewer played 400 random seeds and found a wave that never ended |
+| **Levels proven by a solver** | 2 of 2 puzzles | every level solvable, its par known, a hint for free, levels generated and kept as data; the difficulty from how often a random player finishes | nothing checks it outside the game's tests yet (the level checker in `gp validate` is a planned block) |
+| **Tuning in data** | 10 of 10 | Basic Launch numbers change one file | Brew had to wrap the shop to lock upgrades behind the story (now `lock` in `UpgradeShop`) |
+| **Fixed-step simulation** | 6 of 10 (Spin 30 Hz, Yeet 1/120 s, Germ 1/60 s, Candle, Dread, Starsilk) | the same run on a 60 Hz phone and a 144 Hz monitor; the tests replay exactly | Petri steps with the frame's `dt`: three different games in its tests, its bot and on screen. Clickers and turn puzzles don't need it |
+| **Everything drawn in code, no image files** | 10 of 10 | uploads of 61–160 KB for games up to ≈ 5,000 lines, instant loading; covers and videos come from the game | the only file assets are fonts, imported `?inline`: Brew's (45 KB), Dread's five (the upload grew from 122 to 355 KB). Candle's 14,500 lines of content make 329 KB |
+| **Pixel art as rows of palette letters** | 2 of 2 pixel games (Candle, Starsilk) | sprites as readable data, mirrored halves, recoloured frames, baked to canvases once | each wrote its own baker, anchors and flash (a planned helper, D62) |
+| **DOM for every control, canvas for the action** | 10 of 10 | `gp qa` checks every button's size and position | canvas targets are invisible to QA: the puzzles' whole input (hooks, swipes) is there, so their own tests carry it |
+| **A second agent reviews the code** | 8 of 10 (all but Petri and Spin) | 2–16 findings each that neither `gp qa` nor the game's tests caught (§4) | Petri had no review: its reward button was hidden by ad blockers, found only in the portal's Preview |
+| **A playtester agent plays every screen** | Yeet, Dread | Dread's found 14 bugs after the code review: texts off screen, one tap doing two things, a chapter shown over a lost stage | — |
+| **A concept search before building** | 5 of 10 (Germ, Hang, Nimbus, Dread, Starsilk) | Germ dropped three taken ideas in 10 minutes; Nimbus dropped a liar-deduction idea (Braindom 2); Starsilk dropped cursor lassos (jam games) | Petri: rejected for its concept. Their findings are now in the platform's list of taken concepts (`W_CONCEPT_TAKEN`) |
+| **A staged `?cover` frame** | 10 of 10 (Petri: a separate cover page) | covers from the game's own art, the title the only text | Germ's first covers showed floating numbers from the simulation |
+| **A demo bot the tools can film** | 10 of 10 | `host.qa({ demo })` + `video.mjs` since game 7; before, a `window.__…` hook per game | Dread still needed a dev hook (`window.__dread`) to stage a later stage for the video |
+| **Seeded randomness** | 10 of 10 | `?seed=1` replays a run; bots replay a campaign | eight games (Spin, Yeet, Brew, Germ, Candle, Dread, Starsilk, Echoflies) pasted the same `mulberry32` for their bots, levels and covers — now `seededRng(seed)`; the run itself uses `host.rng` |
+| **Stars per level, sequential unlock** | 5 of 10 (Germ, Hang, Nimbus, Dread, Starsilk) | a replay goal; "new stars" pay a first-clear bonus once | each wrote the same clamp, best-keeping and unlock — now `loadStars`, `recordStars`, `levelOpen`, `starsFromPar` (§5); Echoflies, the first game made after them, used them and wrote none of it |
+| **A daily challenge** | Echoflies (Tonight's meadow), Yeet (a daily gift) | `gp forecast`'s first lever for most ideas (a reason to return, D1): Echoflies' expected value went from €51 for the idea to €112 with it and an early twist | each kept a date key, "done today?" and a trimmed list — now `dayKey`, `daySeed`, `loadDaily`, `recordDaily` (§5) |
+| **A beat between attempts** | Echoflies | its playtest: loops back to back taught nothing; a card with the last loop, the echoes' paths drawn, the next loop only on a fresh tap | a tap left over from the last screen started the next loop (the review) — ignore input from before the screen appeared |
+
+### What Frankengun (game22) added: the first 3D game
+
+| Pattern | What it gave | Where |
+|---|---|---|
+| **Two bots: an average and a skilled one** | the average bot draws the curve (fresh 10.5 waves → fully progressed 20); the skilled one (tighter aim, quicker, dodges 85 % of telegraphs) sets the difficulty: a win in 24 of 120 runs from scratch, the owner's "4 of 20". The varied late drops alone doubled its wins — measured again, the late waves made tougher | `bot.ts` `AVERAGE` / `SKILLED`, `botRun`; docs/balance.md |
+| **A rookie first run** | the first review died 35 s into wave 1 on a phone; with robots hitting at 45 % for waves 1–2 of the first run and a hit arc toward every attacker, three fresh runs survived wave 1 | `ROOKIE` in data.ts, one multiplier in the sim |
+| **Side systems after two runs** | about ten systems around the core action made in a day read as a prototype; the daily run, the weekly event and contracts appear after 2 runs, danger and Overtime after a win, so the first session meets a short title and finished screens | `SIDE_FROM = 2` in main.ts |
+| **Platform screens in the game's look** | the results, the language sheet, the welcome-back card, the streak card and the dialogue themed through their CSS variables; the results show the run's gun | `style.ts` (`#gp-results`, `#gp-welcome`, `#gp-lang-sheet`, `#gp-streak`, `#gp-dialog`) |
+| **One icons file, never a glyph** | ◆ ⚡ ▶ ◀ replaced by drawn SVG on one 24-unit grid; the currency the same hexagon everywhere | `icons.ts` |
+| **Models built in code** | voxels instead of 1.6 MB of GLB packs: one look for the robots, the gun, the props, the crowd, the covers and the DOM screens' pictures (rendered off screen once) | `view/vox.ts`, [three-fps.md §4](three-fps.md#4-voxel-models-in-code) |
+| **The cover hero is the twist in hand** | the first covers showed a box of a robot; the gun being built, a part snapping on, became the hero (scores 87/100/100) | `cover.ts` |
+| **A render and a glare audit** | draw calls 271 → 209, triangles −40 % (no shadow pass for robots, the shadow map every third frame, flat fans); the bright moments dimmed at the lens | [three-fps.md §5–6](three-fps.md#5-the-draw-call-and-triangle-budget) |
+
+## 3. Numbers across the games
+
+| Game | Time to done | validate runs | QA | Upload | Unit tests | Bot-measured session | Review findings | Game code (lines, no tests) |
+|---|---|---|---|---|---|---|---|---|
+| Petri Panic | ≈ 1.5 h to v0.1 by commit times, then 6 fix commits | — | own e2e, 45 checks | ≈ 78 KB | 19 | a fresh run lasts 4:40–7:15 | no review | 4,001 (≈ 640 its own portal, saves, input, audio) |
+| Spin Brawl | ≈ 40 min | 1 | 72/72 + online e2e 13/13 | zip 62 KB | 11 + 3 server | median life 36 s | no review | 2,471 + 210 server |
+| Yeet the Gnome | ≈ 2 h 20 min, then a polish pass | 1 | 72/72 | ≈ 70 KB | 15 | the goal after 27–33 min | 2 + 4 small; a designer and a playtester | 2,615 |
+| Brew & Banter | ≈ 35 min to green QA, + 30 min assets and review | 1 | 77/77 | 155 KB (font 45 KB) | 18 | the finale after 26–31 min | 4; second review 4 small | 3,788 |
+| Germ Bait | ≈ 45 min (10 min concept search), + review | 1 | 89/89 (quick 42/43 first) | ≈ 100 KB | 12 | campaign ≈ 13 min; endless ≈ 6 min | 9 | 2,833 |
+| Hang the Moon | ≈ 16 min from the concept to green QA (+ 15 min study and search) | 1 | 77/77, later 94/94 | 61 KB | 43 | levels: a random safe-hook player and a greedy one | 5 | 1,849 + 214 tools |
+| Nimbus Drift | ≈ 25 min to the first full green QA, 31 min in all | 1 | 94/94 | 67 KB | 53 | levels: the share of random players that finish | 3 | 2,005 + 237 tools |
+| Candle Crypt | ≈ 3 h to green QA (art and sound by two helper agents), then two big iterations | 1 | 89/89 (79/89 first), then 77/77 | 193 KB, later 329 KB | 11, later 14+ | a fresh candle clears 3.3 floors, full meta wins 16/16 | 16 | 14,547 |
+| Dread Throne | ≈ 45 min to the first full QA, then 3 versions | 1 | 106/106 (third run), later 107/107 | 122 KB, 355 KB with fonts | 14, later 31 | campaign 111–117 min (average bot) | 4 + small; playtester 14 | 8,240 |
+| Starsilk | ≈ 2 h 40 min to a complete submission | 1 | 106/106 (quick 59/60 first) | 144 KB | 34 | depth 1 in 0.6 min, campaign 23–44 min | 5 | 4,935 |
+| Frankengun | ≈ 14 h of commits (05:24–19:33), with two owner playtests and four rounds of reshaping | — (0 errors, 3 warnings explained at the end) | 308/308 | 1.7 MB, 634 KB gzipped (budget raised to 1,200 KB on purpose) | 24 (with the reviewer's fuzz of 100 bot runs) | fresh 10.5 waves → full 20 (average bot); a win in 24/120 runs, a winning run ≈ 33 min (skilled bot) | code 21 (7 bugs, 7 risks, 7 nits); quality 7 blocking + 11 nice | ≈ 14,500 |
+| Germ Dodge (example) | — | — | CI 94/94 | — | — | — | — | 264 |
+
+What the numbers say:
+- **Green QA in 16–45 minutes** for every game since the platform had its commands; the rest is the game (art,
+  a campaign, a story) or what the platform still lacked.
+- **Every review found bugs QA didn't** (2–16). Plan for it: the review is part of done. A playtester agent after it
+  found 14 more in Dread Throne.
+- **Every game passed validate on its first real run** (1 run each since game 3): the rules are clear; what fails is QA's
+  layout checks (a "No thanks" narrower than the offer, a title too tall for 821×462, buttons under 48 px, a shop that
+  doesn't fit a phone) — see them in the first quick run, not at the end.
+- **Aim the bot's curve at 10+ minutes.** The campaigns with meta progression were tuned to 13–117 minutes before
+  anyone played.
+- **Uploads stay under 200 KB** when everything is drawn and synthesized in code; web fonts (Dread: +230 KB) and a very big
+  content game (Candle: 329 KB) grow them — still far under the portal's limits. A 3D game doesn't: Frankengun is
+  634 KB gzipped (three 442 KB raw, 320 KB of embedded voice and effects, yuka and camera-controls 108 KB), ≈ 4.8 s to Play.
+
+## 4. The mistakes that repeated
+
+| Mistake | Games | What to do instead |
+|---|---|---|
+| A concept close to a live game | Petri (rejected); Germ (all three brief ideas taken); Nimbus (liar deduction dropped); Starsilk (cursor lassos dropped) | search the portal first; `concept` in `game.yaml`; `W_CONCEPT_TAKEN` knows what these searches found |
+| No `concept.twist` declared | Hang, Nimbus, Starsilk (made before or at the time `twist` came) | declare it and call `host.twist()`: `gp uniqueness` gives it 20 of 100 points and `gp submission` needs 70 |
+| The twist explained too briefly to read | Echoflies (the echo's explanation on screen for 30 ms; QA 116/116, the review didn't see it — a playtest did) | `concept.twist.explained`: `gp qa` checks the words stay 2 s + 50 ms a character before or when the twist fires; a hint that waits for a tap makes the demo bot wait too ([uniqueness.md](uniqueness.md#the-explanation)) |
+| A timer that outlives Pause or Restart | Hang (a crash timer: phantom crash), Nimbus (a pending win: a paid hint rewound a finished level), Candle (a death beat: soft-lock), Dread (a long press: a panel over the results) | the game's clock for everything that waits in a run, cancelled by pause and restart; test pause-during-the-beat (`gp qa` skips the beat) |
+| A run that ends twice or never | Yeet (double `roundEnd`), Germ (a given-up run stayed `play`), Dread (the King and the last hero falling on one step left no end screen; Restart without `roundEnd`), Starsilk (`endRun` twice through the QA hook; `play()` abandoning a run), Candle (the victory paid twice) | one state machine; `roundEnd()` exactly once, a restart included; test it |
+| Input working under an ad or a screen | Hang (keys and canvas under an ad), Nimbus (a released drag kept swiping), Candle (right-click blocked while firing), Dread (a tap closing a panel also turned a room) | disable input while `host.adPending` and while any panel is open; one tap does one thing |
+| The first QA runs failed on layout | Dread (title screen too tall for 821×462; "No thanks" smaller than the offer), Starsilk ("No thanks" narrower), Candle (48 px buttons, the shop, zooming DOM screens down), Germ (the shop at 360×800) | run `gp qa --quick` as soon as the screens exist |
+| Screens QA never opened | Candle (13 screens checked by its own `tools/responsive.mjs`, 148 lines; platform QA saw 5 — re-checked through `host.qa({ screens })`: its journal, sheet and results use 9–11 px text in the portal's 800×450 frame) | declare every screen in `host.qa({ screens })`: `gp qa` opens each at every size (buttons, text that fits, no page scroll, 12 px in the portal frames, screenshots) |
+| The one-file upload, covers or videos built by hand | games 2–6; Candle still copied Yeet's `standalone.mjs` and `covers.mjs` | `gp build --target crazygames`, `gp covers`, `gp video`, `gp submission` |
+| A failed rewarded ad handled wrong | Petri, Yeet, Germ (the over-fix) | `rewardedButton()`; `host.rewardedAvailable` |
+| The shop doesn't fit a phone | Yeet, Brew, Germ, Candle | `mountUpgradeShop`; open it at 360×800 and 800×360 |
+| A story before the first tap, or over a result | Brew (≈ 110 words before playing), Dread (a chapter over a lost stage; victory hidden behind a chapter; the first scene froze a live wave) | one ≤ 20-word line, then play; results first, the chapter after ([story.md](story.md)) |
+| Saving at the start of a run | Brew, Candle ("chapter seen" written as the next run began) | save after a run, a purchase, a settings change; `gp qa` says when Play again writes the save |
+| A reward that doesn't survive a reload, or pays twice | Yeet, Brew, Candle (the victory timer), Germ (a late revive) | write a reward once, when it is final; `recordStars` returns only the new stars |
+| A first level QA's key press solves | Nimbus (one swipe right: `round:end × 2`) | make level 1 need another move; `gp qa` now says so and plays again |
+| Reading the portal SDK directly | Petri, Yeet, Spin | `host.portalMuted`; for what the host lacks, a block request |
+| Copying tools from another game | Brew, Germ, Candle (`standalone.mjs`, `video.mjs`, `covers.mjs` from Yeet) | the platform's commands (§5): the copies are older versions of them |
+| A midgame ad on Menu | Candle (still in 1.2), Spin, Brew; Echoflies until its review | the break on the way into the next run only (CrazyGames: never on a navigational button); `gp qa` taps the results' Menu and fails a break there |
+| The loop running on the title, the pause screen or under an ad | Candle, Dread, Starsilk (Echoflies' title animates on purpose but doesn't say so) | the loop only in play and while `!host.paused` — with an engine adapter `eng.setRunning(state === 'play')` on every screen change (it stops on `host.onPause` by itself); with your own loop, the next frame requested only while `running()`, and `wake()` after a screen change, a resize and in `host.onResume` (Candle's "the loop never dies" requested it every frame); a title that animates on purpose: `host.qa({ …, idleAnimation: true })` — the pause screen and ads still stand still ([Still screens](code-games.md#still-screens); `gp qa` checks it, D68) |
+| Checked on an old platform | Echoflies (116/116 on a checkout older than that morning's checks), Candle 1.2 (no `money`, asked for since the day before) | pull the platform before the full QA and before an update; `qa/report.md` names the commit it ran on |
+| Several builds committed | Candle 1.2 (`crazygames/`, `standalone/`, `release/crazygames`, `release/netlify` and zips, of two sizes: which one is uploaded?) | one build from `gp build --target crazygames`, handed over through `gp submission`; build output stays out of git |
+| An update without its bookkeeping | Candle 1.1 and 1.2 (no `version` in game.yaml, REPORT.md still says 14 tests of 41, patch notes outside the ledger) | [weekly-loop.md](../team/weekly-loop.md): `version`, `CHANGELOG.md`, `publisher/updates.yaml`; re-run `gp validate`, `gp qa`, `gp forecast` on the current platform |
+| Scratch scripts in the repository | Echoflies (a playtester's probes committed with everything else), Candle (a helper deleted the shared `.scratch/`) | the session's scratchpad, or `scratch/` (ignored by the `gp init` template) |
+| A first run lost before the first minute | Frankengun (dead 35 s into wave 1 with random thumbs on a phone; `firstRun` set but never read) | a rookie factor on the damage of the first run's first waves, a hit cue toward every attacker; play the first minute with random thumbs yourself (`gp lessons`: first-minute) |
+| Side systems the first session meets unfinished | Frankengun (a chassis screen of text rows and blurred squares, five kill effects sharing one icon, event cards with ◆) | finish a screen or hide it until the second or third run (`gp lessons`: side-systems-later) |
+| The platform's screens left in their stock look | Frankengun (results, language sheet, welcome-back: slate grey and a yellow pill beside purple glass) | their CSS variables in the game's CSS ([first-minute.md](first-minute.md)); `gp lessons`: themed-platform-screens |
+| A cover without the twist | Frankengun (a box of a robot and an explosion; the gun the title names missing) | the twist in hand as the hero ([covers.md](covers.md)); `gp lessons`: cover-hero |
+| GPU objects never disposed | Frankengun (per-enemy clones, a material per shot and per pickup, the gun rebuilt on every pickup) | share materials per kind, pool, dispose a rebuilt subtree; `renderer.info.memory` flat across waves ([three-fps.md §5](three-fps.md#5-the-draw-call-and-triangle-budget)) |
+
+## 5. What the platform gives you, so you don't copy another game
+
+**Don't copy tools from another game's repository.** Its `tools/standalone.mjs`, `tools/video.mjs`, `tools/covers.mjs`,
+`scripts/setup.sh`, its shop code and its level bookkeeping are older versions of what the platform now has, written
+before the platform had them. A copy carries their bugs and misses every fix since.
+
+| You need | The platform | It replaces |
+|---|---|---|
+| A new game repository | `gp init <dir> --id <id> --title "…"` — this picture as a repository: scripts, configs (the `tsconfig.json` with `vite/client` and `.ts` imports), `docs/concept.md`, `REPORT.md` and a skeleton (screens, host, a placeholder progression, Continue, cover, demo bot, pure sim, balance bot with its `balance()` report, tests) around a placeholder mechanic ([code-games.md → A game in its own repository](code-games.md#a-game-in-its-own-repository)) | copied `scripts/setup.sh`, `scripts/gp.sh`, `tsconfig.json`; Spin's submodule |
+| To know the concept is its own | the concept gate: `concept` in `game.yaml` (`E_CONCEPT`), the list of taken concepts from every search so far, ours included (`W_CONCEPT_TAKEN`; what a game says it is *not* doesn't count), `W_CONCEPT_THEME`, `E_TITLE_GENERIC`, `concept.twist` checked in play, `gp uniqueness` | a rejection after the game is finished. Still write the search in `docs/concept.md` |
+| The one-file upload | `gp build --target crazygames` → `upload/index.html`, checked and played by `gp qa` | `standalone.mjs`, `single-file.mjs`, `package-crazygames.mjs` |
+| Covers and preview videos | `gp covers` (from your `?cover` frame), `gp video` (15 s, both orientations, a virtual clock; your `video.mjs` or `host.qa({ demo })`); `gp doctor` says whether ffmpeg is there | `covers.mjs`, 90–190-line recorders, `window.__…` hooks |
+| Everything for the form | `gp submission` → `submission/`, each file checked | `store/listing.md`, `SUBMISSION.md`, a hand-made checklist |
+| Progression | the shape for the genre — `Roster` (unlocks), `Tiers`, `PactTree` (gains with a cost), `RunChoices`, `UpgradeShop` (a level shop; `mountUpgradeShop` is its screen, for idle and launch games) — and `gp balance` on the bot's `balance()` — [upgrades.md](upgrades.md) | Yeet's hand-made shop, Germ's CSS overrides, Brew's story-lock wrapper, the same stock shop in four games |
+| Levels with stars | `loadStars`, `levelOpen`, `firstOpenLevel`, `recordStars` (the new stars only), `starsFromPar`, `starsFromShare`, `totalStars` | the same 15 lines in Germ Bait, Hang the Moon, Nimbus Drift, Dread Throne and Starsilk |
+| A puzzle's undo | `UndoHistory` (current state, moves, undo that never passes the start) | Hang the Moon's and Nimbus Drift's `history: State[]` |
+| A rewarded button | `rewardedButton()`, `host.rewardedAvailable`, `host.adPending` | every game's own ad buttons |
+| A story | the story engine (`StoryRunner`, `dueScene`, `commitScene`, `validateStory`) and `mountDialogue` — [story.md](story.md) | Brew's `dialogue.ts`, Candle's own scene system |
+| Portal mute, input, emoji, randomness | `host.portalMuted`, `MoveInput`, `EMOJI_FONT`, `host.rng` (the run), `seededRng(seed)` (a bot, a level, a day: `@gp/core/rng` in Node), `Bag` | reading `window.CrazyGames.SDK`, own joysticks, the `mulberry32` eight games pasted |
+| A daily challenge | `dayKey()` (UTC: one for everyone; `{ local: true }` for a gift), `daySeed(key, id)` → `seededRng`, `loadDaily` / `recordDaily` / `dailyDone` — a calendar of cleared days and a count, never a loss-framed streak; a reward week and a daily order: `dailyStreak` + `mountStreakCard`, `dailyOrder` | Echoflies' `dateKey`, `dailyNight` and trimmed `daily` list; Yeet's `today()` |
+| An engine (many sprites, physics, 3D) | `gp init --engine pixi\|phaser\|three` and the adapters `@gp/core/engines/<name>` (created stopped, runs only in play and while the host isn't paused, resize and DPR, sound through the host, a lost WebGL context, a readable "can't run"); game.yaml `engine` pinned and checked — [code-games.md → Engines](code-games.md#engines) | the engine lab's hand-written shell and worlds: 4–8 integration bugs per engine that `gp qa` passed, Phaser's 4 private internals |
+| Browser QA | `gp qa`: 3 screen sizes, ads (and ads failing, the offer waited for up to 3 s after losing), saves, portal frames, the production build; every screen you declare in `host.qa({ screens })` at every size ([code-games.md](code-games.md#what-gp-qa-checks-underneath-the-engine)) | Petri's 329-line `e2e.mjs`, Candle's 148-line `responsive.mjs` |
+| Engine checks | `gp qa` underneath the game: still screens stand still, one AudioContext through `host.audio.out`, a lost WebGL context, no WebGL2 / WebGL, Tab out of the canvas, fps told from the machine; canvas-drawn UI through `host.qa({ canvasUi })` ([code-games.md](code-games.md#what-gp-qa-checks-underneath-the-engine)) | the engine lab's `tools/measure.mjs` probes, a review for each engine |
+
+Still yours, and still written again by each game (planned blocks, [decisions.md D62](../team/decisions.md)): the level
+solver and generator, a level-select screen, twin-stick input (Candle; Frankengun's first-person one with pointer lock), pixel
+sprites (Candle, Starsilk), voxel models (Frankengun), barks (Dread, Starsilk). Tips shown once are `hints()` in `@gp/core` now.
+
+What stays yours, in every game: `concept`, the mechanics (`sim.ts`), the tuning (`data.ts`), the bot and its curve,
+the look (`render.ts`), the sounds, the cover frame, the video scenario, the texts, and the report. That is what makes
+each game its own ([AGENTS.md §2.3](../../AGENTS.md#2-rules-you-never-break)).
+
+## Checklist
+
+- [ ] `docs/concept.md`: the closest live games; `concept` (with `twist` and the words that explain it, `explained`) in `game.yaml` before any code
+- [ ] `sim.ts` without the DOM, a fixed step, `host.rng`; `data.ts` holds every number; no bare `setTimeout` in a run
+- [ ] `bot.ts` plays like a player; a test pins its curve (or proves every level at par); the curve reaches 10+ minutes
+- [ ] every control in the DOM, drawn in one style; SVG icons, `EMOJI_FONT` for emoji; input off under ads and panels
+- [ ] `rewardedButton`, the progression blocks, the level-stars helpers, `seededRng`, the daily helpers, the story blocks — not your own
+- [ ] `host.adBreak()` only on the way into the next run, never on Menu; the loop stands still on the title, the pause screen and under an ad ([the pattern](code-games.md#still-screens); a title animated on purpose: `idleAnimation: true`)
+- [ ] the platform pulled before the full `gp qa` (the report names its commit); scratch files outside the repository
+- [ ] a `?cover` frame with only the title; `video.mjs` or `host.qa({ demo })`
+- [ ] every screen in `host.qa({ screens })`; `gp qa --quick` as soon as the screens exist; the full run green; a second agent reviewed the code (with a fuzz); a playtester played it
+- [ ] `gp review` → a second agent's `quality.md` with no `[blocking]` finding; `gp submission` complete; `REPORT.md` written ([definition-of-done.md](definition-of-done.md))
+- [ ] a 3D game: [three-fps.md](three-fps.md)'s checklist (pointer lock, the portrait view, instancing, the glare audit, quality levels, what QA's software GPU didn't measure)

@@ -1,0 +1,12 @@
+{
+  "name": "@gp/android",
+  "private": true,
+  "type": "module",
+  "description": "Android packaging: a Capacitor project generated from the resolved game, manifest allowlist check",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": {
+    "@capacitor/android": "8.5.2",
+    "@capacitor/cli": "8.5.2",
+    "@gp/spec": "*"
+  }
+}

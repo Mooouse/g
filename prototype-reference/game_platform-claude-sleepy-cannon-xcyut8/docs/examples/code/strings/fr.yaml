@@ -1,0 +1,14 @@
+# AZERTY: the game reads physical keys, so WASD is ZQSD on a French keyboard — the texts say so
+hint: "Évitez les germes. ZQSD, flèches ou glisser."
+best: "Record : {time}"
+lasted: "Vous avez tenu {time}"
+seconds: "{s} s"
+continue: "Continuer (pub)"
+ouch: "Aïe !"
+gameOver: "Partie terminée"
+sound: "Son : {state}"
+tipMove: "Glisse ou utilise les flèches"
+goal: "Survis {time}"
+listing:
+  description: "Germ Dodge est un petit jeu de survie : guidez une cellule à travers un essaim de germes qui arrivent de tous les bords et accélèrent à mesure que vous tenez. Un doigt ou les flèches, aucun menu en travers. Battez votre meilleur temps. (Un exemple de la plateforme, pas un jeu à publier.)"
+  controls: "Clavier : ZQSD (WASD en QWERTY) ou flèches pour bouger, P pour la pause. Souris ou tactile : glissez n'importe où pour diriger."

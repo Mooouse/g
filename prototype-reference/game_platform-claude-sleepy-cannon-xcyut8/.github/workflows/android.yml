@@ -1,0 +1,156 @@
+# Android: the game's Capacitor project generated from game.yaml (gp build --target android), debug APK +
+# release AAB, the merged manifest checked against the channel's permission allowlist, then the game on an
+# Android emulator (real touches, AdMob test ad, TTS, Back, full screen, rotation, parent gate, privacy link).
+# Signing: repository secrets UPLOAD_KEYSTORE_BASE64, UPLOAD_KEYSTORE_PASSWORD, UPLOAD_KEY_ALIAS, UPLOAD_KEY_PASSWORD.
+# Without them the AAB is signed with a TEMPORARY key — only to verify the build, never upload it to Google Play.
+name: Android
+
+# Only when the Android packaging itself changes, or by hand (Actions minutes ran out on 2026-10-03 with an emulator
+# run on every push: ~500 runs queued and failed in 3 s; the owner: «кажется закончилось место для разворачивания»)
+on:
+  push:
+    paths:
+      - 'packages/android/**'
+      - 'packages/cli/src/android.ts'
+      - '.github/workflows/android.yml'
+  workflow_dispatch:
+    inputs:
+      game:
+        description: Game folder (docs/examples/kids is Balloon Pop, the kids kit's example; a gp new game is games/<id>)
+        default: docs/examples/kids
+
+permissions:
+  contents: read
+
+env:
+  GAME: ${{ inputs.game || 'docs/examples/kids' }}
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate and generate the Android project
+        run: node packages/cli/src/gp.ts build "$GAME" --target android
+
+      - name: Signing key
+        env:
+          UPLOAD_KEYSTORE_BASE64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
+          UPLOAD_KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_PASSWORD }}
+          UPLOAD_KEY_ALIAS: ${{ secrets.UPLOAD_KEY_ALIAS }}
+          UPLOAD_KEY_PASSWORD: ${{ secrets.UPLOAD_KEY_PASSWORD }}
+        run: |
+          KS="$RUNNER_TEMP/upload.jks"
+          if [ -n "$UPLOAD_KEYSTORE_BASE64" ]; then
+            echo "$UPLOAD_KEYSTORE_BASE64" | base64 -d > "$KS"
+            {
+              echo "ANDROID_KEYSTORE_FILE=$KS"
+              echo "ANDROID_KEYSTORE_PASSWORD=$UPLOAD_KEYSTORE_PASSWORD"
+              echo "ANDROID_KEY_ALIAS=$UPLOAD_KEY_ALIAS"
+              echo "ANDROID_KEY_PASSWORD=$UPLOAD_KEY_PASSWORD"
+            } >> "$GITHUB_ENV"
+            echo "Signing: publisher upload key from secrets"
+          else
+            PASS="$(openssl rand -hex 16)"
+            echo "::add-mask::$PASS"
+            keytool -genkeypair -noprompt -keystore "$KS" -storetype PKCS12 -alias temp \
+              -keyalg RSA -keysize 2048 -validity 30 -storepass "$PASS" -keypass "$PASS" \
+              -dname "CN=Temporary build key, O=CI"
+            {
+              echo "ANDROID_KEYSTORE_FILE=$KS"
+              echo "ANDROID_KEYSTORE_PASSWORD=$PASS"
+              echo "ANDROID_KEY_ALIAS=temp"
+              echo "ANDROID_KEY_PASSWORD=$PASS"
+            } >> "$GITHUB_ENV"
+            echo "::warning::No signing secrets — the AAB is signed with a temporary key for verification only. Do not upload it to Google Play."
+          fi
+
+      - name: Build APK (debug) and AAB (release)
+        working-directory: ${{ env.GAME }}/android
+        run: ./gradlew --no-daemon assembleDebug bundleRelease
+
+      - name: Merged manifest against the channel allowlist
+        run: |
+          M="$(find "$GAME/android/app/build/intermediates/merged_manifest/release" -name AndroidManifest.xml | head -1)"
+          cp "$M" merged-AndroidManifest-release.xml
+          node packages/cli/src/gp.ts android check-manifest "$GAME" "$M"
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: android
+          retention-days: 3
+          path: |
+            ${{ env.GAME }}/android/app/build/outputs/apk/debug/*.apk
+            ${{ env.GAME }}/android/app/build/outputs/bundle/release/*.aab
+            merged-AndroidManifest-release.xml
+
+  device-test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm install --no-save sharp@0.32.6
+
+      - name: E2E build (test hooks on, no minification) and debug APK
+        run: |
+          node packages/cli/src/gp.ts build "$GAME" --target android --e2e
+          cd "$GAME/android" && ./gradlew --no-daemon assembleDebug
+
+      - name: App id
+        run: |
+          echo "APP_ID=$(node -p "require('./$GAME/capacitor.config.json').appId")" >> "$GITHUB_ENV"
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run the game on the emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis_playstore
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -no-boot-anim -camera-back none
+          script: node packages/kit-kids/qa/device-test.mjs ${{ env.GAME }}/android/app/build/outputs/apk/debug/app-debug.apk ${{ env.APP_ID }} ${{ env.GAME }}/device-test
+
+      - name: Results
+        if: always()
+        run: cat "$GAME/device-test/README.md" || true
+
+      - uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: device-test
+          retention-days: 3
+          path: ${{ env.GAME }}/device-test/

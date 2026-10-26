@@ -1,0 +1,27 @@
+# The art showcase (kit: code): what @gp/art draws — a rigged robot and a jelly creature idling under dynamic lights with
+# soft shadows, a parallax industrial dusk with depth fog, a glass HUD with gauges, sparks, steam and explosions with a
+# shockwave, camera shake and a light flash, the camera following. docs/guides/art.md explains every part; it is QA-checked
+# and built like any portal game (gp qa, gp build --target crazygames). Tap or click anywhere in a run: an explosion there.
+spec: 0
+id: art-showcase
+title: "Forge Night"
+audience: general
+channel: crazygames
+kit: code
+entry: main.ts
+background: "#0b1026"
+# A platform example, never to be submitted: honest about how thin the game under the art is.
+concept:
+  pitch: "Watch a workshop robot and its jelly friend through a night shift, and set off explosions with a tap."
+  closest: ["Idle Factory", "Tap Tap Boom", "Robot Workshop"]
+  different: "Nothing as a game: it is the @gp/art showcase (lights, rigs, effects, parallax). A platform example, never to be submitted."
+money:
+  genre: hypercasual
+  session: { minutes: 3, breaks: 1, breaksAt: "the 40-second shift ends → Play again" }
+  rewarded: []
+  returns: { kind: meta, what: "Only the best score of a shift, kept between visits: a showcase of the drawing module" }
+listing:
+  description: "Forge Night is the drawing showcase of the game platform: a hovering workshop robot and a jelly creature work a night shift on a metal deck at dusk, under lamps, sparks and steam. Tap anywhere to set off an explosion. (A platform example, not a game for release.)"
+  controls: "Mouse or touch: tap anywhere for an explosion. Keyboard: P pauses."
+  orientation: both
+  tags: [Casual, Arcade]

@@ -1,0 +1,48 @@
+# yaml-language-server: $schema=../../../packages/spec/schema/game.schema.json
+# "Pop the balloon!" — the kids kit's example and regression test (not a game we ship), rebuilt from its original (QmaCyber/game) in one file.
+# A toddler taps balloons floating up; each pops with confetti, shows a color/number/letter/animal and says it.
+
+spec: 0
+id: balloon-pop
+title: "Pop the balloon!"
+appId: com.babygames.balloonpop      # never change after the first release
+locale: en-US
+audience: ages-2-5
+channel: android-families
+kit: kids
+theme: sky-balloons
+saveKey: balloonpop.save.v1          # the original game's key: players keep their stickers
+privacyPolicyUrl: https://qmacyber.github.io/balloon-pop/privacy-policy.html
+
+round:
+  mechanic: tap-collect
+  goal: 15
+  maxOnScreen: 6
+  spawnEvery: [0.45, 0.95]
+  trajectory: { type: rise, time: [5.5, 7.5] }
+  target: { radius: 0.105, min: 38, max: 92 }
+  celebrateSec: 1.4
+
+modes:
+  - id: colors
+    content: colors-en
+    card: { preview: [{ color: 0 }, { color: 2 }, { color: 4 }] }
+  - id: numbers
+    content: numbers-1-10-en
+    card: { preview: [{ color: 3, label: "1" }, { color: 1, label: "2" }, { color: 5, label: "3" }] }
+  - id: letters
+    content: alphabet-en
+    card: { preview: [{ color: 6, label: A }, { color: 4, label: B }, { color: 2, label: C }] }
+  - id: animals
+    content: animals-en
+    card: { preview: [{ color: 1, emoji: "🐶" }, { color: 3, emoji: "🐱" }, { color: 6, emoji: "🐰" }] }
+
+menu: { backgroundTargets: 4 }
+
+rewards:
+  stickers: stickers-24
+  praise: ["Well done!", "Great job!", "Super!"]
+
+monetization:
+  ads: { appId: auto, interstitial: auto }   # gp admob provision fills these in
+  removeAds: { product: remove_ads }

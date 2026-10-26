@@ -1,0 +1,13 @@
+hint: "Unikaj zarazków. WASD, strzałki lub przeciągnij."
+best: "Rekord: {time}"
+lasted: "Czas przetrwania: {time}"
+seconds: "{s} s"
+continue: "Kontynuuj (reklama)"
+ouch: "Auć!"
+gameOver: "Koniec gry"
+sound: "Dźwięk: {state}"
+tipMove: "Przeciągnij lub użyj strzałek"
+goal: "Przetrwaj {time}"
+listing:
+  description: "Germ Dodge to mała gra o przetrwaniu: prowadź komórkę przez rój zarazków, które nadlatują ze wszystkich stron i przyspieszają, im dłużej wytrzymujesz. Jeden dotyk albo strzałki, żadnych menu po drodze. Pobij swój najlepszy czas. (Przykład platformy, nie gra do wydania.)"
+  controls: "Klawiatura: WASD lub strzałki, aby się poruszać, P – pauza. Mysz lub dotyk: przeciągnij w dowolnym miejscu, aby sterować."
