@@ -16,29 +16,41 @@ jobs:
         id: chrome
         with:
           chrome-version: stable
-      - name: Render and record previews
+      - name: Render preview without waiting for external SDK
         shell: bash
         run: |
+          set +e
+          python3 - <<'PY'
+          path='index.html'
+          html=open(path,encoding='utf8').read()
+          html=html.replace('<script defer src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>', '')
+          open(path,'w',encoding='utf8').write(html)
+          css='style.css'
+          content=open(css,encoding='utf8').read()
+          content=content.replace("@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@500;700;800;900&display=swap');", '')
+          open(css,'w',encoding='utf8').write(content)
+          PY
           python3 -m http.server 8989 --bind 127.0.0.1 >/tmp/server.log 2>&1 &
           sleep 2
           CHROME="${{ steps.chrome.outputs.chrome-path }}"
-          set +e
-          timeout 90s "$CHROME" --headless --no-sandbox --disable-dev-shm-usage --hide-scrollbars --virtual-time-budget=4000 --window-size=1650,928 --screenshot=/tmp/desktop.png http://127.0.0.1:8989/ > /tmp/chrome-desktop.log 2>&1
+          timeout 18s "$CHROME" --headless=new --no-sandbox --disable-dev-shm-usage --disable-background-networking --no-first-run --hide-scrollbars --window-size=1100,650 --screenshot=/tmp/desktop.png http://127.0.0.1:8989/ >/tmp/desktop.log 2>&1
           RESULT_DESKTOP=$?
-          timeout 90s "$CHROME" --headless --no-sandbox --disable-dev-shm-usage --hide-scrollbars --virtual-time-budget=4000 --window-size=430,850 --screenshot=/tmp/mobile.png http://127.0.0.1:8989/ > /tmp/chrome-mobile.log 2>&1
+          timeout 18s "$CHROME" --headless=new --no-sandbox --disable-dev-shm-usage --disable-background-networking --no-first-run --hide-scrollbars --window-size=440,900 --screenshot=/tmp/mobile.png http://127.0.0.1:8989/ >/tmp/mobile.log 2>&1
           RESULT_MOBILE=$?
-          printf '# Visual QA Results\n\nChrome executable: %s\nDesktop render: %s\nMobile render: %s\n' "$CHROME" "$RESULT_DESKTOP" "$RESULT_MOBILE" > VISUAL_RESULT.md
-          if command -v convert >/dev/null; then
-            convert /tmp/desktop.png -resize 1000x -quality 70 /tmp/preview-desktop.jpg 2>>/tmp/chrome-desktop.log
-            convert /tmp/mobile.png -resize 450x -quality 70 /tmp/preview-mobile.jpg 2>>/tmp/chrome-mobile.log
-          else
-            ffmpeg -v error -y -i /tmp/desktop.png -vf scale=1000:-1 -q:v 9 /tmp/preview-desktop.jpg
-            ffmpeg -v error -y -i /tmp/mobile.png -vf scale=430:-1 -q:v 9 /tmp/preview-mobile.jpg
-          fi
-          if test -f /tmp/preview-desktop.jpg; then base64 -w0 /tmp/preview-desktop.jpg > VISUAL_DESKTOP_BASE64.txt; fi
-          if test -f /tmp/preview-mobile.jpg; then base64 -w0 /tmp/preview-mobile.jpg > VISUAL_MOBILE_BASE64.txt; fi
+          {
+            printf '# Visual QA Results\n\nDesktop render: %s\nMobile render: %s\n' "$RESULT_DESKTOP" "$RESULT_MOBILE"
+            printf '\n### Desktop Chrome log\n\n~~~\n'
+            tail -8 /tmp/desktop.log
+            printf '\n~~~\n### Mobile Chrome log\n\n~~~\n'
+            tail -8 /tmp/mobile.log
+            printf '\n~~~\n'
+          } > VISUAL_RESULT.md
+          if test -s /tmp/desktop.png; then base64 -w0 /tmp/desktop.png > VISUAL_DESKTOP_BASE64.txt; fi
+          if test -s /tmp/mobile.png; then base64 -w0 /tmp/mobile.png > VISUAL_MOBILE_BASE64.txt; fi
+          git checkout -- index.html style.css
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add VISUAL_RESULT.md VISUAL_*_BASE64.txt || true
-          if ! git diff --cached --quiet; then git commit -m "Store temporary browser visual review captures"; git push; fi
+          git add VISUAL_RESULT.md
+          for file in VISUAL_DESKTOP_BASE64.txt VISUAL_MOBILE_BASE64.txt; do if test -f "$file"; then git add "$file"; fi; done
+          if ! git diff --cached --quiet; then git commit -m "Save temporary browser screenshots for visual check"; git push; fi
           test "$RESULT_DESKTOP" -eq 0 && test "$RESULT_MOBILE" -eq 0
