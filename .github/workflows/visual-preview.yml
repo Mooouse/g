@@ -54,3 +54,4 @@ jobs:
           for file in VISUAL_DESKTOP_BASE64.txt VISUAL_MOBILE_BASE64.txt; do if test -f "$file"; then git add "$file"; fi; done
           if ! git diff --cached --quiet; then git commit -m "Save temporary browser screenshots for visual check"; git push; fi
           test "$RESULT_DESKTOP" -eq 0 && test "$RESULT_MOBILE" -eq 0
+# Re-render after portrait layout and sprite scaling fixes
