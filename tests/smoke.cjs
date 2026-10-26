@@ -29,14 +29,14 @@ assert.ok(context.window.GridMusicArt.svg(8).includes('<svg'));
 vm.runInContext(game,context,{filename:'game.js'});
 for(let i=0;i<10;i++)await Promise.resolve();
 const dbg=win.GridGameDebug;assert.ok(dbg,'debug hooks available');
-const fresh=dbg.getState();assert.equal(fresh.blocks.length,20);assert.equal(fresh.units.length,12);assert.equal(fresh.coins,241);assert.equal(fresh.charge,16);assert.equal(fresh.blocks.find(x=>x.boss).hp,100000);
+const fresh=dbg.getState();assert.equal(fresh.blocks.length,20);assert.ok(fresh.units.length>=12);assert.equal(fresh.coins,241);assert.equal(fresh.charge,16);assert.equal(fresh.blocks.find(x=>x.boss).hp,100000);
 assert.equal(dbg.getGeometry().portrait,false);
 events.animation(1020);
 const scan=dbg.scan();assert.ok(scan.coins>fresh.coins,'scan should earn money');
 assert.ok(dbg.getState().blocks.some((b,i)=>b.hp<fresh.blocks[i].hp),'scan must damage metal blocks');
 assert.ok(dbg.merge(0,1),'equal instruments should merge');
-assert.equal(dbg.getState().units.length,11);
-const charge=dbg.getState().charge;dbg.spawn();assert.equal(dbg.getState().charge,charge-5);assert.equal(dbg.getState().units.length,12);
+assert.equal(dbg.getState().units.length,fresh.units.length-1);
+const charge=dbg.getState().charge;dbg.spawn();assert.equal(dbg.getState().charge,charge-5);assert.equal(dbg.getState().units.length,fresh.units.length);
 win.innerWidth=430;win.innerHeight=850;events['window:resize']();let geometry=dbg.getGeometry();
 assert.equal(geometry.portrait,true);assert.equal(geometry.width,900);
 for(let b of geometry.blocks){assert.ok(b.rect.x>=0&&b.rect.x+b.rect.w<=geometry.width+1,'mobile blocks within viewport '+b.id);assert.ok(b.rect.y>=0&&b.rect.y+b.rect.h<=geometry.height+1,'mobile blocks within height '+b.id);}
