@@ -1,0 +1,47 @@
+name: Melody Scanner QA
+on:
+  push:
+    paths:
+      - 'index.html'
+      - 'game.js'
+      - 'art.js'
+      - 'style.css'
+      - 'tests/**'
+      - '.github/workflows/qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test and commit status
+        shell: bash
+        run: |
+          set +e
+          node --check art.js > /tmp/artlog.txt 2>&1
+          ART=$?
+          node --check game.js > /tmp/gamelog.txt 2>&1
+          GAME=$?
+          node tests/smoke.cjs > /tmp/qaoutput.txt 2>&1
+          SMOKE=$?
+          {
+            printf '# Melody Scanner automated QA\n\n'
+            printf 'Commit: %s\n' "$(git rev-parse HEAD)"
+            printf 'Node: %s\n\n' "$(node --version)"
+            printf '| Check | Exit code |\n| --- | ---: |\n'
+            printf '| Sprite artwork | %s |\n' "$ART"
+            printf '| Game syntax | %s |\n' "$GAME"
+            printf '| Gameplay / mobile test | %s |\n\n' "$SMOKE"
+            printf '%s\n' '### Gameplay output' '~~~'
+            cat /tmp/qaoutput.txt
+            cat /tmp/artlog.txt
+            cat /tmp/gamelog.txt
+            printf '%s\n' '~~~'
+          } > QA_STATUS.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add QA_STATUS.md
+          if ! git diff --cached --quiet; then git commit -m "Record scanner arcade QA results"; git push; fi
+          test "$ART" -eq 0 && test "$GAME" -eq 0 && test "$SMOKE" -eq 0
