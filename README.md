@@ -12,14 +12,14 @@ An original HTML5 arcade game rebuilt around the gameplay shown in the supplied 
 - The lower green button creates new instruments when enough charge is available. Charge builds from scanning and damaging metal targets.
 - Steel blocks lose hit points (10, 20, 40, 50, 600, 800, 1K, 2K, 3K, 4K, 5K, 7K, 9K), revealing more tiles. The huge boss has 100K HP.
 - Countdown timer, money, sound upgrades, fast scanner upgrades, income boost, visual note effects and sound synthesizers.
-- Uses native canvas 2D rendering and original SVG art, zero build dependencies, CrazyGames SDK v3, local save, Russian/English/Spanish settings, desktop and portrait layouts.
+- Uses native canvas 2D rendering, carefully cropped instrument sprites from the user-provided gameplay reference video with SVG fallbacks, zero build dependencies, CrazyGames SDK v3, local save, Russian/English/Spanish settings, desktop and portrait layouts.
 - Press **Space** to generate an instrument, **Enter** to restart after a round, click the top-left icons for upgrades/settings.
 - Restarting a timed-out round retains accumulated money, items and HP already taken from the blocks.
 
 ## Why it looks different from previous prototypes
-The game **does not** display a peripheral shop panel or a conventional merge inventory screen. The playfield is the entire viewport. In the provided reference video, the scanner moves through a pastel purple/gold board, instruments occupy individual or multiple grid cells, damage appears as floating numbers/music notes, and a large 100K gold target dominates the upper-right. The game's layout was built around those details.
+The game **does not** display a peripheral shop panel or a conventional merge inventory screen. Settings are available by moving the pointer into the upper-left corner or pressing **S**, upgrades by **U**, pause by **P**. The playfield is the entire viewport. In the provided reference video, the scanner moves through a pastel purple/gold board, instruments occupy individual or multiple grid cells, damage appears as floating numbers/music notes, and a large 100K gold target dominates the upper-right. The game's layout was built around those details.
 
-This is a **new independent implementation**, not a redistribution of Beat Grid's original copyrighted code, images, sounds, or branding.
+The game code, synthesized sounds, and game systems are independently implemented. The sprite atlas in `sprites/video-instruments.webp` contains cropped visual references from the gameplay recording the user provided. For public distribution or commercial release, confirm you have the appropriate rights to use any original Beat Grid artwork, or replace that atlas with appropriately licensed art.
 
 ## Development
 ```sh
