@@ -1,55 +1,45 @@
-/* Music Crates smoke test, no npm dependencies. */
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),vm=require('node:vm');
-const html=fs.readFileSync('index.html','utf8'),sprites=fs.readFileSync('instruments.js','utf8'),game=fs.readFileSync('game.js','utf8');
-new vm.Script(sprites,{filename:'instruments.js'});new vm.Script(game,{filename:'game.js'});
+const art=fs.readFileSync('art.js','utf8'),game=fs.readFileSync('game.js','utf8'),html=fs.readFileSync('index.html','utf8');
+new vm.Script(art,{filename:'art.js'});new vm.Script(game,{filename:'game.js'});
 const ids=new Set([...html.matchAll(/id="([^"]+)"/g)].map(m=>m[1]));
-const used=new Set([...game.matchAll(/\$\('([^']+)'\)/g)].map(m=>m[1]));
-assert.deepEqual([...used].filter(id=>!ids.has(id)),[],'missing DOM elements');
+const refs=new Set([...game.matchAll(/\$\('([^']+)'\)/g)].map(m=>m[1]));
+assert.deepEqual([...refs].filter(k=>!ids.has(k)),[],'referenced DOM IDs must exist');
 assert.ok(html.includes('crazygames-sdk-v3.js'));
-let events={},elements={},store={},timers=[];
-function el(id){
- if(!elements[id])elements[id]={
- id,innerHTML:'',textContent:'',value:'',dataset:{},disabled:false,
- style:{setProperty(){}},parentElement:{getBoundingClientRect(){return {left:0,top:0};}},
- classList:{add(){},remove(){},contains(){return false;}},appendChild(){},remove(){},
- addEventListener(n,callback){events[id+':'+n]=callback;},querySelector(){return null;}
- };
- return elements[id];
-}
-const doc={hidden:false,documentElement:{lang:'en'},getElementById:el,querySelectorAll(){return[];},createElement(){return {style:{setProperty(){}},remove(){},textContent:'',className:''};},addEventListener(){}};
-const ctx={window:{addEventListener(){}},document:doc,navigator:{language:'ru-RU'},performance:{now(){return 1000;}},localStorage:{getItem(k){return store[k]||null;},setItem(k,v){store[k]=v;}},console,
-Math,Date,Set,Map,Number,Array,String,JSON,encodeURIComponent,performance: {now(){return 1000;}},requestAnimationFrame(){},clearTimeout(){},setTimeout(fn){timers.push(fn);return timers.length;}};
-vm.createContext(ctx);
-vm.runInContext(sprites,ctx,{filename:'instruments.js'});
-assert.equal(ctx.window.MusicArt.total,16);
-ctx.MusicArt=ctx.window.MusicArt;
-vm.runInContext(game,ctx,{filename:'game.js'});
-const snap=()=>ctx.window.MusicCratesDebug.snapshot();
-assert.equal(doc.documentElement.lang,'ru');
-assert.equal(snap().level,1);
-assert.equal(snap().n,6);
-assert.ok(el('board').innerHTML.includes('data-index="14"'));
-assert.ok(snap().cells.filter(c=>c.kind==='box').length>20);
-ctx.window.MusicCratesDebug.select(14);
-ctx.window.MusicCratesDebug.select(15);
-assert.equal(snap().cells[15].tier,1,'merge should upgrade identical instruments');
-ctx.window.MusicCratesDebug.select(20);
-ctx.window.MusicCratesDebug.select(21);
-assert.equal(snap().cells[21].tier,1);
-ctx.window.MusicCratesDebug.select(15);
-ctx.window.MusicCratesDebug.select(21);
-assert.equal(snap().cells[21].tier,2,'merge progression');
-assert.equal(snap().highest,2);
-assert.ok(snap().known.includes(2));
-const damaged=ctx.window.MusicCratesDebug.step();
-assert.ok(damaged.after<=damaged.before,'instruments should destroy boxes over time');
-events['languageBtn:click']();
-assert.equal(doc.documentElement.lang,'en');
-events['languageBtn:click']();
-assert.equal(doc.documentElement.lang,'es');
-ctx.window.MusicCratesDebug.forceWin();
-for(const fn of timers)if(typeof fn==='function')fn();
-assert.ok(snap().cells.every(c=>c.kind!=='box'));
-assert.ok(snap().coins>=110);
-console.log('PASS Music Crates: startup, crates, two merges, tier progression, attacks, locales, victory');
+const noop=()=>{},events={},ui={};const gradient={addColorStop:noop};
+const ctx=new Proxy({createLinearGradient:()=>gradient,createRadialGradient:()=>gradient},{get(o,k){return o[k]??noop},set(o,k,v){o[k]=v;return true;}});
+function element(id){return ui[id]??(ui[id]={
+id,width:1650,height:928,textContent:'',innerHTML:'',value:'',style:{},
+classList:{add:noop,remove:noop,toggle:noop},
+addEventListener(n,fn){events[id+':'+n]=fn;},
+getContext(){return ctx;},
+getBoundingClientRect(){return {left:0,top:0,width:this.width,height:this.height};},
+setPointerCapture:noop
+});}
+const document={getElementById:element,hidden:false,addEventListener:noop};
+const store={getItem(){return null},setItem:noop};
+const win={innerWidth:1650,innerHeight:928,addEventListener(n,fn){events['window:'+n]=fn;}};
+class MockImage{constructor(){this.complete=true;this.naturalWidth=220;this.naturalHeight=200;this.src='';}}
+const context={window:win,document,localStorage:store,navigator:{language:'ru-RU'},console,Math,JSON,Number,String,Date,Array,Set,Map,
+Image:MockImage,performance:{now:()=>1000},setTimeout(fn){return 1;},clearTimeout:noop,requestAnimationFrame(fn){events.animation=fn;return 1},encodeURIComponent};
+vm.createContext(context);
+(async()=>{
+vm.runInContext(art,context,{filename:'art.js'});assert.equal(context.window.GridMusicArt.total,16);
+assert.ok(context.window.GridMusicArt.svg(8).includes('<svg'));
+vm.runInContext(game,context,{filename:'game.js'});
+for(let i=0;i<10;i++)await Promise.resolve();
+const dbg=win.GridGameDebug;assert.ok(dbg,'debug hooks available');
+const fresh=dbg.getState();assert.equal(fresh.blocks.length,20);assert.equal(fresh.units.length,9);assert.equal(fresh.coins,241);assert.equal(fresh.charge,16);assert.equal(fresh.blocks.find(x=>x.boss).hp,100000);
+assert.equal(dbg.getGeometry().portrait,false);
+events.animation(1020);
+const scan=dbg.scan();assert.ok(scan.coins>fresh.coins,'scan should earn money');
+assert.ok(dbg.getState().blocks.some((b,i)=>b.hp<fresh.blocks[i].hp),'scan must damage metal blocks');
+assert.ok(dbg.merge(0,1),'equal instruments should merge');
+assert.equal(dbg.getState().units.length,8);
+const charge=dbg.getState().charge;dbg.spawn();assert.equal(dbg.getState().charge,charge-5);assert.equal(dbg.getState().units.length,9);
+win.innerWidth=430;win.innerHeight=850;events['window:resize']();let geometry=dbg.getGeometry();
+assert.equal(geometry.portrait,true);assert.equal(geometry.width,900);
+for(let b of geometry.blocks){assert.ok(b.rect.x>=0&&b.rect.x+b.rect.w<=geometry.width+1,'mobile blocks within viewport '+b.id);assert.ok(b.rect.y>=0&&b.rect.y+b.rect.h<=geometry.height+1,'mobile blocks within height '+b.id);}
+events.animation(1070);
+console.log('PASS — reference layout, 20 metal blocks, 100K boss, scanner damage, merge, spawn, portrait layout, rendered frames');
+})().catch(e=>{console.error(e);process.exitCode=1;});

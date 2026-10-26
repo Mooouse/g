@@ -1,4 +1,4 @@
-name: Test and publish Music Crates
+name: Deploy Melody Scanner
 on:
   push:
     branches: [main]
@@ -15,20 +15,17 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Verify game logic
+      - name: Run automated gameplay tests
         run: |
-          node --check instruments.js
+          node --check art.js
           node --check game.js
           node tests/smoke.cjs
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
-      - name: Upload game
-        uses: actions/upload-pages-artifact@v3
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
         with:
           path: .
-      - name: Publish site
-        id: deploy
+      - id: deployment
         uses: actions/deploy-pages@v4

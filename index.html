@@ -1,65 +1,23 @@
-<!doctype html>
-<html lang="ru">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#17142b">
-<meta name="description" content="Music Crates — объединяй инструменты, разбивай коробки и открывай новые музыкальные звуки.">
-<title>MUSIC CRATES — Музыкальная игра</title>
+<!doctype html><html lang="ru"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#7452c9"><meta name="description" content="Собирай музыкальные инструменты, запускай звуковой сканер, разрушай металлические блоки.">
+<title>Melody Scanner — Musical Merge Arcade</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="style.css?v=3">
-<script src="https://sdk.crazygames.com/crazygames-sdk-v3.js" defer></script>
-<script src="instruments.js?v=3" defer></script>
-<script src="game.js?v=3" defer></script>
+<link rel="stylesheet" href="style.css">
+<script defer src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>
+<script defer src="art.js"></script>
+<script defer src="game.js"></script>
 </head>
-<body>
-<div class="ambient-stars" aria-hidden="true">♪ ♫ ✦ ♬ ♪ ✦ ♫</div>
-<div id="gameRoot">
-<header class="masthead">
-  <div class="logo" aria-label="Music Crates"><div class="logo-icon">♫</div><div><strong>MUSIC <span>CRATES</span></strong><small data-i18n="tagline">MERGE • SMASH • GROOVE</small></div></div>
-  <div class="head-resources">
-    <div class="resource-pill"><span class="coin">✦</span><b id="coins">0</b><small data-i18n="coins">COINS</small></div>
-    <button id="languageBtn" class="head-button" aria-label="Switch language">RU</button>
-    <button id="settingsBtn" class="head-button" aria-label="Settings">⚙</button>
-  </div>
-</header>
-<main class="layout">
- <section class="play-col">
-   <div class="level-head">
-     <div class="level-title"><span class="chapter-label"><span class="status-dot"></span><span id="chapterLabel">НАЧАЛО МЕЛОДИИ</span></span><h1><span data-i18n="level">УРОВЕНЬ</span> <em id="levelNum">1</em></h1><p data-i18n="goal">Разбивай коробки и открывай новые инструменты!</p></div>
-     <div class="level-meter"><strong id="openPct">0%</strong><span data-i18n="complete">ОТКРЫТО</span><div class="tiny-meter"><i id="openBar"></i></div></div>
-   </div>
-   <div class="stage">
-    <div class="stage-header"><div><span class="stage-indicator">●</span><span data-i18n="field">МУЗЫКАЛЬНОЕ ПОЛЕ</span></div><span class="stage-mini"><span id="boxesLeft">0</span> <span data-i18n="boxes">КОРОБОК</span></span></div>
-    <div class="board-frame"><div id="board" class="board" role="grid" aria-label="Музыкальное поле"></div><div id="particles" class="particles" aria-hidden="true"></div></div>
-    <div class="board-bottom"><div class="board-tip"><span class="tip-spark">✧</span><span id="gameHint" data-i18n="hint">Нажми на инструмент, чтобы сыграть и разбить соседние коробки.</span></div><button id="helpBtn" class="help-mini" aria-label="How to play">?</button></div>
-   </div>
-   <div class="action-row">
-     <button id="playBtn" class="big-action"><span class="action-graphic">♫</span><span><b data-i18n="play">ИГРАТЬ!</b><small data-i18n="playDesc">Звуковая волна</small></span><span class="action-chevron">➜</span></button>
-     <button id="createBtn" class="create-action"><span class="create-glyph">＋</span><span><b data-i18n="create">НОВЫЙ ИНСТРУМЕНТ</b><small id="createCost">✦ 40</small></span></button>
-   </div>
- </section>
- <aside class="sidebar">
-  <div class="info-panel current-panel">
-    <div class="section-label"><span>01</span><span data-i18n="selected">ИНСТРУМЕНТ</span></div>
-    <div class="spotlight"><div class="spotlight-circle"></div><img id="currentImg" draggable="false" alt=""><span class="shine-note">♪</span></div>
-    <div class="item-name" id="currentName">—</div><div class="item-rank" id="currentRank">РАНГ 1</div>
-    <div class="stats-grid"><div><small data-i18n="damage">УРОН</small><b id="damageStat">1</b></div><div><small data-i18n="radius">РАДИУС</small><b id="radiusStat">1</b></div><div><small data-i18n="speed">СКОРОСТЬ</small><b id="speedStat">1.0</b></div></div>
-  </div>
-  <div class="info-panel improvements">
-    <div class="section-label"><span>02</span><span data-i18n="upgradeTitle">УЛУЧШЕНИЯ</span></div>
-    <div id="upgradeList" class="upgrade-list"></div>
-  </div>
-  <div class="info-panel collection-panel">
-    <div class="section-label"><span>03</span><span data-i18n="collection">КОЛЛЕКЦИЯ</span><b id="collectionNum" class="collection-count">1/16</b></div>
-    <div id="collectionGrid" class="collection-grid"></div>
-  </div>
- </aside>
-</main>
-<footer>© MUSIC CRATES <span>♫</span> HTML5 <span data-i18n="footer">СДЕЛАНО С ЛЮБОВЬЮ К МУЗЫКЕ</span></footer>
+<body><div id="viewport">
+<canvas id="game" width="1650" height="928" role="application" aria-label="Musical grid game"></canvas>
+<div id="tapHint" class="tip hidden"></div>
+<div id="panel" class="panel hidden"><div class="panel-header"><h2 id="panelTitle">Настройки</h2><button id="closePanel" aria-label="Закрыть">✕</button></div>
+<div id="settingsContent" class="settings-content">
+<label><span id="volText">Громкость</span><input id="volume" type="range" min="0" max="100" value="65"></label>
+<label><span id="musicText">Фоновая музыка</span><input id="music" type="range" min="0" max="100" value="38"></label>
+<label><span id="langText">Язык</span><select id="language"><option value="ru">Русский</option><option value="en">English</option><option value="es">Español</option></select></label>
 </div>
-<div id="tutorial" class="tutorial hidden" role="status"><div class="tutorial-step" id="tutorialStep">1/3</div><p id="tutorialMessage"></p><div><button id="tutorialNext" data-i18n="next">ДАЛЕЕ ➜</button><button id="tutorialSkip" class="tut-skip" data-i18n="skip">ПРОПУСТИТЬ</button></div></div>
-<div id="toast" class="toast" role="status" aria-live="polite"></div>
-<div id="settingsOverlay" class="veil hidden"><div class="modal"><header><div><small data-i18n="settingsSub">МУЗЫКАЛЬНАЯ СТУДИЯ</small><h2 data-i18n="settings">НАСТРОЙКИ</h2></div><button id="closeSettings" class="close" aria-label="Close">×</button></header><label class="field"><span data-i18n="volume">ГРОМКОСТЬ</span><div><input type="range" id="volume" min="0" max="100" value="65"><b id="volumeLabel">65%</b></div></label><label class="field"><span data-i18n="music">ФОНОВАЯ МУЗЫКА</span><div><input type="range" id="musicVolume" min="0" max="100" value="40"><b id="musicLabel">40%</b></div></label><label class="field"><span data-i18n="language">ЯЗЫК</span><select id="language"><option value="ru">Русский</option><option value="en">English</option><option value="es">Español</option></select></label><button id="replayTutorial" class="text-button" data-i18n="replay">ПОКАЗАТЬ ОБУЧЕНИЕ</button><button id="saveSettings" class="modal-button" data-i18n="done">ГОТОВО</button></div></div>
-<div id="winOverlay" class="veil hidden"><div class="modal finish-modal"><div class="finish-star">✹</div><span class="finish-kicker" data-i18n="finishKicker">УРОВЕНЬ ЗАВЕРШЁН</span><h2 data-i18n="finishTitle">НЕПЛОХОЙ КОНЦЕРТ!</h2><p data-i18n="finishText">Все коробки разбиты. Следующая мелодия ждёт тебя!</p><div class="reward"><span>✦</span><b id="rewardAmount">+100</b><small data-i18n="coins">МОНЕТ</small></div><button id="nextLevel" class="modal-button" data-i18n="nextLevel">СЛЕДУЮЩИЙ УРОВЕНЬ ➜</button></div></div>
+<div id="shopContent" class="shop-content hidden"><div class="shop-subtitle" id="shopSubtitle">Улучшай звук и скорость сканера</div><div id="upgradeOptions"></div></div>
+<div id="panelFooter" class="panel-footer">♫</div></div>
+</div>
 </body></html>

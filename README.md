@@ -1,39 +1,35 @@
-# MUSIC CRATES
+# Melody Scanner
 
-A new HTML5 merge-and-smash music game inspired by the publicly described gameplay of [Beat Grid by AxelSonic](https://axelsonic.itch.io/beat-grid). Uses **original implementation, graphics, sounds and title** — no third-party source code or licensed assets are copied.
+An original HTML5 arcade game rebuilt around the gameplay shown in the supplied **40.9-second, 1920×1080** Beat Grid reference video, rather than the earlier dashboard-style prototypes.
 
-## Play
-GitHub Pages: **https://mooouse.github.io/g/** (after a successful Pages workflow)
+**Play on GitHub Pages:** https://mooouse.github.io/g/
 
-### Core loop
-- Tap instruments to make music and damage surrounding wooden boxes.
-- Combine two matching instruments with consecutive taps or drag one onto the other. Higher tiers hit harder and unlock new timbres.
-- Crates lose health and break, dropping money and sometimes extra instruments.
-- Rare golden crates hold a surprise and extra resources.
-- Instruments also hit nearby boxes automatically over time, creating a hands-on idle progression. Drag onto an unlocked free square to extend coverage.
-- Use your earnings to buy instruments and boost attack strength, attack speed and loot rewards.
-- Clear all boxes to advance through procedurally generated levels with increasing HP and board size.
-- Keep your highest unlocked instrument tier between levels.
+## Core mechanics
+- A full-screen musical **13×6 tile grid** with detailed metallic damage blocks of different shapes and values, and a massive red/gold **100K target**.
+- A neon vertical **playhead scanner** sweeps across the grid. When it passes a musical instrument, that instrument plays a synthesized note and damages a corresponding block.
+- Musical instruments range from small keyboards and ukuleles to guitars, synthesizers and harps. They occupy **1×1, 2×1, 1×2 and 2×2** tiles.
+- Drag two matching instruments together, or select the same tier twice, to **merge** them into a more powerful instrument.
+- The lower green button creates new instruments when enough charge is available. Charge builds from scanning and damaging metal targets.
+- Steel blocks lose hit points (10, 20, 40, 50, 600, 800, 1K, 2K, 3K, 4K, 5K, 7K, 9K), revealing more tiles. The huge boss has 100K HP.
+- Countdown timer, money, sound upgrades, fast scanner upgrades, income boost, visual note effects and sound synthesizers.
+- Uses native canvas 2D rendering and original SVG art, zero build dependencies, CrazyGames SDK v3, local save, Russian/English/Spanish settings, desktop and portrait layouts.
+- Press **Space** to generate an instrument, **Enter** to restart after a round, click the top-left icons for upgrades/settings.
+- Restarting a timed-out round retains accumulated money, items and HP already taken from the blocks.
 
-### Included
-- 16 illustrated musical instrument tiers, procedural musical synthesizer, ambient rhythm and volume controls.
-- Small 3-step contextual tutorial, English/Russian/Spanish, responsive phone/tablet/desktop UI, persistent progress.
-- CrazyGames SDK v3 with loading/gameplay events and platform data fallback to browser storage.
+## Why it looks different from previous prototypes
+The game **does not** display a peripheral shop panel or a conventional merge inventory screen. The playfield is the entire viewport. In the provided reference video, the scanner moves through a pastel purple/gold board, instruments occupy individual or multiple grid cells, damage appears as floating numbers/music notes, and a large 100K gold target dominates the upper-right. The game's layout was built around those details.
 
-### Development
-No dependencies. Open `index.html` in a browser, or serve via `python3 -m http.server 8000`.
+This is a **new independent implementation**, not a redistribution of Beat Grid's original copyrighted code, images, sounds, or branding.
 
-Validate:
+## Development
 ```sh
-node --check instruments.js
+python3 -m http.server 8000
+# http://localhost:8000
+node --check art.js
 node --check game.js
 node tests/smoke.cjs
 ```
 
-GitHub Pages publishing uses `.github/workflows/pages.yml`. Ensure **Settings → Pages → Build and deployment → GitHub Actions** is enabled.
+Deployment: [GitHub Actions](.github/workflows/pages.yml). Configure **Settings → Pages → Source → GitHub Actions** in the repository.
 
-## User-supplied project reference
-`game_platform-claude-sleepy-cannon-xcyut8 (2).zip` is preserved unchanged. It contains a game-creation platform, not the original Beat Grid game. The game code above is separate.
-
-### Intellectual property
-This project recreates common gameplay mechanics rather than copying the proprietary executable, art, soundtrack, branding or source of Beat Grid. Approval or a license from its author would be required to redistribute those original assets.
+The user-supplied `game_platform-claude-sleepy-cannon-xcyut8 (2).zip` is preserved, unchanged, as project reference. It is a general development platform, not the original Beat Grid game.
