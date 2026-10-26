@@ -1,9 +1,0 @@
-{
-  "name": "@gp/cli",
-  "private": true,
-  "type": "module",
-  "description": "gp — the command line for making games on the platform",
-  "bin": { "gp": "./src/gp.ts" },
-  "exports": { ".": "./src/gp.ts", "./clock": "./src/clock.ts" },
-  "dependencies": { "@gp/spec": "*", "@gp/qa": "*", "@gp/android": "*", "xbr-js": "2.0.1", "xbrz-js": "1.9.2" }
-}

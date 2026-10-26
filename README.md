@@ -1,53 +1,46 @@
-# 🎵 Melody Forge
+# BEATBOUND — Sonic Merge
 
-A premium-feeling, responsive musical merge game for desktop, tablet and phone. Built in **plain HTML5 / CSS / JavaScript**, with no build dependencies.
+**A new musical merge puzzle** built as a responsive HTML5 game. This repository was rebuilt from scratch; the earlier Melody Forge source was removed.
 
 ## Play
+GitHub Pages: **https://mooouse.github.io/g/** (after the Pages Actions deployment succeeds).
 
-**GitHub Pages:** https://mooouse.github.io/g/ *(becomes active after GitHub Pages is enabled in the repository settings)*
+The board is an 8-step sequencer. Each instrument plays a note and damages crystals in its local area when its beat arrives. Every crystal must be destroyed to finish a level. More advanced instruments have stronger soundwaves, a wider range, and a new musical timbre.
 
-### How to play
-1. Tap an instrument, then another one of the same tier to **merge** them into a new instrument.
-2. Select an instrument and press **Play a Note** (or tap it twice). Its distinctive musical voice damages crystals in the surrounding cells. Higher tiers have more power and range.
-3. Select an instrument and tap a **free unlocked tile** to move it so its notes can reach the next crystals.
-4. Clear every crystal to win the level. Your highest-tier instrument carries over to the next composition.
-5. Earn Gold Notes, summon new instruments, and upgrade sound power, energy capacity, and regeneration speed.
+- **Click / tap an instrument** to select and hear it; tap a second one of the same tier to merge.
+- **Drag and drop** an instrument onto another matching instrument to merge; drop it on a free unlocked tile to relocate it.
+- **Click SOUND BURST** after selecting an instrument for a stronger instant attack (consumes energy).
+- **Buy fresh instruments** and invest earned Sound Coins into attack power, maximum energy, or recovery.
+- **Keep progressing:** map size and crystal toughness increase, while highest unlocked instrument tiers carry between levels.
+- **16 original instrument illustrations** drawn in SVG and accompanied by unique Web Audio synthesizer patches.
+- **Automatic beat-synced background soundtrack** mixing drums, bass, melody, and instrument voices.
+- **English / Russian / Spanish**, volume sliders, non-blocking in-game tutorial, save data.
+- **CrazyGames SDK v3** integration with graceful standalone fallback for GitHub Pages.
 
-### Included
-- **12 hand-crafted illustrated instruments**, each with its own synthesized timbre
-- Procedurally generated stages; board sizes and crystal health grow with progression
-- Generative ambient music with a Web Audio synthesizer and volume slider
-- First-launch guided tutorial and accessible on-screen instructions
-- English / Русский / Español, changeable at any time
-- Persistent collection, upgrades, currency, and level progress
-- CrazyGames SDK **v3** with gameplay events, data-module save when available, and local fallback on GitHub Pages
-- Mobile-friendly touch controls and responsive layouts
-- No third-party game assets or runtime dependencies
+## Quick start
+Serve these files as-is. No build process and no libraries:
 
-## Enable GitHub Pages (one-time)
-1. Open [Settings → Pages](https://github.com/Mooouse/g/settings/pages).
-2. Under **Build and deployment → Source**, select **GitHub Actions**.
-3. The checked-in workflow at `.github/workflows/pages.yml` deploys automatically on each push to `main`.
-4. After the first successful deployment, use https://mooouse.github.io/g/.
-
-## Development and verification
-Open `index.html` in a browser or serve the repository directory with any static HTTP server, for example:
-
-```bash
+```sh
 python3 -m http.server 8000
+# then visit http://localhost:8000
 ```
 
-Check the JavaScript and smoke-test the core gameplay:
+Test syntax and gameplay:
 
-```bash
-node --check art.js
-node --check game.js
+```sh
+node --check visuals.js
+node --check audio.js
+node --check app.js
 node tests/smoke.cjs
 ```
 
-The GitHub Pages deployment workflow runs these tests before publishing.
+## GitHub Pages
+The workflow `.github/workflows/pages.yml` tests and deploys automatically on `main`. In repository **Settings → Pages** the source must be set to **GitHub Actions**.
 
 ## CrazyGames
-The official HTML5 v3 SDK is loaded from `https://sdk.crazygames.com/crazygames-sdk-v3.js`. The game initializes the SDK, handles gameplay start/stop, data-module saves (with local fallback when not on CrazyGames), and marks loading as complete. Publishing to the CrazyGames catalog is a separate submission process from GitHub Pages.
+The v3 SDK runs on CrazyGames, with loading/gameplay events and optional platform Data storage. Outside the platform, the game uses localStorage. The game does not request advertisements. Submission and platform moderation are separate from GitHub Pages testing.
 
-No advertisements or monetization are enabled by default.
+## Uploaded development reference
+The archive `game_platform-claude-sleepy-cannon-xcyut8 (2).zip` is the user's supplied multi-package **game development platform**, not the game source. Its guidance on first-minute gameplay, quality, portal submission, localization, and QA was studied. The original ZIP is retained in the repository for the owner. The actual game is a new standalone project, not copied platform runtime.
+
+Inspired by the idea of musical grid play; all implementation, illustration designs, and generated audio are newly created.

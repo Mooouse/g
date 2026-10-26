@@ -1,48 +1,67 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#100c1c">
-<meta name="description" content="Melody Forge. Merge enchanted instruments, play magical soundwaves, and awaken a silent world.">
-<title>Melody Forge — Musical Merge Adventure</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101319"><meta name="description" content="BEATBOUND — merge musical instruments, build your beat, crack open the grid.">
+<title>BEATBOUND — Merge to the rhythm</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="styles.css">
 <script src="https://sdk.crazygames.com/crazygames-sdk-v3.js" defer></script>
-<script src="art.js" defer></script><script src="game.js" defer></script>
-</head><body>
-<div class="backdrop" aria-hidden="true"><div class="glow glow-a"></div><div class="glow glow-b"></div><div class="gridlines"></div></div>
-<div id="app">
-<header class="topbar">
-<div class="brand"><div class="brand-icon">♫</div><div class="brand-text"><b>MELODY <em>FORGE</em></b><small data-i18n="tagline">THE MUSICAL MERGE ADVENTURE</small></div></div>
-<div class="top-center"><span class="live-dot"></span><span data-i18n="soundOn">THE STUDIO IS LIVE</span><span class="divider-small">/</span><span id="stageBadge">01 — ENCHANTED WOODS</span></div>
-<div class="top-actions"><button id="langQuick" class="top-btn language-btn" title="Language" aria-label="Language">EN</button><button id="settingsButton" class="top-btn" aria-label="Settings">⚙</button></div>
+<script src="visuals.js" defer></script>
+<script src="audio.js" defer></script>
+<script src="app.js" defer></script>
+</head>
+<body>
+<div class="bg-layer" aria-hidden="true"><div class="bg-halo"></div></div>
+<div id="shell">
+<header class="header">
+ <div class="identity"><div class="ident-mark"><span>♪</span></div><div class="ident-text"><strong>BEAT<span>BOUND</span></strong><small data-i18n="subtitle">MAKE NOISE. BREAK THE GRID.</small></div></div>
+ <div class="head-links"><div id="soundIndicator" class="head-status"><span class="status-led"></span><span data-i18n="live">LIVE SESSION</span></div><button id="languageToggle" class="header-button" aria-label="Change language">EN</button><button id="settingsToggle" class="header-button settings-icon" aria-label="Settings"><svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M18.4 5.6l-2.1 2.1m-8.6 8.6-2.1 2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/></svg></button></div>
 </header>
-<main class="game-layout">
-<aside class="left-rail">
-<div class="sidebar-eyebrow"><span class="side-line"></span><span data-i18n="journey">YOUR JOURNEY</span></div>
-<div class="info-card level-card"><span class="mini-label" data-i18n="currentLevel">CURRENT LEVEL</span><div class="giant-level" id="leftLevel">01</div><div id="chapterName" class="chapter-name">Enchanted Woods</div><div class="tiny-progress"><div id="chapterProgress"></div></div><span class="mini-muted" id="chapterDetail">01 / 10</span></div>
-<div class="info-card resources-card"><div class="resource"><div class="resource-symbol coin-symbol">✦</div><div><small data-i18n="coins">GOLD NOTES</small><strong id="coinsValue">0</strong></div></div><div class="resource"><div class="resource-symbol power-symbol">ϟ</div><div><small data-i18n="power">RESONANCE</small><strong id="powerValue">1×</strong></div></div></div>
-<div class="sidebar-eyebrow companion-heading"><span class="side-line"></span><span data-i18n="create">CREATE MUSIC</span></div>
-<button class="summon-button" id="summonButton"><span class="summon-icon">✧</span><span><strong data-i18n="summon">SUMMON INSTRUMENT</strong><small id="summonPrice">✦ 35</small></span><span class="summon-plus">＋</span></button>
-<div class="aside-tip"><span>✧</span><p data-i18n="asideTip">Merge matching instruments to create powerful soundwaves.</p></div>
-<div class="decor-notes" aria-hidden="true">♪　♫　♬</div>
-</aside>
-<section class="arena">
-<div class="arena-heading"><div><div class="eyebrow"><span class="diamond">◆</span><span data-i18n="mainQuest">MAIN QUEST</span></div><h1 data-i18n="openAll">Wake up the melody</h1><p data-i18n="objective">Break every crystal seal to complete the composition.</p></div><div class="arena-counter"><span id="openCount">0/25</span><small data-i18n="unlocked">UNLOCKED</small></div></div>
-<div class="board-wrap"><div class="board-topline"><div><span class="board-glow"></span><span data-i18n="magicBoard">RESONANCE GRID</span></div><span id="boardRank">♩ BPM 96</span></div><div id="board" class="board" role="grid" aria-label="Game board"></div><div class="board-footer"><span id="boardStatus" data-i18n="selectInstrument">SELECT AN INSTRUMENT</span><div class="board-legend"><span class="legend-dot"></span><span data-i18n="tapTip">TAP TWICE TO PLAY</span></div></div></div>
-<div class="controls"><div class="energy"><div class="energy-head"><span>ϟ <span data-i18n="energy">ENERGY</span></span><strong id="energyNum">8 / 8</strong></div><div id="energyPips" class="energy-pips"></div><span class="recharge-label" id="rechargeText">+1 every 3s</span></div><button id="pulseButton" class="pulse-button"><span class="pulse-orb">♫</span><span><strong data-i18n="playNote">PLAY A NOTE</strong><small data-i18n="pulseDesc">Deal damage to nearby seals</small></span><span class="pulse-chevron">↗</span></button></div>
-<div class="board-hint"><span class="hint-icon">✧</span><span data-i18n="boardHint">Tap an instrument to select it. Tap another matching one to merge!</span></div>
+<main class="game">
+<section class="play-area">
+  <div class="level-head">
+    <div class="level-id"><div class="little-eyebrow"><span class="stage-line"></span><span data-i18n="world">THE SOUND LAB</span><span class="chapter-sep">/</span><span id="zoneName">THE FIRST SPARK</span></div><h1><span data-i18n="level">LEVEL</span> <em id="levelLabel">01</em></h1><p data-i18n="mission">Wake up every tile. Make a masterpiece.</p></div>
+    <div class="level-stats"><div class="progress-ring" id="progressRing"><div class="progress-inner"><strong id="progressValue">0%</strong><small data-i18n="cleared">CLEARED</small></div></div></div>
+  </div>
+  <div class="stage-surface">
+    <div class="stage-caption"><div><span class="light-dot"></span><span data-i18n="studio">SONIC PLAYFIELD</span></div><span id="bpmBadge">♩ 108 BPM</span></div>
+    <div class="board-frame"><div id="board" class="board" role="grid" aria-label="Merge puzzle board"></div><div id="impactFx" class="impact-fx" aria-hidden="true"></div></div>
+    <div class="sequencer"><div class="seq-label">PLAYHEAD</div><div id="seqSteps" class="seq-steps"></div><div id="beatReadout" class="seq-count">01 / 08</div></div>
+    <div class="stage-foot"><div class="stage-foot-tip"><span class="foot-glyph">✳</span><span id="statusLine" data-i18n="hintSelect">Tap an instrument to play. Drag matching ones together to merge.</span></div><button id="helpBtn" class="help-button" aria-label="How to play">?</button></div>
+  </div>
+  <div class="bottom-hud">
+    <div class="combo"><span class="hud-symbol">ϟ</span><div><small data-i18n="combo">GROOVE COMBO</small><strong id="comboCount">×1.0</strong></div></div>
+    <div class="bottom-cta"><button id="burstBtn" class="action-btn"><span class="action-icon">♫</span><span class="action-copy"><strong data-i18n="burst">SOUND BURST</strong><small id="burstSub" data-i18n="burstTip">Tap any instrument first</small></span><span class="action-arrow">↗</span></button></div>
+    <div class="energy-meter"><div class="energy-top"><span data-i18n="energy">BEAT ENERGY</span><strong id="energyText">6 / 6</strong></div><div class="energy-track"><div id="energyFill"></div></div></div>
+  </div>
 </section>
-<aside class="right-rail">
-<div class="sidebar-eyebrow"><span class="side-line"></span><span data-i18n="forge">THE FORGE</span></div>
-<div class="info-card selection-card"><div class="mini-label" data-i18n="nowPlaying">NOW PLAYING</div><div id="selectedArt" class="selected-art"></div><div class="selection-name" id="selectedName">—</div><div class="selection-tier" id="selectedTier">SELECT AN INSTRUMENT</div><div class="selection-details"><span data-i18n="damage">SOUND POWER</span><strong id="selectedDamage">—</strong></div><div class="selection-details"><span data-i18n="range">RESONANCE RANGE</span><strong id="selectedRange">—</strong></div></div>
-<div class="sidebar-eyebrow upgrade-heading"><span class="side-line"></span><span data-i18n="upgrades">STUDIO UPGRADES</span></div>
-<div id="upgrades" class="upgrades"></div>
-<div class="album-card"><div class="album-top"><span>✺</span><span data-i18n="discovered">DISCOVERED SOUNDS</span></div><div class="album-number" id="collectionCount">1 <span>/ 12</span></div><div id="collectionDots" class="collection-dots"></div></div>
+<aside class="side-area">
+  <div class="cash-row"><div class="cash-info"><div class="cash-symbol">✦</div><div><small data-i18n="currency">SOUND COINS</small><strong id="coinCounter">0</strong></div></div><div id="musicBars" class="music-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <section class="now-playing">
+    <div class="panel-heading"><span class="head-index">01</span><span data-i18n="selectedInstrument">YOUR INSTRUMENT</span></div>
+    <div id="showcase" class="showcase"><div class="showcase-halo"></div><img id="showcaseArt" alt="" draggable="false"><div class="showcase-reflection"></div></div>
+    <div class="now-caption"><div><div class="tier-badge" id="tierBadge">TIER 01</div><h2 id="instrumentLabel">—</h2></div><span id="instrumentPower" class="power-badge">⚡ 1</span></div>
+    <div class="info-divider"></div>
+    <div class="range-label"><span data-i18n="attackArea">RESONANCE RANGE</span><strong id="rangeLabel">1 × 1</strong></div>
+  </section>
+  <section class="shop-panel">
+    <div class="panel-heading"><span class="head-index">02</span><span data-i18n="workshop">THE WORKSHOP</span></div>
+    <button id="summonBtn" class="summon"><div class="summon-glyph">+</div><span class="summon-copy"><strong data-i18n="summon">DROP AN INSTRUMENT</strong><small data-i18n="summonHint">Add a new sound to the stage</small></span><span id="summonCost" class="price">✦ 30</span></button>
+    <div id="upgrades" class="upgrades"></div>
+  </section>
+  <section class="discovery-panel"><div class="panel-heading"><span class="head-index">03</span><span data-i18n="collection">SOUND COLLECTION</span><span class="collection-fraction" id="collectionCount">1 / 16</span></div><div id="discoveryTiles" class="discovery-tiles"></div><p data-i18n="collectHint">Merge to unlock new instrument sounds.</p></section>
 </aside>
-</main><footer class="footer"><span>© MELODY FORGE • HTML5</span><span data-i18n="footerText">BUILT FOR THE LOVE OF MUSIC</span><span>♫</span></footer></div>
+</main>
+<footer class="site-footer"><span>BEATBOUND <span class="footer-star">✳</span> WEB EDITION</span><span data-i18n="footer">BUILT FOR MUSIC LOVERS</span><span>© 2026</span></footer>
+</div>
+<div id="coach" class="coach hidden"><div class="coach-number" id="coachStep">01 / 03</div><p id="coachText"></p><button id="coachNext" aria-label="Next tip">→</button><button id="coachClose" class="coach-x" aria-label="Close tutorial">×</button></div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<div class="overlay" id="welcomeOverlay"><div class="modal welcome-modal"><div class="modal-ornament">✦ SOUND IS MAGIC ✦</div><div class="welcome-art"><div class="welcome-echo echo-one"></div><div class="welcome-echo echo-two"></div><div id="welcomeInstrument"></div><span class="music-particle p1">♪</span><span class="music-particle p2">✦</span><span class="music-particle p3">♫</span></div><span class="welcome-kicker" data-i18n="welcomeKicker">A NEW MUSICAL ADVENTURE</span><h2>MELODY <em>FORGE</em></h2><p data-i18n="welcomeText">Merge enchanted instruments. Unleash beautiful melodies. Bring a silent world back to life.</p><button id="startButton" class="primary-button"><span data-i18n="beginAdventure">BEGIN ADVENTURE</span><span>↗</span></button><div class="welcome-features"><span>✧ <span data-i18n="feature1">MERGE</span></span><span>✧ <span data-i18n="feature2">CREATE</span></span><span>✧ <span data-i18n="feature3">DISCOVER</span></span></div></div></div>
-<div class="overlay hidden" id="tutorialOverlay"><div class="modal tutorial-modal"><span class="modal-top" data-i18n="quickLesson">A QUICK LESSON</span><div id="tutorialVisual" class="tutorial-visual"></div><div class="step-pips" id="tutorialPips"></div><h2 id="tutorialTitle"></h2><p id="tutorialText"></p><button id="tutorialNext" class="primary-button"><span id="tutorialButtonText"></span><span>↗</span></button><button class="plain-link" id="tutorialSkip" data-i18n="skip">Skip tutorial</button></div></div>
-<div class="overlay hidden" id="winOverlay"><div class="modal win-modal"><div class="victory-sun">✷</div><span class="modal-top" data-i18n="levelComplete">LEVEL COMPLETE</span><h2 data-i18n="beautiful">Beautifully played!</h2><p data-i18n="winText">Your melody has awakened another part of the world.</p><div class="win-reward"><span>✦</span><strong id="winCoins">+100</strong><small data-i18n="goldNotes">GOLD NOTES</small></div><div class="win-stats"><span id="winMoves">0 notes played</span><span id="winMerges">0 merges</span></div><button id="nextLevelButton" class="primary-button"><span data-i18n="nextLevel">NEXT COMPOSITION</span><span>↗</span></button></div></div>
-<div class="overlay hidden" id="settingsOverlay"><div class="modal settings-modal"><div class="modal-header"><h2 data-i18n="settings">Settings</h2><button class="close-button" id="closeSettings" aria-label="Close">×</button></div><div class="setting-section"><label for="volumeSlider"><span data-i18n="volume">MASTER VOLUME</span><strong id="volumeLabel">60%</strong></label><input id="volumeSlider" type="range" min="0" max="100" value="60"><p data-i18n="volumeHelp">Music and instrument sounds</p></div><div class="setting-section"><label for="languageSelect" data-i18n="language">LANGUAGE</label><select id="languageSelect"><option value="en">English</option><option value="ru">Русский</option><option value="es">Español</option></select></div><div class="setting-section"><label data-i18n="howToPlay">HOW TO PLAY</label><button class="secondary-button" id="replayTutorial" data-i18n="replayTutorial">Replay tutorial</button></div><button class="primary-button" id="doneSettings"><span data-i18n="done">DONE</span><span>✓</span></button></div></div>
+<div id="settingsOverlay" class="overlay hidden"><div class="modal settings-modal"><div class="modal-head"><div><small data-i18n="controls">STUDIO CONTROLS</small><h2 data-i18n="settings">SETTINGS</h2></div><button id="settingsClose" class="close" aria-label="Close settings">×</button></div>
+<div class="field"><label for="volumeRange" data-i18n="volume">MASTER VOLUME</label><div class="field-track"><input type="range" id="volumeRange" min="0" max="100" value="65"><span id="volumeValue">65%</span></div></div>
+<div class="field"><label for="musicRange" data-i18n="musicVolume">BACKING TRACK</label><div class="field-track"><input type="range" id="musicRange" min="0" max="100" value="45"><span id="musicValue">45%</span></div></div>
+<div class="field"><label for="langSelect" data-i18n="language">LANGUAGE</label><select id="langSelect"><option value="en">English</option><option value="ru">Русский</option><option value="es">Español</option></select></div>
+<button id="replayTutorial" class="plain-action" data-i18n="replay">REPLAY THE TUTORIAL ↗</button>
+<button id="settingsDone" class="modal-primary" data-i18n="done">BACK TO GAME →</button></div></div>
+<div id="winOverlay" class="overlay hidden"><div class="modal victory-modal"><div class="victory-spark">✳</div><div class="victory-over" data-i18n="levelComplete">COMPOSITION COMPLETE</div><h2 data-i18n="amazing">THAT SOUNDED AMAZING!</h2><p data-i18n="winDetail">Every tile is alive. The next stage is waiting.</p><div class="victory-award"><span>✦</span><strong id="rewardText">+100</strong><small data-i18n="currency">SOUND COINS</small></div><div class="victory-stats"><span id="winBeats">0 BEATS</span><span id="winMerges">0 MERGES</span></div><button id="nextLevelBtn" class="modal-primary" data-i18n="nextLevel">NEXT STAGE →</button></div></div>
 </body></html>
