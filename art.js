@@ -127,10 +127,10 @@ function organ(){
 }
 function orchestral(){let s=harp(12);s+='<g transform="translate(80,120) scale(.54)">'+drumset()+'</g>';return s;}
 const palette=[
- {type:'synth',color:0,w:220,h:200}, {type:'synth',color:1,w:220,h:200},
- {type:'ukulele',w:220,h:200},{type:'synthwide',color:2,w:260,h:155},
+ {type:'synth',color:0,w:155,h:155}, {type:'synth',color:1,w:155,h:155},
+ {type:'ukulele',w:220,h:200},{type:'synthwide',color:2,w:258,h:130},
  {type:'guitar',color:0,w:170,h:270},{type:'guitar',color:1,w:170,h:270},
- {type:'guitar',color:2,w:170,h:270},{type:'synthdouble',color:3,w:245,h:234},
+ {type:'guitar',color:2,w:170,h:270},{type:'synthdouble',color:3,w:240,h:235},
  {type:'guitar',color:3,w:170,h:270},{type:'harp',w:230,h:230},
  {type:'guitar',color:2,w:170,h:270},{type:'synthdouble',color:5,w:245,h:234},
  {type:'harp',w:230,h:230},{type:'drums',w:230,h:230},
@@ -139,15 +139,15 @@ const palette=[
 const svg=tier=>{
  tier=Math.max(0,Math.min(15,tier|0));const item=palette[tier];
  let body='',view='0 0 240 230';
- if(item.type==='synth'){body=synth(item.color,false,false);view='0 0 240 185';}
- if(item.type==='synthwide'){body=synth(item.color,true,false);view='0 30 240 155';}
- if(item.type==='synthdouble'){body=synth(item.color,true,true);view='0 0 240 235';}
+ if(item.type==='synth'){body=synth(item.color,false,false);view='32 30 176 153';}
+ if(item.type==='synthwide'){body=synth(item.color,true,false);view='8 51 224 124';}
+ if(item.type==='synthdouble'){body=synth(item.color,true,true);view='8 7 224 216';}
  if(item.type==='ukulele'){body=ukulele();view='40 0 135 205';}
  if(item.type==='guitar'){body=stringsGuitar(item.color);view='15 0 140 264';}
- if(item.type==='harp'){body=harp(tier);}
- if(item.type==='drums'){body=drumset();}
- if(item.type==='organ'){body=organ();}
- if(item.type==='orchestra'){body=orchestral();}
+ if(item.type==='harp'){body=harp(tier);view='27 7 179 215';}
+ if(item.type==='drums'){body=drumset();view='20 19 189 208';}
+ if(item.type==='organ'){body=organ();view='19 5 198 225';}
+ if(item.type==='orchestra'){body=orchestral();view='22 0 202 231';}
  return '<svg xmlns="http://www.w3.org/2000/svg" width="'+item.w+'" height="'+item.h+'" viewBox="'+view+'" preserveAspectRatio="xMidYMid meet">'+defs+body+'</svg>';
 };
 const cache=new Map();
