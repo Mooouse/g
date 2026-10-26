@@ -36,3 +36,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add VIEW_DESKTOP.txt VIEW_MOBILE.txt
           git commit -m "Temporary reference screenshot QA" && git push
+
+# Validate sprites remain legible during scan
