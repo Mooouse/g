@@ -150,19 +150,29 @@ const svg=tier=>{
  if(item.type==='orchestra'){body=orchestral();view='22 0 202 231';}
  return '<svg xmlns="http://www.w3.org/2000/svg" width="'+item.w+'" height="'+item.h+'" viewBox="'+view+'" preserveAspectRatio="xMidYMid meet">'+defs+body+'</svg>';
 };
-const cache=new Map();
-const src=tier=>{tier=Math.max(0,Math.min(15,tier|0));if(!cache.has(tier))cache.set(tier,'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg(tier)));return cache.get(tier);};
-const spans=tier=>palette[Math.max(0,Math.min(15,tier|0))].type==='synthwide'?{w:2,h:1}:['guitar'].includes(palette[tier]?.type)?{w:1,h:2}:['synthdouble','harp','drums','organ','orchestra'].includes(palette[tier]?.type)?{w:2,h:2}:{w:1,h:1};
-// Cropped and cleaned sprite art from the user-supplied gameplay reference video.
-const videoFrames=[
- [24,38,102,105], [174,36,102,108], [316,48,114,98], [456,56,139,68],
- [36,188,83,164], [186,188,80,161], [348,187,57,169], [456,239,139,63],
- [6,384,139,133], [159,387,131,126], [305,383,136,135], [456,384,139,133]
+// Approved sprites (each instrument family has its own level sequence).
+// Images are independent transparent WebP files; unused previous SVG variations
+// are retained solely as a fallback if an image fails to load.
+const approved=[
+ {id:'keyboard_1',family:'keys',level:1,w:1,h:1,file:'assets/approved/keyboard_1.webp'},
+ {id:'keyboard_2',family:'keys',level:2,w:1,h:1,file:'assets/approved/keyboard_2.webp'},
+ {id:'ukulele_1',family:'ukulele',level:1,w:1,h:1,file:'assets/approved/ukulele_1.webp'},
+ {id:'drums_1',family:'drums',level:1,w:1,h:1,file:'assets/approved/drums_1.webp'},
+ {id:'drums_2',family:'drums',level:2,w:2,h:2,file:'assets/approved/drums_2.webp'},
+ {id:'guitar_1',family:'guitar',level:1,w:1,h:2,file:'assets/approved/guitar_1.webp'},
+ {id:'guitar_2',family:'guitar',level:2,w:1,h:2,file:'assets/approved/guitar_2.webp'}
 ];
-const tierToVideo=[0,1,2,3,4,5,6,7,4,9,6,8,10,11,9,11];
-window.GridMusicArt={
- src,svg,spans,total:16,
- atlasUrl:'sprites/video-instruments.webp',
- frameForTier(tier){return videoFrames[tierToVideo[Math.max(0,Math.min(15,tier|0))]];}
-};
+const next={0:1,3:4,5:6};
+const cache=new Map();
+function src(tier){
+ const t=approved[tier];
+ if(t)return t.file;
+ tier=Math.max(0,Math.min(15,tier|0));
+ if(!cache.has(tier))cache.set(tier,'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg(tier)));
+ return cache.get(tier);
+}
+const spans=tier=>approved[tier]?{w:approved[tier].w,h:approved[tier].h}:{w:1,h:1};
+const nextTier=tier=>Number.isInteger(next[tier])?next[tier]:null;
+const spawnTiers=[0,0,0,2,2,3,3,5,5];
+window.GridMusicArt={src,svg,spans,nextTier,approved,spawnTiers,total:approved.length};
 })();
