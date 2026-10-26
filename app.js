@@ -43,7 +43,7 @@ async function initSDK(){
  const sdk=window.CrazyGames?.SDK;
  if(sdk){try{await Promise.race([sdk.init(),new Promise((_,reject)=>setTimeout(()=>reject(Error('SDK timeout')),2600))]);sdkReady=true;try{sdk.game.loadingStart();}catch(e){}
  try{store=sdk.data?.getItem&&sdk.data?.setItem?sdk.data:localStorage;}catch(e){store=localStorage;}
- try{if(typeof sdk.game?.addEventListener==='function')sdk.game.addEventListener('mute',(v)=>AUDIO.setPortalMuted(!!v));}catch(e){}
+ try{const applySettings=(settings)=>AUDIO.setPortalMuted(!!settings?.muteAudio);applySettings(sdk.game?.settings);sdk.game?.addSettingsChangeListener?.(applySettings);}catch(e){}
  }catch(e){console.info('Standalone browser mode');}}
  if(!store)store=localStorage;
  initSaved();AUDIO.setVolumes(S.volume,S.musicVolume);renderAll();gameSDK('loadingStop');gameplay(true);
