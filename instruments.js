@@ -1,4 +1,4 @@
-/* GRIDSONATA original instrument illustrations — scalable, local, resolution-independent SVG. */
+/* Music Crates: illustrated musical instruments (game-original SVG assets). */
 (() => {
 'use strict';
 const colors=[
@@ -35,7 +35,7 @@ default:return '<g>'+p('M100 12L125 52L171 45L151 94L181 128L128 135L100 187L71 
 }
 }
 const cache=new Map();
-function svg(level){const i=Math.max(0,Math.min(15,Number(level)||0)),[hi,lo]=colors[i];return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img"><defs><linearGradient id="main" x1="0" x2=".75" y1="0" y2="1"><stop stop-color="'+hi+'"/><stop offset=".4" stop-color="'+lo+'"/><stop offset=".7" stop-color="'+hi+'"/><stop offset="1" stop-color="'+lo+'"/></linearGradient><radialGradient id="shine"><stop stop-color="'+hi+'" stop-opacity=".38"/><stop offset="1" stop-color="'+lo+'" stop-opacity="0"/></radialGradient></defs><circle cx="100" cy="100" r="96" fill="url(#shine)"/><circle cx="100" cy="100" r="77" fill="none" stroke="'+hi+'" stroke-width="1" opacity=".23" stroke-dasharray="2 7"/><g fill="'+hi+'" opacity=".72"><path d="M22 42l3 8 8 3-8 3-3 8-3-8-8-3 8-3zM169 31l3 7 7 3-7 3-3 7-3-7-7-3 7-3z"/><circle cx="175" cy="158" r="3"/></g>'+draw(i)+'</svg>';}
+function svg(level){const i=Math.max(0,Math.min(15,Number(level)||0)),[hi,lo]=colors[i];return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img"><defs><linearGradient id="main" x1="0" x2=".75" y1="0" y2="1"><stop stop-color="'+hi+'"/><stop offset=".4" stop-color="'+lo+'"/><stop offset=".7" stop-color="'+hi+'"/><stop offset="1" stop-color="'+lo+'"/></linearGradient><radialGradient id="shine"><stop stop-color="'+hi+'" stop-opacity=".17"/><stop offset="1" stop-color="'+lo+'" stop-opacity="0"/></radialGradient></defs><circle cx="100" cy="100" r="95" fill="url(#shine)"/><circle cx="100" cy="100" r="77" fill="none" stroke="'+hi+'" stroke-width="1" opacity=".23" stroke-dasharray="2 7"/><g fill="'+hi+'" opacity=".72"><path d="M22 42l3 8 8 3-8 3-3 8-3-8-8-3 8-3zM169 31l3 7 7 3-7 3-3 7-3-7-7-3 7-3z"/><circle cx="175" cy="158" r="3"/></g>'+draw(i)+'</svg>';}
 function src(i){if(!cache.has(i))cache.set(i,'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg(i)));return cache.get(i);}
-window.BeatArt={src,svg,total:16};
+window.MusicArt={src,svg,total:16};
 })();

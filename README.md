@@ -1,46 +1,39 @@
-# GRIDSONATA — Sonic Merge
+# MUSIC CRATES
 
-**A new musical merge puzzle** built as a responsive HTML5 game. This repository was rebuilt from scratch; the earlier Melody Forge source was removed.
+A new HTML5 merge-and-smash music game inspired by the publicly described gameplay of [Beat Grid by AxelSonic](https://axelsonic.itch.io/beat-grid). Uses **original implementation, graphics, sounds and title** — no third-party source code or licensed assets are copied.
 
 ## Play
-GitHub Pages: **https://mooouse.github.io/g/** (after the Pages Actions deployment succeeds).
+GitHub Pages: **https://mooouse.github.io/g/** (after a successful Pages workflow)
 
-The board is an 8-step sequencer. Each instrument plays a note and damages crystals in its local area when its beat arrives. Every crystal must be destroyed to finish a level. More advanced instruments have stronger soundwaves, a wider range, and a new musical timbre.
+### Core loop
+- Tap instruments to make music and damage surrounding wooden boxes.
+- Combine two matching instruments with consecutive taps or drag one onto the other. Higher tiers hit harder and unlock new timbres.
+- Crates lose health and break, dropping money and sometimes extra instruments.
+- Rare golden crates hold a surprise and extra resources.
+- Instruments also hit nearby boxes automatically over time, creating a hands-on idle progression. Drag onto an unlocked free square to extend coverage.
+- Use your earnings to buy instruments and boost attack strength, attack speed and loot rewards.
+- Clear all boxes to advance through procedurally generated levels with increasing HP and board size.
+- Keep your highest unlocked instrument tier between levels.
 
-- **Click / tap an instrument** to select and hear it; tap a second one of the same tier to merge.
-- **Drag and drop** an instrument onto another matching instrument to merge; drop it on a free unlocked tile to relocate it.
-- **Click SOUND BURST** after selecting an instrument for a stronger instant attack (consumes energy).
-- **Buy fresh instruments** and invest earned Sound Coins into attack power, maximum energy, or recovery.
-- **Keep progressing:** map size and crystal toughness increase, while highest unlocked instrument tiers carry between levels.
-- **16 original instrument illustrations** drawn in SVG and accompanied by unique Web Audio synthesizer patches.
-- **Automatic beat-synced background soundtrack** mixing drums, bass, melody, and instrument voices.
-- **English / Russian / Spanish**, volume sliders, non-blocking in-game tutorial, save data.
-- **CrazyGames SDK v3** integration with graceful standalone fallback for GitHub Pages.
+### Included
+- 16 illustrated musical instrument tiers, procedural musical synthesizer, ambient rhythm and volume controls.
+- Small 3-step contextual tutorial, English/Russian/Spanish, responsive phone/tablet/desktop UI, persistent progress.
+- CrazyGames SDK v3 with loading/gameplay events and platform data fallback to browser storage.
 
-## Quick start
-Serve these files as-is. No build process and no libraries:
+### Development
+No dependencies. Open `index.html` in a browser, or serve via `python3 -m http.server 8000`.
 
+Validate:
 ```sh
-python3 -m http.server 8000
-# then visit http://localhost:8000
-```
-
-Test syntax and gameplay:
-
-```sh
-node --check visuals.js
-node --check audio.js
-node --check app.js
+node --check instruments.js
+node --check game.js
 node tests/smoke.cjs
 ```
 
-## GitHub Pages
-The workflow `.github/workflows/pages.yml` tests and deploys automatically on `main`. In repository **Settings → Pages** the source must be set to **GitHub Actions**.
+GitHub Pages publishing uses `.github/workflows/pages.yml`. Ensure **Settings → Pages → Build and deployment → GitHub Actions** is enabled.
 
-## CrazyGames
-The v3 SDK runs on CrazyGames, with loading/gameplay events and optional platform Data storage. Outside the platform, the game uses localStorage. The game does not request advertisements. Submission and platform moderation are separate from GitHub Pages testing.
+## User-supplied project reference
+`game_platform-claude-sleepy-cannon-xcyut8 (2).zip` is preserved unchanged. It contains a game-creation platform, not the original Beat Grid game. The game code above is separate.
 
-## Uploaded development reference
-The archive `game_platform-claude-sleepy-cannon-xcyut8 (2).zip` is the user's supplied multi-package **game development platform**, not the game source. Its guidance on first-minute gameplay, quality, portal submission, localization, and QA was studied. The original ZIP is retained in the repository for the owner. The actual game is a new standalone project, not copied platform runtime.
-
-Inspired by the idea of musical grid play; all implementation, illustration designs, and generated audio are newly created.
+### Intellectual property
+This project recreates common gameplay mechanics rather than copying the proprietary executable, art, soundtrack, branding or source of Beat Grid. Approval or a license from its author would be required to redistribute those original assets.

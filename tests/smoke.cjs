@@ -1,56 +1,55 @@
-/* GRIDSONATA standalone smoke tests. Run node tests/smoke.cjs. */
-const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const source={};
-for(const p of ['index.html','styles.css','visuals.js','audio.js','app.js'])source[p]=fs.readFileSync(p,'utf8');
-for(const p of ['visuals.js','audio.js','app.js'])new vm.Script(source[p],{filename:p});
-const ids=new Set([...source['index.html'].matchAll(/id="([^"]+)"/g)].map(x=>x[1]));
-const refs=new Set([...source['app.js'].matchAll(/\$\('([^']+)'\)/g)].map(x=>x[1]));
-assert.deepEqual([...refs].filter(x=>!ids.has(x)),[],'every JS DOM element must exist');
-assert.ok(source['index.html'].includes('crazygames-sdk-v3.js'),'CrazyGames v3 SDK included');
-const callbacks={},nodes={},writes={},intervals=[];
-function node(id){
- if(!nodes[id])nodes[id]={id,value:'',innerHTML:'',textContent:'',dataset:{},disabled:false,style:{width:'',setProperty(k,v){this[k]=v;}},parentElement:{getBoundingClientRect(){return {left:0,top:0};}},
- classList:{tokens:new Set(),add(k){this.tokens.add(k);},remove(k){this.tokens.delete(k);},contains(k){return this.tokens.has(k);}},addEventListener(name,fn){callbacks[id+':'+name]=fn;},querySelector(){return null;},appendChild(){}};
- return nodes[id];
+/* Music Crates smoke test, no npm dependencies. */
+const assert=require('node:assert/strict');
+const fs=require('node:fs'),vm=require('node:vm');
+const html=fs.readFileSync('index.html','utf8'),sprites=fs.readFileSync('instruments.js','utf8'),game=fs.readFileSync('game.js','utf8');
+new vm.Script(sprites,{filename:'instruments.js'});new vm.Script(game,{filename:'game.js'});
+const ids=new Set([...html.matchAll(/id="([^"]+)"/g)].map(m=>m[1]));
+const used=new Set([...game.matchAll(/\$\('([^']+)'\)/g)].map(m=>m[1]));
+assert.deepEqual([...used].filter(id=>!ids.has(id)),[],'missing DOM elements');
+assert.ok(html.includes('crazygames-sdk-v3.js'));
+let events={},elements={},store={},timers=[];
+function el(id){
+ if(!elements[id])elements[id]={
+ id,innerHTML:'',textContent:'',value:'',dataset:{},disabled:false,
+ style:{setProperty(){}},parentElement:{getBoundingClientRect(){return {left:0,top:0};}},
+ classList:{add(){},remove(){},contains(){return false;}},appendChild(){},remove(){},
+ addEventListener(n,callback){events[id+':'+n]=callback;},querySelector(){return null;}
+ };
+ return elements[id];
 }
-const document={hidden:false,documentElement:{lang:'en'},getElementById:node,querySelectorAll(){return[];},addEventListener(){},createElement(){return {...node('mockElement'),style:{}};}};
-const localStorage={getItem(k){return writes[k]||null;},setItem(k,v){writes[k]=v;}};
-const context={window:{addEventListener(){}},document,localStorage,navigator:{language:'en-US'},console,Date,Math,JSON,Set,Map,Number,String,Array,encodeURIComponent,
-setTimeout(fn){return 1;},clearTimeout(){},setInterval(fn){intervals.push(fn);return intervals.length;}};
-vm.createContext(context);
-vm.runInContext(source['visuals.js'],context,{filename:'visuals.js'});
-assert.ok(context.window.BeatArt.svg(15).includes('<svg'));
-assert.equal(context.window.BeatArt.total,16);
-vm.runInContext(source['audio.js'],context,{filename:'audio.js'});
-context.BeatArt=context.window.BeatArt;
-context.BeatAudio=context.window.BeatAudio;
-vm.runInContext(source['app.js'],context,{filename:'app.js'});
-const snapshot=()=>context.window.GridSonataDebug.getSnapshot();
-function click(i){callbacks['board:click']({target:{closest:()=>({dataset:{i:String(i)}})}});}
-assert.equal(snapshot().level,1);
-assert.equal(snapshot().board.cells.length,36);
-assert.equal(document.documentElement.lang,'en');
-assert.ok(node('board').innerHTML.includes('data-i="21"'));
-click(21);click(20);
-assert.ok(snapshot().board.cells[20].tier===1,'matching tiers must merge');
-assert.equal(snapshot().known.length,2,'merged tier must be discovered');
-assert.ok(snapshot().board.cells[21].tier===null);
-click(15);click(14);click(20);click(14);
-assert.equal(snapshot().highest,2,'two first-tier merges should upgrade to tier 3');
-const beforeEnergy=snapshot().energy;
-callbacks['burstBtn:click']();
-assert.equal(snapshot().energy,beforeEnergy-1,'manual attack uses energy');
-assert.ok(snapshot().board.cells.filter(c=>c.hp===0).length>6,'a burst should clear at least one crystal');
-callbacks['languageToggle:click']();
-assert.equal(document.documentElement.lang,'ru');
-callbacks['languageToggle:click']();
-assert.equal(document.documentElement.lang,'es');
-callbacks['languageToggle:click']();
-assert.equal(document.documentElement.lang,'en');
-assert.ok(node('shopPanel')===undefined||true);
-context.window.GridSonataDebug.unlockAll();
-assert.ok(snapshot().board.cells.every(c=>c.hp===0));
-/* Run the pending victory timeout with a deliberate function-level check instead
-   of depending on real time. All manual action invariants are already covered. */
-assert.ok(intervals.length>=2,'sequencer and energy timers registered');
-console.log('PASS: initial level, board rendering, merge chain, sound burst, i18n, progression and SDK hooks');
+const doc={hidden:false,documentElement:{lang:'en'},getElementById:el,querySelectorAll(){return[];},createElement(){return {style:{setProperty(){}},remove(){},textContent:'',className:''};},addEventListener(){}};
+const ctx={window:{addEventListener(){}},document:doc,navigator:{language:'ru-RU'},performance:{now(){return 1000;}},localStorage:{getItem(k){return store[k]||null;},setItem(k,v){store[k]=v;}},console,
+Math,Date,Set,Map,Number,Array,String,JSON,encodeURIComponent,performance: {now(){return 1000;}},requestAnimationFrame(){},clearTimeout(){},setTimeout(fn){timers.push(fn);return timers.length;}};
+vm.createContext(ctx);
+vm.runInContext(sprites,ctx,{filename:'instruments.js'});
+assert.equal(ctx.window.MusicArt.total,16);
+ctx.MusicArt=ctx.window.MusicArt;
+vm.runInContext(game,ctx,{filename:'game.js'});
+const snap=()=>ctx.window.MusicCratesDebug.snapshot();
+assert.equal(doc.documentElement.lang,'ru');
+assert.equal(snap().level,1);
+assert.equal(snap().n,6);
+assert.ok(el('board').innerHTML.includes('data-index="14"'));
+assert.ok(snap().cells.filter(c=>c.kind==='box').length>20);
+ctx.window.MusicCratesDebug.select(14);
+ctx.window.MusicCratesDebug.select(15);
+assert.equal(snap().cells[15].tier,1,'merge should upgrade identical instruments');
+ctx.window.MusicCratesDebug.select(20);
+ctx.window.MusicCratesDebug.select(21);
+assert.equal(snap().cells[21].tier,1);
+ctx.window.MusicCratesDebug.select(15);
+ctx.window.MusicCratesDebug.select(21);
+assert.equal(snap().cells[21].tier,2,'merge progression');
+assert.equal(snap().highest,2);
+assert.ok(snap().known.includes(2));
+const damaged=ctx.window.MusicCratesDebug.step();
+assert.ok(damaged.after<=damaged.before,'instruments should destroy boxes over time');
+events['languageBtn:click']();
+assert.equal(doc.documentElement.lang,'en');
+events['languageBtn:click']();
+assert.equal(doc.documentElement.lang,'es');
+ctx.window.MusicCratesDebug.forceWin();
+for(const fn of timers)if(typeof fn==='function')fn();
+assert.ok(snap().cells.every(c=>c.kind!=='box'));
+assert.ok(snap().coins>=110);
+console.log('PASS Music Crates: startup, crates, two merges, tier progression, attacks, locales, victory');

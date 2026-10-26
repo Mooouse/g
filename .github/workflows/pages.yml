@@ -1,4 +1,4 @@
-name: Verify and deploy GRIDSONATA
+name: Test and publish Music Crates
 on:
   push:
     branches: [main]
@@ -8,28 +8,27 @@ permissions:
   pages: write
   id-token: write
 concurrency:
-  group: pages
+  group: github-pages
   cancel-in-progress: true
 jobs:
   deploy:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Verify game code
+      - name: Verify game logic
         run: |
-          node --check visuals.js
-          node --check audio.js
-          node --check app.js
+          node --check instruments.js
+          node --check game.js
           node tests/smoke.cjs
-      - name: Configure Pages
+      - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
-      - name: Upload website
+      - name: Upload game
         uses: actions/upload-pages-artifact@v3
         with:
           path: .
-      - name: Publish
-        id: deployment
+      - name: Publish site
+        id: deploy
         uses: actions/deploy-pages@v4
