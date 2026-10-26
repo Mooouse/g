@@ -19,7 +19,8 @@ const configs=[
 ];
 const starting=[
 {tier:0,c:0,r:2},{tier:0,c:0,r:3},{tier:0,c:2,r:2},{tier:1,c:1,r:3},{tier:1,c:2,r:3},
-{tier:2,c:3,r:3},{tier:2,c:4,r:4},{tier:3,c:4,r:2},{tier:4,c:5,r:4}
+{tier:2,c:3,r:3},{tier:2,c:4,r:4},{tier:3,c:4,r:2},{tier:4,c:5,r:4},
+{tier:0,c:0,r:4},{tier:2,c:2,r:4},{tier:1,c:3,r:5}
 ];
 const startState=()=>({stage:1,coins:241,time:192,charge:16,chargeFill:.62,highest:4,upgrades:{power:0,speed:0,wealth:0},units:[],blocks:[],volume:.7,music:.46,lang:/^ru/i.test(navigator.language)?'ru':/^es/i.test(navigator.language)?'es':'en',tutorialSeen:false,finished:false});
 let state=startState(),selected=null,dragging=null,hovered=null,paused=false,showResult='',scanner=-50,pass=0,frameLast=performance.now(),fx=[],hints=0,toast=null,checkpoint=0,portrait=false,LAY=null,imgs=[],booted=false,sdkReady=false,store=null,chargeHitBox=null,settingsHot=null,shopHot=null,pauseHot=null;
@@ -367,7 +368,7 @@ function drawChrome(){
  ctx.fillStyle=gradient(bx,by,bw,bh,[[0,'#6ef4d4'],[.7,'#38d7b7'],[1,'#45b99e']]);ctx.fillRect(bx+12,by+10,bw-24,bh-20);ctx.restore();
  strokeRound(bx+8,by+8,bw-16,bh-16,9,'#f4f6f0',3);
  textStroke(String(Math.floor(state.charge)),bx+bw/2,by+bh/2+3,LAY.portrait?61:73,'#fffefe','center','#29293e',5);
- if(!state.tutorialSeen){textStroke(txt('hint'),LAY.W*.5,LAY.portrait?837:733,LAY.portrait?21:22,'#fffcee','center','#64467c',4);}
+ // Keep the board unobstructed, as in the reference gameplay.
  if(toast){textStroke(toast.t,W*.5,LAY.portrait?1448:720,LAY.portrait?29:33,'#fffdbf','center','#8a4e81',5);}
 }
 function drawResult(){
