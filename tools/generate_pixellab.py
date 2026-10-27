@@ -109,7 +109,7 @@ def main():
         try:
             response=requests.post(URL,headers={
                 "Authorization":"Bearer "+key,"Content-Type":"application/json"},
-                json=payload,timeout=180)
+                json=payload,timeout=(15,420))
             if response.status_code!=200:
                 # Never log response bodies (might include user/account information).
                 raise RuntimeError("PixelLab returned HTTP "+str(response.status_code))
