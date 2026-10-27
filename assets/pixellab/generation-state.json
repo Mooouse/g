@@ -9,8 +9,12 @@
         64
       ],
       "status": "completed"
+    },
+    "keyboard_2": {
+      "attempt": 2,
+      "status": "request_started"
     }
   },
-  "spent_attempts": 1,
+  "spent_attempts": 2,
   "version": 1
 }
