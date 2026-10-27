@@ -93,7 +93,12 @@
     },
     "ukulele_5": {
       "attempt": 11,
-      "status": "request_started"
+      "bytes": 4156,
+      "size": [
+        64,
+        128
+      ],
+      "status": "completed"
     }
   },
   "spent_attempts": 11,
