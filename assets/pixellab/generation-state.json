@@ -183,7 +183,12 @@
     },
     "metal_block": {
       "attempt": 28,
-      "status": "request_started"
+      "bytes": 5199,
+      "size": [
+        64,
+        64
+      ],
+      "status": "completed"
     },
     "ukulele_1": {
       "attempt": 7,
