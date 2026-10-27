@@ -15,6 +15,10 @@ The user requested that we study how PixelLab approaches game pixel art. These a
 - [Style generation](https://www.pixellab.ai/docs/tools/style): controllable outlines/shading/details and references.
 - [PixelLab API](https://api.pixellab.ai/v2/docs): optional external generation and image-to-pixelart workflows, only after explicitly authorized connection/credentials.
 
+## Current integration mode (supersedes old one-by-one preview mode)
+
+The user requested: **generate each graphic element into its own file, do not show previews, immediately add to the game**. Therefore, pixel sprites now use independently generated PNG files in `assets/pixel/`, with a shared style checklist, automatic QA and immediate GitHub deployment. The previous individual approval step is suspended for this redesign until the user changes the instruction.
+
 ## Default pixel-style specification (proposed, not user-approved)
 
 1. **Native pixel grid**, not a blurred high-res illustration with a pixelate filter. Work in true low pixel counts; place deliberate pixel clusters and readable silhouettes. Never mix soft anti-aliasing or subpixel brush work into sprites.
