@@ -25,32 +25,45 @@ Image:MockImage,performance:{now:()=>1000},setTimeout(fn){return 1;},clearTimeou
 vm.createContext(context);
 (async()=>{
 vm.runInContext(art,context,{filename:'art.js'});const artMeta=context.window.GridMusicArt;
-assert.equal(artMeta.total,7,'exactly seven user-approved sprites');
+assert.ok([7,24].includes(artMeta.total),'legacy release has seven tiers; PixelLab release has twenty-four');
+const pixellab=artMeta.style==='pixellab-game-assets';
 const expected=[
  ['keyboard_1','keys',1,1,1],['keyboard_2','keys',2,1,1],
  ['ukulele_1','ukulele',1,1,1],
  ['drums_1','drums',1,1,1],['drums_2','drums',2,2,2],
  ['guitar_1','guitar',1,1,2],['guitar_2','guitar',2,1,2]
 ];
+if(pixellab){
+ const counts={keys:0,ukulele:0,drums:0,guitar:0};
+ for(const a of artMeta.approved){assert.ok(a.family in counts);counts[a.family]++;}
+ assert.deepEqual({...counts},{keys:6,ukulele:6,drums:6,guitar:6});
+ assert.equal(artMeta.total,24,'24 separately generated models');
+ for(let i=0;i<24;i++){
+  const a=artMeta.approved[i],b=artMeta.approved[artMeta.nextTier(i)];
+  if(a.level<6){assert.ok(b&&a.family===b.family&&b.level===a.level+1,'correct family upgrade for '+a.id);}
+  else assert.equal(artMeta.nextTier(i),null,'level 6 is terminal: '+a.id);
+ }
+}
 for(let i=0;i<expected.length;i++){
  const [id,family,level,w,h]=expected[i],a=artMeta.approved[i];
  assert.deepEqual([a.id,a.family,a.level,a.w,a.h],[id,family,level,w,h]);
  assert.deepEqual({...artMeta.spans(i)},{w,h},id+' cell footprint');
- const file=a.file;assert.ok(file.startsWith('assets/pixel/'),'individual PNG sprite path');
+ const file=a.file;assert.ok(file.startsWith(pixellab?'assets/pixellab/':'assets/pixel/'),'individual PNG sprite path');
  const data=fs.readFileSync(file);
  assert.ok(data.length>100,'PNG data not empty: '+id);
  // Regression guard: don't silently ship the old 200–1000 byte geometry placeholders.
  const minimumPixels={keyboard_1:2200,keyboard_2:2200,ukulele_1:1500,drums_1:2500,drums_2:9000,guitar_1:4200,guitar_2:4200};
- assert.ok(data.length>minimumPixels[id],id+' should contain a detailed remastered silhouette, not the previous blocky placeholder');
+ assert.ok(data.length>(pixellab?450:minimumPixels[id]),id+' must be a detailed art asset');
  assert.equal(data.subarray(0,8).toString('hex'),'89504e470d0a1a0a','valid PNG signature: '+id);
  assert.equal(data.readUInt32BE(16),w*64,'native width: '+id);
  assert.equal(data.readUInt32BE(20),h*64,'native height: '+id);
  assert.equal(artMeta.src(i),file,'image path: '+id);
 }
-assert.equal(artMeta.style,'pixel-art-images');
+assert.ok(['pixel-art-images','pixellab-game-assets'].includes(artMeta.style));
 const uiExpected={background_tile:[64,64],cell:[64,64],metal_block:[64,64],boss_block:[128,128],scanner:[16,64],charge_button:[128,48],sparkle:[16,16],
 settings_icon:[32,32],shop_icon:[32,32],pause_icon:[32,32],coin:[24,24],result_panel:[128,64]};
-for(const [name,dim] of Object.entries(uiExpected)){
+for(const [name,legacyDim] of Object.entries(uiExpected)){
+ const dim=pixellab?[artMeta.uiAssets[name].includes('pixellab/')?(name==='charge_button'||name==='result_panel'?128:64):legacyDim[0],artMeta.uiAssets[name].includes('pixellab/')?64:legacyDim[1]]:legacyDim;
  const file=artMeta.uiAssets[name];assert.ok(file,'UI asset path: '+name);
  const bytes=fs.readFileSync(file);
  assert.equal(bytes.subarray(0,8).toString('hex'),'89504e470d0a1a0a','UI PNG signature: '+name);
@@ -60,7 +73,7 @@ for(const [name,dim] of Object.entries(uiExpected)){
 assert.equal(artMeta.nextTier(0),1,'keyboard progression');
 assert.equal(artMeta.nextTier(3),4,'drum progression');
 assert.equal(artMeta.nextTier(5),6,'guitar progression');
-for(const i of [1,2,4,6])assert.equal(artMeta.nextTier(i),null,'no unapproved merges');
+if(!pixellab)for(const i of [1,2,4,6])assert.equal(artMeta.nextTier(i),null,'no unapproved merges');
 assert.ok(artMeta.spawnTiers.every(t=>[0,2,3,5].includes(t)),'spawn only approved family starters');
 vm.runInContext(game,context,{filename:'game.js'});
 for(let i=0;i<10;i++)await Promise.resolve();
@@ -105,5 +118,5 @@ assert.equal(geometry.height,1560);
 assert.ok(geometry.renderWidth>=900,'mobile backing store not downsampled');
 for(let b of geometry.blocks){assert.ok(b.rect.x>=0&&b.rect.x+b.rect.w<=geometry.width+1,'mobile blocks within viewport '+b.id);assert.ok(b.rect.y>=0&&b.rect.y+b.rect.h<=geometry.height+1,'mobile blocks within height '+b.id);}
 events.animation(1070);
-console.log('PASS — 19 standalone native pixel PNG sprites, no smoothing, separate family merges, mobile board, scanner and controls');
+console.log('PASS — '+artMeta.total+' unique playable tiers, '+Object.keys(artMeta.uiAssets).length+' UI sprites, merges, mobile board and scanner');
 })().catch(e=>{console.error(e);process.exitCode=1;});
