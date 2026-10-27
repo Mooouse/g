@@ -75,7 +75,12 @@
     },
     "guitar_3": {
       "attempt": 22,
-      "status": "request_started"
+      "bytes": 4839,
+      "size": [
+        64,
+        128
+      ],
+      "status": "completed"
     },
     "keyboard_1": {
       "attempt": 1,
