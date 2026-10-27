@@ -16,7 +16,7 @@ getContext(){return ctx;},
 getBoundingClientRect(){const ratio=win.innerHeight>win.innerWidth*1.08?900/1560:1650/928;return {left:0,top:0,width:Math.min(win.innerWidth,win.innerHeight*ratio),height:Math.min(win.innerHeight,win.innerWidth/ratio)};},
 setPointerCapture:noop
 });}
-const document={getElementById:element,hidden:false,addEventListener:noop};
+const document={getElementById:element,hidden:false,addEventListener:noop,createElement(tag){assert.equal(tag,'canvas');return {width:0,height:0,getContext(){return ctx;}};}};
 const store={getItem(){return null},setItem:noop};
 const win={innerWidth:2560,innerHeight:1440,devicePixelRatio:2,addEventListener(n,fn){events['window:'+n]=fn;}};
 class MockImage{constructor(){this.complete=true;this.naturalWidth=220;this.naturalHeight=200;this.src='';}}
@@ -55,9 +55,11 @@ assert.equal(dbg.getGeometry().portrait,false);
 const desktop=dbg.getGeometry();
 assert.equal(desktop.width,1650,'logical width stays fixed');
 assert.equal(desktop.height,928,'logical height stays fixed');
-assert.ok(desktop.renderWidth>=3000,'high DPI backing store avoids upscaled blurry canvas');
-assert.ok(desktop.renderHeight>=1600,'high DPI backing height');
-assert.ok(desktop.renderScale>=1.6,'high DPI scale');
+assert.ok(desktop.renderWidth>=1900,'keep enough backing pixels for sharp sprites');
+assert.ok(desktop.renderWidth<=2200,'canvas does not exceed performance pixel budget');
+assert.ok(desktop.renderHeight>=1050,'high DPI backing height');
+assert.ok(desktop.renderWidth*desktop.renderHeight<=2600000,'canvas pixel budget protects performance');
+assert.ok(desktop.renderScale>=1.1&&desktop.renderScale<=1.5,'adaptive scale avoids expensive full DPR');
 assert.equal(ctx.imageSmoothingEnabled,true,'image smoothing enabled');
 assert.equal(ctx.imageSmoothingQuality,'high','resampling uses high quality');
 // Simulated pointer mapping remains in logical coordinates after increasing backing resolution.
@@ -88,5 +90,5 @@ assert.equal(geometry.height,1560);
 assert.ok(geometry.renderWidth>=900,'mobile backing store not downsampled');
 for(let b of geometry.blocks){assert.ok(b.rect.x>=0&&b.rect.x+b.rect.w<=geometry.width+1,'mobile blocks within viewport '+b.id);assert.ok(b.rect.y>=0&&b.rect.y+b.rect.h<=geometry.height+1,'mobile blocks within height '+b.id);}
 events.animation(1070);
-console.log('PASS — seven approved assets, merges, sharp 2K HiDPI canvas, logical pointer mapping and mobile gameplay');
+console.log('PASS — seven approved assets, merged families, 2.5 MP limit, prerendered board, pointer mapping and mobile gameplay');
 })().catch(e=>{console.error(e);process.exitCode=1;});
