@@ -47,5 +47,13 @@ jobs:
           git add docs/qa-screenshots/
           if ! git diff --cached --quiet; then
             git commit -m "Record actual Chrome gameplay screenshots"
-            git push
+            # QA and deployment workflows can update main concurrently.
+            # Rebase the screenshot-only commit rather than failing on a race.
+            for attempt in 1 2 3 4; do
+              git fetch origin main
+              git rebase origin/main || { git rebase --abort; exit 1; }
+              if git push origin HEAD:main; then break; fi
+              if [ "$attempt" -eq 4 ]; then exit 1; fi
+              sleep 2
+            done
           fi
