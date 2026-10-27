@@ -1,6 +1,7 @@
 /* Melody Scanner — original canvas recreation of the observed grid-based gameplay. */
 (()=>{'use strict';
-const canvas=document.getElementById('game'),ctx=canvas.getContext('2d'),$=id=>document.getElementById(id),ART=window.GridMusicArt;
+const canvas=document.getElementById('game'),$=id=>document.getElementById(id),ART=window.GridMusicArt;
+let ctx=canvas.getContext('2d');
 const KEY='melody-scanner-approved-assets-v1';
 const OLD_KEY='melody-scanner-video-reference-v3';
 const I={
@@ -193,7 +194,18 @@ function popup(t){toast={t,time:2.3};}
 // Render at the device's actual pixel density, while all gameplay coordinates
 // remain in the same logical 1650x928 / 900x1560 units. This prevents
 // full-screen CSS upscaling from turning the approved art into a blurry mosaic.
-let renderScale=1;
+let renderScale=1,staticScene=null;
+const DRAW_PIXEL_BUDGET=2500000; // 2.5 MP instead of the previous 8.4 MP on HiDPI screens
+const TARGET_FRAME_MS=1000/40; // cap Canvas redraws to 40 FPS
+function cacheStaticScene(){
+ staticScene=null;
+ if(typeof document.createElement!=='function')return;
+ const off=document.createElement('canvas');off.width=LAY.W;off.height=LAY.H;
+ const offctx=off.getContext('2d');if(!offctx)return;
+ const original=ctx;
+ try{ctx=offctx;drawBackground(0);drawCells();staticScene=off;}finally{ctx=original;}
+}
+
 function setView(){
  portrait=window.innerHeight>window.innerWidth*1.08;
  LAY=portrait?{W:900,H:1560,x:76,y:145,step:104,size:99,portrait:true}
@@ -204,14 +216,14 @@ function setView(){
  const dpr=Math.min(3,Math.max(1,Number(window.devicePixelRatio)||1));
  const required=Math.max(1,cssW*dpr/LAY.W,cssH*dpr/LAY.H);
  // Keep the render target within a reasonable memory/GPU budget.
- const budgetScale=Math.sqrt(8400000/(LAY.W*LAY.H));
- renderScale=Math.min(required,budgetScale,3);
+ const budgetScale=Math.sqrt(DRAW_PIXEL_BUDGET/(LAY.W*LAY.H));
+ renderScale=Math.min(required,budgetScale,1.5);
  canvas.width=Math.round(LAY.W*renderScale);
  canvas.height=Math.round(LAY.H*renderScale);
  ctx.setTransform(canvas.width/LAY.W,0,0,canvas.height/LAY.H,0,0);
  ctx.imageSmoothingEnabled=true;
  ctx.imageSmoothingQuality='high';
- layoutMobile();
+ layoutMobile();cacheStaticScene();
 }
 let mobilePos=[];
 function layoutMobile(){
@@ -246,7 +258,7 @@ function gradient(x,y,w,h,stops){const g=ctx.createLinearGradient(x,y,x+w,y+h);s
 function textStroke(text,x,y,size,fill='#fff',align='center',stroke='#2c294c',line=3){
  ctx.textAlign=align;ctx.textBaseline='middle';ctx.font='700 '+size+'px Fredoka, Arial Black, sans-serif';ctx.lineJoin='round';ctx.lineWidth=line;ctx.strokeStyle=stroke;ctx.strokeText(text,x,y);ctx.fillStyle=fill;ctx.fillText(text,x,y);
 }
-const rnd=random(8908),sparkle=Array.from({length:470},()=>({x:rnd(),y:rnd(),r:4+rnd()*25,a:.035+rnd()*.08,angle:rnd()*3})),imgFilter=()=>{};
+const rnd=random(8908),sparkle=Array.from({length:110},()=>({x:rnd(),y:rnd(),r:4+rnd()*25,a:.035+rnd()*.08,angle:rnd()*3})),imgFilter=()=>{};
 function drawBackground(t){
  const {W,H}=LAY;
  const g=ctx.createLinearGradient(0,0,W,H);
@@ -473,7 +485,8 @@ function drawResult(){
  textStroke(txt('restart'),W*.5,H*.65,20,'#f4d5f7','center','#543d67',2);
 }
 function render(dt){
- drawBackground(performance.now());drawCells();
+ if(staticScene){ctx.drawImage(staticScene,0,0,LAY.W,LAY.H);}
+ else{drawBackground(performance.now());drawCells();}
  for(const b of state.blocks)drawBlock(b);
  drawScan(performance.now());
  for(const u of state.units)if(!dragging||dragging.id!==u.id)drawUnit(u);
@@ -499,8 +512,12 @@ function mainStep(dt){
  }
  if(toast){toast.time-=dt;if(toast.time<=0)toast=null;}
 }
+let lastPaint=0;
 function loop(now){
- let dt=clamp((now-frameLast)/1000,0,.06);frameLast=now;
+ if(lastPaint&&now-lastPaint<TARGET_FRAME_MS-1){requestAnimationFrame(loop);return;}
+ lastPaint=now;
+ let dt=clamp((now-frameLast)/1000,0,.085);
+ frameLast=now;
  if(booted)mainStep(dt);
  render(dt);
  requestAnimationFrame(loop);
