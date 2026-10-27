@@ -28,6 +28,10 @@
       ],
       "status": "completed"
     },
+    "charge_button": {
+      "attempt": 31,
+      "status": "request_started"
+    },
     "drums_1": {
       "attempt": 13,
       "bytes": 2371,
@@ -263,6 +267,6 @@
       "status": "completed"
     }
   },
-  "spent_attempts": 30,
+  "spent_attempts": 31,
   "version": 1
 }
