@@ -219,7 +219,12 @@
     },
     "result_panel": {
       "attempt": 35,
-      "status": "request_started"
+      "bytes": 12636,
+      "size": [
+        128,
+        64
+      ],
+      "status": "completed"
     },
     "scanner": {
       "attempt": 30,
