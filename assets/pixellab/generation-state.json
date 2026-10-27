@@ -228,7 +228,12 @@
     },
     "shop_icon": {
       "attempt": 33,
-      "status": "request_started"
+      "bytes": 5102,
+      "size": [
+        64,
+        64
+      ],
+      "status": "completed"
     },
     "ukulele_1": {
       "attempt": 7,
