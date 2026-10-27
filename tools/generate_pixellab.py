@@ -73,7 +73,10 @@ def main():
         return 3
     state=load()
     manual_retry=os.getenv("PIXELLAB_RETRY_FAILED","false").lower()=="true"
-    for item in assets:
+    mode=os.getenv("PIXELLAB_MODE","pilot")
+    if mode not in ("pilot","full"):raise ValueError("Unknown safe PixelLab generation mode")
+    for index,item in enumerate(assets):
+        if mode=="pilot" and index>=1:break
         p=OUT/(item.name+".png")
         prev=state["requests"].get(item.name)
         if prev and prev["status"]=="completed" and p.exists():
@@ -129,7 +132,8 @@ def main():
             persist(f"Record PixelLab issue {attempt}/40 for {item.name}")
             print("STOP:",item.name,"failed. Generation will NOT retry automatically.",flush=True)
             return 6
-    print("DONE: 36 unique sprites, four generations remain reserved.")
+    if mode=="pilot":print("PILOT COMPLETE: only one sprite attempted; full batch not launched.")
+    else:print("BATCH COMPLETE: 36 unique sprites; four reserved for corrections.")
     return 0
 
 if __name__=="__main__":sys.exit(main())
