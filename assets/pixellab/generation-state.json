@@ -30,7 +30,12 @@
     },
     "charge_button": {
       "attempt": 31,
-      "status": "request_started"
+      "bytes": 12044,
+      "size": [
+        128,
+        64
+      ],
+      "status": "completed"
     },
     "drums_1": {
       "attempt": 13,
