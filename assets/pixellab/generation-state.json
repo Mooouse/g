@@ -201,7 +201,12 @@
     },
     "scanner": {
       "attempt": 30,
-      "status": "request_started"
+      "bytes": 4115,
+      "size": [
+        64,
+        64
+      ],
+      "status": "completed"
     },
     "ukulele_1": {
       "attempt": 7,
