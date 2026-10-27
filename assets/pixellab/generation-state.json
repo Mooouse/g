@@ -3,7 +3,12 @@
   "requests": {
     "background_tile": {
       "attempt": 26,
-      "status": "request_started"
+      "bytes": 8607,
+      "size": [
+        64,
+        64
+      ],
+      "status": "completed"
     },
     "drums_1": {
       "attempt": 13,
