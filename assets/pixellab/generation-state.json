@@ -262,6 +262,10 @@
       ],
       "status": "completed"
     },
+    "sparkle": {
+      "attempt": 37,
+      "status": "request_started"
+    },
     "ukulele_1": {
       "attempt": 7,
       "bytes": 1730,
@@ -317,6 +321,6 @@
       "status": "completed"
     }
   },
-  "spent_attempts": 36,
+  "spent_attempts": 37,
   "version": 1
 }
