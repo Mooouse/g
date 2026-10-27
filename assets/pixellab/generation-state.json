@@ -30,7 +30,12 @@
     },
     "keyboard_4": {
       "attempt": 4,
-      "status": "request_started"
+      "bytes": 6990,
+      "size": [
+        128,
+        64
+      ],
+      "status": "completed"
     }
   },
   "spent_attempts": 4,
