@@ -13,12 +13,12 @@ id,width:1650,height:928,textContent:'',innerHTML:'',value:'',style:{},
 classList:{add:noop,remove:noop,toggle:noop},
 addEventListener(n,fn){events[id+':'+n]=fn;},
 getContext(){return ctx;},
-getBoundingClientRect(){return {left:0,top:0,width:this.width,height:this.height};},
+getBoundingClientRect(){const ratio=win.innerHeight>win.innerWidth*1.08?900/1560:1650/928;return {left:0,top:0,width:Math.min(win.innerWidth,win.innerHeight*ratio),height:Math.min(win.innerHeight,win.innerWidth/ratio)};},
 setPointerCapture:noop
 });}
 const document={getElementById:element,hidden:false,addEventListener:noop};
 const store={getItem(){return null},setItem:noop};
-const win={innerWidth:1650,innerHeight:928,addEventListener(n,fn){events['window:'+n]=fn;}};
+const win={innerWidth:2560,innerHeight:1440,devicePixelRatio:2,addEventListener(n,fn){events['window:'+n]=fn;}};
 class MockImage{constructor(){this.complete=true;this.naturalWidth=220;this.naturalHeight=200;this.src='';}}
 const context={window:win,document,localStorage:store,navigator:{language:'ru-RU'},console,Math,JSON,Number,String,Date,Array,Set,Map,
 Image:MockImage,performance:{now:()=>1000},setTimeout(fn){return 1;},clearTimeout:noop,requestAnimationFrame(fn){events.animation=fn;return 1},encodeURIComponent};
@@ -52,6 +52,23 @@ for(let i=0;i<10;i++)await Promise.resolve();
 const dbg=win.GridGameDebug;assert.ok(dbg,'debug hooks available');
 const fresh=dbg.getState();assert.equal(fresh.blocks.length,20);assert.ok(fresh.units.length>=7);assert.equal(fresh.coins,241);assert.equal(fresh.charge,16);assert.equal(fresh.blocks.find(x=>x.boss).hp,100000);
 assert.equal(dbg.getGeometry().portrait,false);
+const desktop=dbg.getGeometry();
+assert.equal(desktop.width,1650,'logical width stays fixed');
+assert.equal(desktop.height,928,'logical height stays fixed');
+assert.ok(desktop.renderWidth>=3000,'high DPI backing store avoids upscaled blurry canvas');
+assert.ok(desktop.renderHeight>=1600,'high DPI backing height');
+assert.ok(desktop.renderScale>=1.6,'high DPI scale');
+assert.equal(ctx.imageSmoothingEnabled,true,'image smoothing enabled');
+assert.equal(ctx.imageSmoothingQuality,'high','resampling uses high quality');
+// Simulated pointer mapping remains in logical coordinates after increasing backing resolution.
+const center=desktop.units[0].rect;
+const logicalPoint={x:center.x+center.w/2,y:center.y+center.h/2};
+const canvasBounds=element('game').getBoundingClientRect();
+const mouse={clientX:logicalPoint.x/1650*canvasBounds.width,clientY:logicalPoint.y/928*canvasBounds.height,pointerId:1};
+assert.ok(events['game:pointerdown'],'pointer down handler');
+events['game:pointerdown'](mouse);
+events['game:pointerup'](mouse);
+assert.ok(dbg.getState().units.some(u=>u.tier===fresh.units[0].tier),'pointer maps correctly to logical board');
 events.animation(1020);
 const scan=dbg.scan();assert.ok(scan.coins>fresh.coins,'scan should earn money');
 assert.ok(dbg.getState().blocks.some((b,i)=>b.hp<fresh.blocks[i].hp),'scan must damage metal blocks');
@@ -67,7 +84,9 @@ assert.ok(!dbg.merge(unapprovedIndex,anotherFamilyIndex),'cross-family merge is 
 const charge=dbg.getState().charge;dbg.spawn();assert.equal(dbg.getState().charge,charge-5);assert.equal(dbg.getState().units.length,fresh.units.length);
 win.innerWidth=430;win.innerHeight=850;events['window:resize']();let geometry=dbg.getGeometry();
 assert.equal(geometry.portrait,true);assert.equal(geometry.width,900);
+assert.equal(geometry.height,1560);
+assert.ok(geometry.renderWidth>=900,'mobile backing store not downsampled');
 for(let b of geometry.blocks){assert.ok(b.rect.x>=0&&b.rect.x+b.rect.w<=geometry.width+1,'mobile blocks within viewport '+b.id);assert.ok(b.rect.y>=0&&b.rect.y+b.rect.h<=geometry.height+1,'mobile blocks within height '+b.id);}
 events.animation(1070);
-console.log('PASS — seven approved WebP assets, family progression, grid footprints, blocks, scanner, merge, spawn and mobile render');
+console.log('PASS — seven approved assets, merges, sharp 2K HiDPI canvas, logical pointer mapping and mobile gameplay');
 })().catch(e=>{console.error(e);process.exitCode=1;});
