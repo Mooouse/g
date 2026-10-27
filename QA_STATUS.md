@@ -1,15 +1,31 @@
 # Melody Scanner automated QA
 
-Commit: e48dcd6e5b54108e6f93535dd6dba067b4ca9d50
+Commit: f47bcdcb833df7c76df8f92e35e95042cd8f9aa7
 Node: v22.23.3
 
 | Check | Exit code |
 | --- | ---: |
 | Sprite artwork | 0 |
 | Game syntax | 0 |
-| Gameplay / mobile test | 0 |
+| Gameplay / mobile test | 1 |
 
 ### Gameplay output
 ~~~
-PASS — seven approved assets, merged families, 2.5 MP limit, prerendered board, pointer mapping and mobile gameplay
+AssertionError [ERR_ASSERTION]: keyboard_1 must be a real asset
+    at /home/runner/work/g/g/tests/smoke.cjs:39:27
+    at Object.<anonymous> (/home/runner/work/g/g/tests/smoke.cjs:94:3)
+    at Module._compile (node:internal/modules/cjs/loader:1781:14)
+    at Object..js (node:internal/modules/cjs/loader:1913:10)
+    at Module.load (node:internal/modules/cjs/loader:1505:32)
+    at Function._load (node:internal/modules/cjs/loader:1309:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:254:19)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+    at node:internal/main/run_main_module:36:49 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
 ~~~
