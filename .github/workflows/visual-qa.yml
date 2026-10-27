@@ -5,6 +5,8 @@ on:
     paths:
       - 'game.js'
       - 'art.js'
+      - 'assets/pixel/**'
+      - 'tools/remaster_pixel_assets.py'
       - 'style.css'
       - 'index.html'
       - '.github/workflows/visual-qa.yml'
