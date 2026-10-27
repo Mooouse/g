@@ -3,7 +3,12 @@
   "requests": {
     "drums_1": {
       "attempt": 13,
-      "status": "request_started"
+      "bytes": 2371,
+      "size": [
+        64,
+        64
+      ],
+      "status": "completed"
     },
     "keyboard_1": {
       "attempt": 1,
