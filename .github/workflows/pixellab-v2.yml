@@ -1,5 +1,9 @@
 name: PixelLab Art Batch — 36 of 40
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'triggers/pixellab-full-20261028.txt'
   workflow_dispatch:
     inputs:
       mode:
@@ -52,16 +56,21 @@ jobs:
             git checkout -b generated/pixellab-v1
             git push origin HEAD:generated/pixellab-v1
           fi
+          # The staging branch was created during the one-image pilot.
+          # Merge latest safe generator fixes and tests from main first.
+          git fetch origin main
+          git merge --no-edit origin/main
+          git push origin HEAD:generated/pixellab-v1
       - name: Install PNG validator and HTTPS client
         run: python -m pip install --disable-pip-version-check Pillow==11.3.0 requests==2.32.4
       - name: Generate and checkpoint (never exceed 36 paid calls)
         env:
           PIXELLAB_API_KEY: ${{ secrets.PIXELLAB_API_KEY }}
-          PIXELLAB_MODE: ${{ inputs.mode }}
+          PIXELLAB_MODE: ${{ github.event_name == 'push' && 'full' || inputs.mode }}
           PIXELLAB_RETRY_FAILED: ${{ inputs.retry_failed }}
         run: python tools/generate_pixellab.py
       - name: Validate full set and stage new levels without touching live game
-        if: ${{ inputs.mode == 'full' }}
+        if: ${{ github.event_name == 'push' || inputs.mode == 'full' }}
         shell: bash
         run: |
           python tools/activate_pixellab.py
