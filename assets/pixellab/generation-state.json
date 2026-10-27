@@ -1,6 +1,10 @@
 {
   "limit": 40,
   "requests": {
+    "background_tile": {
+      "attempt": 26,
+      "status": "request_started"
+    },
     "drums_1": {
       "attempt": 13,
       "bytes": 2371,
@@ -218,6 +222,6 @@
       "status": "completed"
     }
   },
-  "spent_attempts": 25,
+  "spent_attempts": 26,
   "version": 1
 }
