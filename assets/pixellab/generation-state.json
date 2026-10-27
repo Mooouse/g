@@ -91,6 +91,10 @@
       ],
       "status": "completed"
     },
+    "guitar_5": {
+      "attempt": 24,
+      "status": "request_started"
+    },
     "keyboard_1": {
       "attempt": 1,
       "bytes": 2077,
@@ -200,6 +204,6 @@
       "status": "completed"
     }
   },
-  "spent_attempts": 23,
+  "spent_attempts": 24,
   "version": 1
 }
