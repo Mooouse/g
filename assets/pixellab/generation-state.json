@@ -75,7 +75,8 @@
     },
     "guitar_3": {
       "attempt": 21,
-      "status": "request_started"
+      "reason": "HTTPSConnectionPool(host='api.pixellab.ai', port=443): Read timed out. (read timeout=180)",
+      "status": "needs_review"
     },
     "keyboard_1": {
       "attempt": 1,
