@@ -45,7 +45,8 @@ for(let i=0;i<expected.length;i++){
  assert.equal(artMeta.src(i),file,'image path: '+id);
 }
 assert.equal(artMeta.style,'pixel-art-images');
-const uiExpected={background_tile:[64,64],cell:[64,64],metal_block:[64,64],boss_block:[128,128],scanner:[16,64],charge_button:[128,48],sparkle:[16,16]};
+const uiExpected={background_tile:[64,64],cell:[64,64],metal_block:[64,64],boss_block:[128,128],scanner:[16,64],charge_button:[128,48],sparkle:[16,16],
+settings_icon:[32,32],shop_icon:[32,32],pause_icon:[32,32],coin:[24,24],result_panel:[128,64]};
 for(const [name,dim] of Object.entries(uiExpected)){
  const file=artMeta.uiAssets[name];assert.ok(file,'UI asset path: '+name);
  const bytes=fs.readFileSync(file);
@@ -101,5 +102,5 @@ assert.equal(geometry.height,1560);
 assert.ok(geometry.renderWidth>=900,'mobile backing store not downsampled');
 for(let b of geometry.blocks){assert.ok(b.rect.x>=0&&b.rect.x+b.rect.w<=geometry.width+1,'mobile blocks within viewport '+b.id);assert.ok(b.rect.y>=0&&b.rect.y+b.rect.h<=geometry.height+1,'mobile blocks within height '+b.id);}
 events.animation(1070);
-console.log('PASS — 14 standalone native pixel PNG sprites, no smoothing, separate family merges, mobile board, scanner and controls');
+console.log('PASS — 19 standalone native pixel PNG sprites, no smoothing, separate family merges, mobile board, scanner and controls');
 })().catch(e=>{console.error(e);process.exitCode=1;});
