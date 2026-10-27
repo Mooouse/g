@@ -18,7 +18,12 @@
   boss_block:root+'boss_block.png',
   scanner:root+'scanner.png',
   charge_button:root+'charge_button.png',
-  sparkle:root+'sparkle.png'
+  sparkle:root+'sparkle.png',
+  settings_icon:root+'settings_icon.png',
+  shop_icon:root+'shop_icon.png',
+  pause_icon:root+'pause_icon.png',
+  coin:root+'coin.png',
+  result_panel:root+'result_panel.png'
  };
  const upgrades={0:1,3:4,5:6};
  const src=i=>approved[i]?.file||approved[0].file;
