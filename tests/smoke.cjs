@@ -36,11 +36,9 @@ for(let i=0;i<expected.length;i++){
  const [id,family,level,w,h]=expected[i],a=artMeta.approved[i];
  assert.deepEqual([a.id,a.family,a.level,a.w,a.h],[id,family,level,w,h]);
  assert.deepEqual({...artMeta.spans(i)},{w,h},id+' cell footprint');
- const file=a.file;assert.ok(file.startsWith('assets/approved/'),id+' must be a real asset');
- const bytes=fs.readFileSync(file);assert.ok(bytes.length>2500,id+' nonempty');
- assert.equal(bytes.toString('ascii',0,4),'RIFF',id+' WEBP RIFF header');
- assert.equal(bytes.toString('ascii',8,12),'WEBP',id+' WebP type');
- assert.equal(artMeta.src(i),file,id+' sprite file path');
+ const file=a.file;assert.ok(file.startsWith('pixel:'),'pixel-art sprite id');
+ assert.ok(artMeta.src(i).startsWith('data:image/svg+xml'),'inline pixel sprite');
+ assert.ok(artMeta.svg(i).includes('shape-rendering="crispEdges"'),'crisp native grid');
 }
 assert.equal(artMeta.nextTier(0),1,'keyboard progression');
 assert.equal(artMeta.nextTier(3),4,'drum progression');
@@ -60,8 +58,8 @@ assert.ok(desktop.renderWidth<=2200,'canvas does not exceed performance pixel bu
 assert.ok(desktop.renderHeight>=1050,'high DPI backing height');
 assert.ok(desktop.renderWidth*desktop.renderHeight<=2600000,'canvas pixel budget protects performance');
 assert.ok(desktop.renderScale>=1.1&&desktop.renderScale<=1.5,'adaptive scale avoids expensive full DPR');
-assert.equal(ctx.imageSmoothingEnabled,true,'image smoothing enabled');
-assert.equal(ctx.imageSmoothingQuality,'high','resampling uses high quality');
+assert.equal(ctx.imageSmoothingEnabled,false,'pixel art is never smoothed');
+assert.equal(ctx.imageSmoothingQuality,'low','no interpolation');
 // Simulated pointer mapping remains in logical coordinates after increasing backing resolution.
 const center=desktop.units[0].rect;
 const logicalPoint={x:center.x+center.w/2,y:center.y+center.h/2};
@@ -90,5 +88,5 @@ assert.equal(geometry.height,1560);
 assert.ok(geometry.renderWidth>=900,'mobile backing store not downsampled');
 for(let b of geometry.blocks){assert.ok(b.rect.x>=0&&b.rect.x+b.rect.w<=geometry.width+1,'mobile blocks within viewport '+b.id);assert.ok(b.rect.y>=0&&b.rect.y+b.rect.h<=geometry.height+1,'mobile blocks within height '+b.id);}
 events.animation(1070);
-console.log('PASS — seven approved assets, merged families, 2.5 MP limit, prerendered board, pointer mapping and mobile gameplay');
+console.log('PASS — seven pixel-art sprites, independent merges, lightweight sharp canvas, pixel UI and mobile gameplay');
 })().catch(e=>{console.error(e);process.exitCode=1;});
