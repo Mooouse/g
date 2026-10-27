@@ -1,6 +1,20 @@
 name: PixelLab Art Batch — 36 of 40
 on:
   workflow_dispatch:
+    inputs:
+      mode:
+        description: 'pilot = one test sprite; full = finish remaining 36 sprites, no live release'
+        required: true
+        type: choice
+        options:
+          - pilot
+          - full
+        default: pilot
+      retry_failed:
+        description: 'Use reserved attempts only after reviewing a failed API call'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -43,24 +57,20 @@ jobs:
       - name: Generate and checkpoint (never exceed 36 paid calls)
         env:
           PIXELLAB_API_KEY: ${{ secrets.PIXELLAB_API_KEY }}
+          PIXELLAB_MODE: ${{ inputs.mode }}
+          PIXELLAB_RETRY_FAILED: ${{ inputs.retry_failed }}
         run: python tools/generate_pixellab.py
-      - name: Validate complete set and activate new levels
+      - name: Validate full set and stage new levels without touching live game
+        if: ${{ inputs.mode == 'full' }}
+        shell: bash
         run: |
           python tools/activate_pixellab.py
           node --check art.js
           node --check game.js
           node tests/smoke.cjs
-      - name: Release all accepted assets in one atomic push
-        shell: bash
-        run: |
           git add assets/pixellab/ art.js game.js index.html
-          git commit -m 'Activate PixelLab full art update and 24 instrument tiers'
+          git commit -m 'Stage reviewed PixelLab art assets and 24 game instrument levels'
           git push origin HEAD:generated/pixellab-v1
-          git fetch origin main
-          git checkout -B pixel-release origin/main
-          git merge --squash generated/pixellab-v1
-          git commit -m 'Launch PixelLab remaster: 24 instruments, 12 UI assets'
-          git push origin HEAD:main
       - name: Attach artwork archive for later review
         if: always()
         uses: actions/upload-artifact@v4
