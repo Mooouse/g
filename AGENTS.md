@@ -17,3 +17,17 @@
 ## Последнее решение пользователя — сразу добавлять без предварительных показов
 
 **Приоритет:** пользователь попросил создавать отдельные изображения для каждого игрового элемента и **не показывать их в чате перед добавлением** («не мне не показывай сразу добавляй»). Для текущей пиксельной переработки это заменяет старый режим «один рисунок — показать — ждать одобрения». Генерировать каждую картинку как отдельный PNG, сверять стиль и размеры, коммитить в `assets/pixel/` и сразу подключать к игре. Рабочий генератор: `tools/paint_assets.py`; сборка: `.github/workflows/build-pixel-assets.yml`. Перед финальным ответом проверять QA и GitHub Pages. Не удалять старые согласованные изображения из `assets/approved/`. Продолжать самостоятельно вести журнал ошибок.
+
+## NEWEST INSTRUCTIONS: PixelLab 40-generation production (28 Oct 2026)
+
+These instructions **supersede** the older section saying "do not show images in chat". The user now wants **each separate graphic generated, shown in the chat, saved, and only after full set approval integrated into the game**. PixelLab is the desired generator; the user supplied an API token in chat. **Never copy or quote that token, never commit it to GitHub, and never pass it as an Actions workflow input.** Store it only as the GitHub Actions secret named `PIXELLAB_API_KEY`, which requires the repository owner's action. This environment does not support authenticated third-party PixelLab POST calls directly.
+
+Follow `PIXELLAB_SETUP.md` and `tools/pixellab_plan.py`:
+- **40 total generation limit**: 36 designed art assets (24 distinct instrument models, 12 UI/board/FX), four attempts reserved.
+- **One-image pilot first**. Do not run 36 blind. Use PixelLab API v2 `create-image-pixen`, not the old Python rectangle drawing program.
+- The generator journals all requests and saves PNGs on separate `generated/pixellab-v1` branch. Don't activate, replace art, publish, or delete existing sprites automatically.
+- Once the pilot and rest are generated, use each sprite's individual saved path to present images to the user in chat, record comments and polish any failed ones with the reserved attempts.
+- On approval, integrate the complete generated set using `tools/activate_pixellab.py`, verify 24 playable tiers and 12 UI sprites, use a pull request from the staging branch, and confirm GitHub Pages deployment success.
+- Family levels are 1–6 for each: keyboards, ukuleles, drums, electric guitars; structural changes with progression, no mere recolors.
+- Do not claim work complete, quotas consumed, API access granted, or 24 new tiers live until the relevant Actions and integration actually succeed.
+
