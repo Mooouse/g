@@ -1,178 +1,77 @@
-/* Original hand-built high-detail music instrument sprites.
-   Each instrument uses a matching aspect ratio: compact synths (square),
-   portrait guitars (1×2), concert keyboards (2×1), harps (2×2). */
+/* Melody Scanner pixel-art visual pack; native 64px grid, no antialiasing. */
 (()=>{'use strict';
-const E=(x,y,rx,ry,f,s='#603951',sw=3)=>'<ellipse cx="'+x+'" cy="'+y+'" rx="'+rx+'" ry="'+ry+'" fill="'+f+'" stroke="'+s+'" stroke-width="'+sw+'"/>';
-const C=(x,y,r,f,s='#603951',sw=2)=>'<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="'+f+'" stroke="'+s+'" stroke-width="'+sw+'"/>';
-const R=(x,y,w,h,r,f,s='#5e3e58',sw=3)=>'<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="'+r+'" fill="'+f+'" stroke="'+s+'" stroke-width="'+sw+'"/>';
-const P=(d,f,s='#603951',sw=3)=>'<path d="'+d+'" fill="'+f+'" stroke="'+s+'" stroke-width="'+sw+'" stroke-linecap="round" stroke-linejoin="round"/>';
-const L=(x,y,X,Y,s='#fef5d4',sw=2)=>'<path d="M'+x+' '+y+'L'+X+' '+Y+'" stroke="'+s+'" stroke-linecap="round" stroke-width="'+sw+'"/>';
-const defs=`<defs>
-<linearGradient id="wood" x1=".16" y1=".08" x2=".93" y2=".9"><stop stop-color="#ffe0a0"/><stop offset=".17" stop-color="#d89044"/><stop offset=".41" stop-color="#a95d2c"/><stop offset=".63" stop-color="#e6a755"/><stop offset=".84" stop-color="#985028"/><stop offset="1" stop-color="#4f2934"/></linearGradient>
-<linearGradient id="red" x1=".08" y1=".03" x2=".96" y2=".96"><stop stop-color="#ffa87b"/><stop offset=".17" stop-color="#e54d37"/><stop offset=".44" stop-color="#a90e28"/><stop offset=".67" stop-color="#e3324a"/><stop offset="1" stop-color="#5a0d2d"/></linearGradient>
-<linearGradient id="blue" x1=".09" y1=".01" x2=".89" y2="1"><stop stop-color="#c0f6ff"/><stop offset=".17" stop-color="#3eaddc"/><stop offset=".48" stop-color="#1863a2"/><stop offset=".72" stop-color="#2d8fc7"/><stop offset="1" stop-color="#17275f"/></linearGradient>
-<linearGradient id="purple" x1=".05" y1=".04" x2="1" y2="1"><stop stop-color="#e9c5fc"/><stop offset=".21" stop-color="#9651be"/><stop offset=".51" stop-color="#5e278a"/><stop offset=".75" stop-color="#913aaf"/><stop offset="1" stop-color="#331847"/></linearGradient>
-<linearGradient id="gold" x1=".12" y1=".02" x2=".84" y2="1"><stop stop-color="#fff6b9"/><stop offset=".15" stop-color="#ffc247"/><stop offset=".38" stop-color="#c77b17"/><stop offset=".55" stop-color="#ffd36e"/><stop offset=".79" stop-color="#a65b15"/><stop offset="1" stop-color="#ffdf87"/></linearGradient>
-<linearGradient id="metal" x1=".06" y1="0" x2="1" y2=".9"><stop stop-color="#fffef7"/><stop offset=".25" stop-color="#b9b1c2"/><stop offset=".5" stop-color="#6b596f"/><stop offset=".73" stop-color="#f4ebed"/><stop offset="1" stop-color="#777083"/></linearGradient>
-<linearGradient id="glass" x1=".08" y1=".04" x2=".98" y2=".94"><stop stop-color="#a8feff"/><stop offset=".25" stop-color="#247d9b"/><stop offset=".61" stop-color="#0e2b42"/><stop offset="1" stop-color="#11203c"/></linearGradient>
-<linearGradient id="black" x1="0" y1="0" x2=".9" y2="1"><stop stop-color="#626175"/><stop offset=".3" stop-color="#1d1a2a"/><stop offset="1" stop-color="#080b1b"/></linearGradient>
-<filter id="shadow" x="-30%" y="-25%" width="165%" height="165%"><feGaussianBlur in="SourceAlpha" stdDeviation="3"/><feOffset dy="4"/><feComponentTransfer><feFuncA type="linear" slope=".66"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-<filter id="glow"><feGaussianBlur stdDeviation="1.5"/></filter>
-</defs>`;
-function synth(tier,full=false,double=false){
- const palette=['#fa9726','#bd67e1','#30d6e0','#ed654e','#76e1ff','#f9b556','#d39afa','#5fd8ac'];
- const body=palette[tier%palette.length],w=full?218:166,h=double?201:full?112:143,x=(240-w)/2,y=double?13:full?55:36;
- let s='<g filter="url(#shadow)">'+R(x+1,y+2,w,h,13,'#252033','#b57442',5)
- +R(x+5,y+5,w-10,h-10,9,body,'#7d3d46',3);
- s+=P(`M${x+12} ${y+9}H${x+w-12}L${x+w-18} ${y+22}H${x+15}Z`,'#fff6d5a8','none',0);
- const top=double?61:full?50:58;
- s+=R(x+11,y+16,w-22,top-19,5,'url(#black)','#dba275',2);
- s+=C(x+31,y+31,full?13:15,'url(#gold)','#433147',3)+C(x+31,y+31,6,'#4b4d67','#f4d39d',2);
- for(let i=0;i<(full?6:4);i++){
-  const kx=x+53+i*(full?21:20);
-  s+=R(kx,y+22,8,22,2,['#ffe37e','#ff9bb5','#a5eeff','#a7ffce'][i%4],'#46384c',1);
-  s+=L(kx+4,y+19,kx+4,y+42,'#fff8e0',1);
- }
- s+=R(x+w-51,y+20,37,24,3,'url(#glass)','#403b57',2);
- for(let k=0;k<5;k++)s+=R(x+w-45+k*6,y+34-(k*3)%12,4,5+(k*3)%12,1,'#ffda62','none',0);
- for(const row of (double?[0,1]:[0])){
-  const ky=y+top+row*(h-top)/2,kwidth=w-25,kh=double?57:h-top-11;
-  const nkeys=full?10:double?8:7;
-  s+=R(x+11,ky,kwidth,kh,3,'#a97a62','#5b3543',2);
-  for(let k=0;k<nkeys;k++){
-   const kw=kwidth/nkeys;
-   s+=R(x+12+k*kw,ky+2,kw-1,kh-4,2,'#fffcf0','#4f394f',1);
-  }
-  for(let k=0;k<nkeys-1;k++)if([0,1,3,4,5].includes(k%7)){
-   const kw=kwidth/nkeys;
-   s+=R(x+12+(k+.69)*kw,ky+2,kw*.55,kh*.54,2,'url(#black)','#292638',1);
-  }
- }
- for(let k=0;k<3;k++)s+=C(x+13+k*10,y+h-5,2,'#ffdf86','#744d49',.6);
- return s+'</g>';
-}
-function stringsGuitar(tier){
- const guitarFill=['url(#red)','url(#blue)','url(#purple)','url(#wood)'][Math.abs(tier)%4];
- let s='<g filter="url(#shadow)">';
- s+=P('M62 83 C38 86 27 112 31 136 C34 156 48 168 46 183 C42 198 26 214 42 234 C64 267 125 258 139 226 C147 207 129 191 112 177 C101 160 121 150 126 133 C133 111 105 92 88 87Z',guitarFill,'#5a2d3b',6);
- s+=P('M50 204 Q43 227 63 237 Q83 247 106 226','none','#ffe8b0',2.3);
- s+=P('M39 119 Q48 95 72 95','none','#ffdcb0',2.6);
- s+=P('M86 91 C80 118 81 156 97 179','none','#f8cc8599',2.3);
- s+=P('M67 109 C92 102 110 121 107 145 C105 160 94 169 82 169 C62 166 54 153 55 139 C54 127 59 117 67 109Z','#ffd8a7','#5b3038',3);
- s+=C(81,141,21,'url(#black)','#efc478',5)+C(81,141,14,'#352339','#6a3950',1.5);
- s+=R(72,17,20,126,4,'url(#wood)','#654038',3);
- s+=P('M66 13 Q76 2 94 10 L99 32 Q93 41 73 38 L65 25Z','url(#wood)','#66403b',3);
- for(let j=0;j<6;j++){
-   const yy=15+Math.floor(j/3)*11;
-   s+=C(62+(j%3)*18,yy,4,'url(#gold)','#7c4e2e',1.3);
- }
- for(let k=0;k<6;k++){
-  let off=k*.88;
-  s+=L(77+off,24,75+k*2,217,'#fff3cc',1.15);
- }
- s+=R(60,212,42,11,2,'#453135','#d8ae6d',2);
- for(let j=0;j<11;j++)s+=L(74,50+j*7,91,50+j*7,'#f9d9a3',j===0?2:1);
- for(let j=0;j<4;j++)s+=C(100+j*6,224,2.3,'#fff2c5','#b78253',.7);
- s+=P('M108 178 Q124 189 123 211 Q115 201 112 207 Q114 190 108 178','none','#f9d487',1.4);
- return s+'</g>';
+const approved=[
+{id:'keyboard_1',family:'keys',level:1,w:1,h:1,file:'pixel:keyboard_1'},
+{id:'keyboard_2',family:'keys',level:2,w:1,h:1,file:'pixel:keyboard_2'},
+{id:'ukulele_1',family:'ukulele',level:1,w:1,h:1,file:'pixel:ukulele_1'},
+{id:'drums_1',family:'drums',level:1,w:1,h:1,file:'pixel:drums_1'},
+{id:'drums_2',family:'drums',level:2,w:2,h:2,file:'pixel:drums_2'},
+{id:'guitar_1',family:'guitar',level:1,w:1,h:2,file:'pixel:guitar_1'},
+{id:'guitar_2',family:'guitar',level:2,w:1,h:2,file:'pixel:guitar_2'}];
+const next={0:1,3:4,5:6};
+const R=(x,y,w,h,c)=>'<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" fill="'+c+'"/>';
+const P=(pts,c)=>'<polygon points="'+pts+'" fill="'+c+'"/>';
+const DARK='#211c35',EDGE='#4b2b3b',METAL='#a8b8ca',LIGHT='#f7ecd5',WHITE='#fff7e8';
+function synth(up){
+ let b=R(5,15,54,38,DARK)+R(7,13,50,39,up?'#503a91':'#a84313')+R(9,12,46,37,up?'#8260d3':'#ff810e')+R(11,13,42,5,up?'#b79aff':'#ffc34c');
+ b+=R(11,29,42,18,DARK)+R(13,31,38,14,'#d0c8b2');
+ for(let k=0;k<7;k++)b+=R(13+k*5.4,31,4.5,12,WHITE)+R(17+k*5.4,31,1,12,'#8b8390');
+ for(let k of [0,1,3,4,5])b+=R(16+k*5.4,31,3,7,DARK);
+ b+=R(13,20,8,7,DARK)+R(15,21,4,5,'#ffc96a');
+ for(let k=0;k<(up?4:3);k++)b+=R(27+k*7,20,5,6,DARK)+R(28+k*7,21,3,3,['#ef5b70','#f7d04a','#6de3ad','#6ebdff'][k]);
+ b+=R(14,48,34,2,'#8f471c');return b;
 }
 function ukulele(){
- let s='<g filter="url(#shadow)">';
- s+=P('M107 68 C87 70 77 84 80 101 C81 107 91 116 88 124 C83 137 66 143 67 163 C68 187 93 196 114 187 C129 181 134 167 130 151 C125 137 110 127 113 118 C119 98 133 96 130 82 C129 73 117 67 107 68Z','url(#wood)','#6a3440',6);
- s+=P('M78 157 Q87 181 103 179','none','#ffd693',2);
- s+=R(103,16,12,111,3,'url(#wood)','#713e35',2);
- s+=P('M98 8H121L124 26H100Z','url(#wood)','#694037',2.5);
- s+=C(107,121,13,'#472637','#ffe9a7',4);
- for(let k=0;k<4;k++){s+=L(105+k*2,17,103+k*3,179,'#fff3cd',1);s+=C(97+(k%2)*25,15+Math.floor(k/2)*10,3,'url(#gold)','#684041',1)}
- s+=R(91,162,38,7,3,'#5e322f','#ffdaa0',2);
- return s+'</g>';
+ let b=R(28,4,10,24,DARK)+R(30,5,6,25,'#8c5634')+R(31,7,4,17,'#cd9464');
+ for(let y=8;y<23;y+=4)b+=R(29,y,8,1,'#ead19b');
+ b+=R(25,3,16,6,DARK)+R(27,4,12,5,'#b6763f');
+ for(let y of [5,8]){b+=R(24,y,3,2,'#d6bb88')+R(40,y,3,2,'#d6bb88');}
+ b+=P('21,26 27,21 37,21 43,27 45,34 42,41 48,47 45,55 39,60 25,60 19,55 17,48 23,41 20,34',DARK);
+ b+=P('24,28 29,24 36,24 40,29 41,34 38,42 44,48 42,54 37,57 27,57 22,53 21,49 26,42 23,34','#b96d31');
+ b+=P('26,29 31,26 37,28 38,36 34,43 40,49 38,54 29,55 24,51 30,42 26,35','#f1a84c');
+ b+=R(29,30,6,7,DARK)+R(30,31,4,5,'#68402b')+R(28,48,9,3,DARK);
+ for(let x=30;x<=35;x+=1.7)b+=R(x,8,.7,42,'#ffe4a6');return b;
 }
-function harp(tier){
- let s='<g filter="url(#shadow)">';
- s+=P('M42 194 Q45 93 71 33 Q84 6 114 18 Q163 43 194 47 Q198 63 180 72 Q143 58 122 48 Q110 138 107 208Z','url(#gold)','#874319',6);
- s+=P('M70 32 Q90 -1 122 17 Q160 37 190 42 Q202 50 186 60 Q152 48 117 34 Q103 31 97 45Z','url(#gold)','#975520',4);
- s+=P('M92 207 Q142 192 181 69 L185 195 Q151 218 92 214Z','url(#wood)','#a25d28',5);
- s+=P('M104 207L182 83L178 194Q138 208 104 207Z','#fff0bc','#855133',2);
- for(let k=0;k<13;k++){
-  const x=102+k*6.1,top=51+k*.85,end=180-k*1.55;
-  s+=L(x,top,end,202,'#fffbea',k%3===0?2.1:1.35);
- }
- s+=R(40,199,157,17,7,'url(#gold)','#8c441b',4);
- for(let k=0;k<8;k++)s+=C(54+k*18,208,3,'#fce2a0','#915124',.9);
- for(let k=0;k<7;k++)s+=C(77+k*17,39+k*.9,4,'url(#gold)','#a05b29',1);
- s+=P('M89 35 C89 23 99 19 105 22','none','#fff2c1',4);
- return s+'</g>';
+function drums(two){
+ let b='';
+ const drum=(x,y,w,h)=>R(x-2,y-2,w+4,h+4,DARK)+R(x,y,w,h,'#e66d17')+R(x+3,y+3,w-6,h-5,'#faac35')+R(x-1,y-1,w+2,4,METAL)+R(x+1,y,w-2,2,LIGHT)+R(x-1,y+h-3,w+2,3,'#51566d');
+ b+=R(16,31,31,26,DARK)+R(18,29,28,26,'#a8441d')+R(20,30,24,24,'#f9ebce')+R(23,34,7,3,'#fffdfa');
+ b+=R(22,53,4,7,METAL)+R(41,53,4,7,METAL);
+ b+=drum(two?13:34,21,two?16:14,13);if(two)b+=drum(35,21,16,13);
+ b+=R(7,14,3,44,METAL)+R(5,56,7,3,DARK)+R(2,9,22,4,'#9c591d')+R(3,6,20,5,'#f4bd35')+R(6,6,14,2,'#fff0a3');
+ if(two){b+=R(53,19,3,40,METAL)+R(46,16,16,4,'#ab6424')+R(45,13,17,5,'#f8c64b')+drum(4,38,13,18);}
+ return b;
 }
-function drumset(){
- let s='<g filter="url(#shadow)">';
- s+=L(53,128,30,215,'#d9c5d8',5)+L(165,128,190,215,'#d9c5d8',5);
- s+=R(35,85,62,70,12,'url(#red)','#733144',4)+R(113,85,70,70,12,'url(#blue)','#4a385f',4);
- s+=E(67,85,33,13,'#fff0cf','#624059',4)+E(148,85,36,13,'#fff0cf','#68435f',4);
- s+=C(108,165,55,'url(#purple)','#603a66',7)+C(108,165,41,'#192132','#f6e7cc',5);
- s+=C(108,165,28,'#3b335f','#8278ce',2);
- s+=L(46,32,87,92,'#fbe5b3',5)+L(174,32,132,91,'#fbe5b3',5);
- s+=E(50,38,45,9,'url(#gold)','#985625',3)+E(166,30,41,9,'url(#gold)','#965421',3);
- return s+'</g>';
+function guitar(up){
+ let b='';
+ const body=up?'#176acb':'#b20d41',hi=up?'#51c7ff':'#f16f87',trim=up?'#c5def9':'#f6bb55';
+ // Tall native 64x128 sprite: unmistakably different body silhouettes.
+ b+=R(28,4,11,61,DARK)+R(30,6,7,60,up?'#4b3950':'#74413b');
+ b+=P(up?'25,3 41,3 43,11 40,17 39,21 27,21 24,16':'28,3 42,3 45,8 43,19 27,19 25,11',DARK);
+ b+=P(up?'27,5 39,5 41,11 38,17 29,17 26,12':'29,5 40,5 42,10 41,17 28,17 27,10',up?'#157cda':'#ba2048');
+ for(let j=0;j<3;j++){b+=R(22,7+j*5,4,2,trim)+R(42,7+j*5,4,2,trim);}
+ for(let y=26;y<64;y+=5)b+=R(29,y,10,1,trim);
+ const outline=up?'12,68 19,61 25,73 34,71 43,69 50,64 55,73 50,82 54,94 50,108 40,117 21,117 12,110 10,96 16,83':'13,74 20,66 28,72 41,70 49,77 53,90 52,107 44,116 21,116 11,106 10,93';
+ b+=P(outline,DARK);
+ const fill=up?'15,74 21,67 26,78 36,75 45,75 50,70 52,76 47,83 50,94 47,106 39,113 22,113 15,107 13,94 19,82':'16,77 22,71 29,76 41,74 47,80 50,93 49,106 42,112 23,112 15,105 13,93';
+ b+=P(fill,body)+R(16,96,7,11,hi)+R(20,111,23,3,up?'#09458c':'#790a32');
+ for(let y of [79,91])b+=R(25,y,21,9,DARK)+R(27,y+2,17,5,'#c9d5df')+R(28,y+3,15,3,'#596273');
+ b+=R(27,102,19,5,trim)+R(44,90,4,4,trim)+R(44,97,4,4,trim);
+ for(let x=30;x<=37;x+=1.4)b+=R(x,17,.6,88,'#f5d9ad');
+ return b;
 }
-function organ(){
- let s='<g filter="url(#shadow)">';
- s+=R(29,77,176,139,13,'url(#wood)','#633d3b',6);
- for(let k=0;k<10;k++)s+=R(39+k*16,27-(5-Math.abs(5-k))*3,12,82+(5-Math.abs(5-k))*3,3,'url(#metal)','#70687a',2);
- s+=R(42,119,149,36,5,'#fbf3e2','#82605d',3);
- for(let k=0;k<12;k++)s+=R(45+k*12,122,11.5,29,1,'#fffefa','#5d505e',.7);
- for(let k=0;k<9;k++)if(k%3!==2)s+=R(52+k*15,122,8,15,1,'url(#black)','#272333',1);
- s+=R(42,163,149,31,5,'#fff7e2','#734e4e',3);
- for(let k=0;k<12;k++)s+=R(45+k*12,166,11.5,25,1,'#fffefa','#5d505e',.7);
- return s+'</g>';
+function svg(i){
+ const a=approved[i]||approved[0],w=a.w*64,h=a.h*64;
+ let art=i<2?synth(i===1):i===2?ukulele():i<5?drums(i===4):guitar(i===6);
+ // 2x2 drum preserves detailed center artwork with 2x nearest-neighbor scaling.
+ if(i===4)art='<g transform="scale(2)">'+art+'</g>';
+ const frame='<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" shape-rendering="crispEdges">'+art+'</svg>';
+ return frame;
 }
-function orchestral(){let s=harp(12);s+='<g transform="translate(80,120) scale(.54)">'+drumset()+'</g>';return s;}
-const palette=[
- {type:'synth',color:0,w:155,h:155}, {type:'synth',color:1,w:155,h:155},
- {type:'ukulele',w:220,h:200},{type:'synthwide',color:2,w:258,h:130},
- {type:'guitar',color:0,w:170,h:270},{type:'guitar',color:1,w:170,h:270},
- {type:'guitar',color:2,w:170,h:270},{type:'synthdouble',color:3,w:240,h:235},
- {type:'guitar',color:3,w:170,h:270},{type:'harp',w:230,h:230},
- {type:'guitar',color:2,w:170,h:270},{type:'synthdouble',color:5,w:245,h:234},
- {type:'harp',w:230,h:230},{type:'drums',w:230,h:230},
- {type:'organ',w:235,h:235},{type:'orchestra',w:230,h:230}
-];
-const svg=tier=>{
- tier=Math.max(0,Math.min(15,tier|0));const item=palette[tier];
- let body='',view='0 0 240 230';
- if(item.type==='synth'){body=synth(item.color,false,false);view='32 30 176 153';}
- if(item.type==='synthwide'){body=synth(item.color,true,false);view='8 51 224 124';}
- if(item.type==='synthdouble'){body=synth(item.color,true,true);view='8 7 224 216';}
- if(item.type==='ukulele'){body=ukulele();view='40 0 135 205';}
- if(item.type==='guitar'){body=stringsGuitar(item.color);view='15 0 140 264';}
- if(item.type==='harp'){body=harp(tier);view='27 7 179 215';}
- if(item.type==='drums'){body=drumset();view='20 19 189 208';}
- if(item.type==='organ'){body=organ();view='19 5 198 225';}
- if(item.type==='orchestra'){body=orchestral();view='22 0 202 231';}
- return '<svg xmlns="http://www.w3.org/2000/svg" width="'+item.w+'" height="'+item.h+'" viewBox="'+view+'" preserveAspectRatio="xMidYMid meet">'+defs+body+'</svg>';
-};
-// Approved sprites (each instrument family has its own level sequence).
-// Images are independent transparent WebP files; unused previous SVG variations
-// are retained solely as a fallback if an image fails to load.
-const approved=[
- {id:'keyboard_1',family:'keys',level:1,w:1,h:1,file:'assets/approved/keyboard_1.webp'},
- {id:'keyboard_2',family:'keys',level:2,w:1,h:1,file:'assets/approved/keyboard_2.webp'},
- {id:'ukulele_1',family:'ukulele',level:1,w:1,h:1,file:'assets/approved/ukulele_1.webp'},
- {id:'drums_1',family:'drums',level:1,w:1,h:1,file:'assets/approved/drums_1.webp'},
- {id:'drums_2',family:'drums',level:2,w:2,h:2,file:'assets/approved/drums_2.webp'},
- {id:'guitar_1',family:'guitar',level:1,w:1,h:2,file:'assets/approved/guitar_1.webp'},
- {id:'guitar_2',family:'guitar',level:2,w:1,h:2,file:'assets/approved/guitar_2.webp'}
-];
-const next={0:1,3:4,5:6};
 const cache=new Map();
-function src(tier){
- const t=approved[tier];
- if(t)return t.file;
- tier=Math.max(0,Math.min(15,tier|0));
- if(!cache.has(tier))cache.set(tier,'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg(tier)));
- return cache.get(tier);
-}
-const spans=tier=>approved[tier]?{w:approved[tier].w,h:approved[tier].h}:{w:1,h:1};
-const nextTier=tier=>Number.isInteger(next[tier])?next[tier]:null;
+const src=i=>{if(!cache.has(i))cache.set(i,'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg(i)));return cache.get(i);};
+const spans=i=>{const a=approved[i];return a?{w:a.w,h:a.h}:{w:1,h:1};};
+const nextTier=i=>Number.isInteger(next[i])?next[i]:null;
 const spawnTiers=[0,0,0,2,2,3,3,5,5];
-window.GridMusicArt={src,svg,spans,nextTier,approved,spawnTiers,total:approved.length};
+window.GridMusicArt={src,svg,spans,nextTier,approved,spawnTiers,total:7,style:'pixel-art'};
 })();
