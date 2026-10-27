@@ -217,6 +217,10 @@
       ],
       "status": "completed"
     },
+    "result_panel": {
+      "attempt": 35,
+      "status": "request_started"
+    },
     "scanner": {
       "attempt": 30,
       "bytes": 4115,
@@ -299,6 +303,6 @@
       "status": "completed"
     }
   },
-  "spent_attempts": 34,
+  "spent_attempts": 35,
   "version": 1
 }
