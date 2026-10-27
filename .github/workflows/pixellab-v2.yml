@@ -1,0 +1,71 @@
+name: PixelLab Art Batch — 36 of 40
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pixellab-generation
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 110
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Check for private API key
+        env:
+          PIXELLAB_API_KEY: ${{ secrets.PIXELLAB_API_KEY }}
+        run: |
+          if [ -z "$PIXELLAB_API_KEY" ]; then
+            echo 'Missing PIXELLAB_API_KEY repository secret. No credits spent.'
+            exit 1
+          fi
+      - name: Prepare isolated checkpoint branch
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if git ls-remote --exit-code --heads origin generated/pixellab-v1 > /dev/null; then
+            git fetch origin generated/pixellab-v1
+            git checkout -B generated/pixellab-v1 FETCH_HEAD
+          else
+            git checkout -b generated/pixellab-v1
+            git push origin HEAD:generated/pixellab-v1
+          fi
+      - name: Install PNG validator and HTTPS client
+        run: python -m pip install --disable-pip-version-check Pillow==11.3.0 requests==2.32.4
+      - name: Generate and checkpoint (never exceed 36 paid calls)
+        env:
+          PIXELLAB_API_KEY: ${{ secrets.PIXELLAB_API_KEY }}
+        run: python tools/generate_pixellab.py
+      - name: Validate complete set and activate new levels
+        run: |
+          python tools/activate_pixellab.py
+          node --check art.js
+          node --check game.js
+          node tests/smoke.cjs
+      - name: Release all accepted assets in one atomic push
+        shell: bash
+        run: |
+          git add assets/pixellab/ art.js game.js index.html
+          git commit -m 'Activate PixelLab full art update and 24 instrument tiers'
+          git push origin HEAD:generated/pixellab-v1
+          git fetch origin main
+          git checkout -B pixel-release origin/main
+          git merge --squash generated/pixellab-v1
+          git commit -m 'Launch PixelLab remaster: 24 instruments, 12 UI assets'
+          git push origin HEAD:main
+      - name: Attach artwork archive for later review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pixellab-generated-art
+          path: assets/pixellab/
+          if-no-files-found: ignore
+          retention-days: 90
