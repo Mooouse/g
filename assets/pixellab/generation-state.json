@@ -3,7 +3,12 @@
   "requests": {
     "keyboard_1": {
       "attempt": 1,
-      "status": "request_started"
+      "bytes": 2077,
+      "size": [
+        64,
+        64
+      ],
+      "status": "completed"
     }
   },
   "spent_attempts": 1,
