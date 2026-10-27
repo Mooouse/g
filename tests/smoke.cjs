@@ -36,9 +36,22 @@ for(let i=0;i<expected.length;i++){
  const [id,family,level,w,h]=expected[i],a=artMeta.approved[i];
  assert.deepEqual([a.id,a.family,a.level,a.w,a.h],[id,family,level,w,h]);
  assert.deepEqual({...artMeta.spans(i)},{w,h},id+' cell footprint');
- const file=a.file;assert.ok(file.startsWith('pixel:'),'pixel-art sprite id');
- assert.ok(artMeta.src(i).startsWith('data:image/svg+xml'),'inline pixel sprite');
- assert.ok(artMeta.svg(i).includes('shape-rendering="crispEdges"'),'crisp native grid');
+ const file=a.file;assert.ok(file.startsWith('assets/pixel/'),'individual PNG sprite path');
+ const data=fs.readFileSync(file);
+ assert.ok(data.length>100,'PNG data not empty: '+id);
+ assert.equal(data.subarray(0,8).toString('hex'),'89504e470d0a1a0a','valid PNG signature: '+id);
+ assert.equal(data.readUInt32BE(16),w*64,'native width: '+id);
+ assert.equal(data.readUInt32BE(20),h*64,'native height: '+id);
+ assert.equal(artMeta.src(i),file,'image path: '+id);
+}
+assert.equal(artMeta.style,'pixel-art-images');
+const uiExpected={background_tile:[64,64],cell:[64,64],metal_block:[64,64],boss_block:[128,128],scanner:[16,64],charge_button:[128,48],sparkle:[16,16]};
+for(const [name,dim] of Object.entries(uiExpected)){
+ const file=artMeta.uiAssets[name];assert.ok(file,'UI asset path: '+name);
+ const bytes=fs.readFileSync(file);
+ assert.equal(bytes.subarray(0,8).toString('hex'),'89504e470d0a1a0a','UI PNG signature: '+name);
+ assert.equal(bytes.readUInt32BE(16),dim[0],'UI sprite width: '+name);
+ assert.equal(bytes.readUInt32BE(20),dim[1],'UI sprite height: '+name);
 }
 assert.equal(artMeta.nextTier(0),1,'keyboard progression');
 assert.equal(artMeta.nextTier(3),4,'drum progression');
@@ -88,5 +101,5 @@ assert.equal(geometry.height,1560);
 assert.ok(geometry.renderWidth>=900,'mobile backing store not downsampled');
 for(let b of geometry.blocks){assert.ok(b.rect.x>=0&&b.rect.x+b.rect.w<=geometry.width+1,'mobile blocks within viewport '+b.id);assert.ok(b.rect.y>=0&&b.rect.y+b.rect.h<=geometry.height+1,'mobile blocks within height '+b.id);}
 events.animation(1070);
-console.log('PASS — seven pixel-art sprites, independent merges, lightweight sharp canvas, pixel UI and mobile gameplay');
+console.log('PASS — 14 standalone native pixel PNG sprites, no smoothing, separate family merges, mobile board, scanner and controls');
 })().catch(e=>{console.error(e);process.exitCode=1;});
