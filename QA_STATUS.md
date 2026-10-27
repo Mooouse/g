@@ -1,31 +1,15 @@
 # Melody Scanner automated QA
 
-Commit: c0153c7cefdfb37d04137b430e3fcb53f2067cb3
+Commit: 45eaa04456fb07a4f76714cea2b4f525a1d6c91d
 Node: v22.23.3
 
 | Check | Exit code |
 | --- | ---: |
 | Sprite artwork | 0 |
 | Game syntax | 0 |
-| Gameplay / mobile test | 1 |
+| Gameplay / mobile test | 0 |
 
 ### Gameplay output
 ~~~
-AssertionError [ERR_ASSERTION]: pixel-art sprite id
-    at /home/runner/work/g/g/tests/smoke.cjs:39:27
-    at Object.<anonymous> (/home/runner/work/g/g/tests/smoke.cjs:92:3)
-    at Module._compile (node:internal/modules/cjs/loader:1781:14)
-    at Object..js (node:internal/modules/cjs/loader:1913:10)
-    at Module.load (node:internal/modules/cjs/loader:1505:32)
-    at Function._load (node:internal/modules/cjs/loader:1309:12)
-    at wrapModuleLoad (node:internal/modules/cjs/loader:254:19)
-    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
-    at node:internal/main/run_main_module:36:49 {
-  generatedMessage: false,
-  code: 'ERR_ASSERTION',
-  actual: false,
-  expected: true,
-  operator: '==',
-  diff: 'simple'
-}
+PASS — 14 standalone native pixel PNG sprites, no smoothing, separate family merges, mobile board, scanner and controls
 ~~~
