@@ -54,8 +54,12 @@
         128
       ],
       "status": "completed"
+    },
+    "ukulele_1": {
+      "attempt": 7,
+      "status": "request_started"
     }
   },
-  "spent_attempts": 6,
+  "spent_attempts": 7,
   "version": 1
 }
