@@ -10,6 +10,10 @@
       ],
       "status": "completed"
     },
+    "boss_block": {
+      "attempt": 29,
+      "status": "request_started"
+    },
     "cell": {
       "attempt": 27,
       "bytes": 4861,
@@ -245,6 +249,6 @@
       "status": "completed"
     }
   },
-  "spent_attempts": 28,
+  "spent_attempts": 29,
   "version": 1
 }
