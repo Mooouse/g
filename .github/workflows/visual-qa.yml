@@ -1,0 +1,51 @@
+name: Browser screenshot QA
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'game.js'
+      - 'art.js'
+      - 'style.css'
+      - 'index.html'
+      - '.github/workflows/visual-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: browser-actions/setup-chrome@v1
+        id: chrome
+        with:
+          chrome-version: stable
+      - name: Take screenshots
+        shell: bash
+        run: |
+          # Avoid remote SDK/font loads so the capture is deterministic.
+          sed -i 's#<script defer src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>##' index.html
+          sed -i "1{/^@import /d}" style.css
+          python3 -m http.server 8321 --bind 127.0.0.1 >/tmp/screenshot-server.log 2>&1 &
+          sleep 2
+          mkdir -p docs/qa-screenshots
+          CHROME="${{ steps.chrome.outputs.chrome-path }}"
+          set +e
+          timeout 16s "$CHROME" --headless=new --no-sandbox --disable-dev-shm-usage --disable-background-networking --no-first-run --hide-scrollbars --window-size=1650,928 --force-device-scale-factor=2 --screenshot=/tmp/desktop.png http://127.0.0.1:8321/ >/tmp/desktop.log 2>&1
+          D=$?
+          timeout 16s "$CHROME" --headless=new --no-sandbox --disable-dev-shm-usage --disable-background-networking --no-first-run --hide-scrollbars --window-size=430,850 --force-device-scale-factor=2 --screenshot=/tmp/mobile.png http://127.0.0.1:8321/ >/tmp/mobile.log 2>&1
+          M=$?
+          set -e
+          test -s /tmp/desktop.png
+          test -s /tmp/mobile.png
+          ffmpeg -nostdin -loglevel error -y -i /tmp/desktop.png -vf scale=1300:-1 -q:v 4 docs/qa-screenshots/desktop.jpg
+          ffmpeg -nostdin -loglevel error -y -i /tmp/mobile.png -vf scale=480:-1 -q:v 4 docs/qa-screenshots/mobile.jpg
+          git checkout -- index.html style.css
+          printf 'Desktop Chrome exit: %s\nMobile Chrome exit: %s\n' "$D" "$M" > docs/qa-screenshots/status.txt
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add docs/qa-screenshots/
+          if ! git diff --cached --quiet; then
+            git commit -m "Record actual Chrome gameplay screenshots"
+            git push
+          fi
