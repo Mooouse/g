@@ -1,0 +1,1 @@
+User authorization: proceed with all remaining PixelLab art generations from the verified one-image pilot. Respect 36 planned attempts, four reserved, save one PNG per item, and stage the result without exposing API credentials.
