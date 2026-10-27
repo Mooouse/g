@@ -45,8 +45,12 @@
         128
       ],
       "status": "completed"
+    },
+    "keyboard_6": {
+      "attempt": 6,
+      "status": "request_started"
     }
   },
-  "spent_attempts": 5,
+  "spent_attempts": 6,
   "version": 1
 }
