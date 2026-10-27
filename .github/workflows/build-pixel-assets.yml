@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - 'tools/paint_assets.py'
+      - 'tools/remaster_pixel_assets.py'
       - '.github/workflows/build-pixel-assets.yml'
   workflow_dispatch:
 permissions:
@@ -17,8 +18,9 @@ jobs:
           python-version: '3.12'
       - name: Render separate native-pixel PNGs
         run: |
-          python -m pip install Pillow==11.3.0
+          python -m pip install Pillow==11.3.0 numpy==2.2.6
           python tools/paint_assets.py
+          python tools/remaster_pixel_assets.py
           python - <<'PY'
           from PIL import Image
           from pathlib import Path
