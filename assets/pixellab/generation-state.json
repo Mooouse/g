@@ -30,7 +30,12 @@
     },
     "drums_4": {
       "attempt": 16,
-      "status": "request_started"
+      "bytes": 10059,
+      "size": [
+        128,
+        128
+      ],
+      "status": "completed"
     },
     "keyboard_1": {
       "attempt": 1,
