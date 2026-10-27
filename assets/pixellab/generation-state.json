@@ -219,7 +219,12 @@
     },
     "settings_icon": {
       "attempt": 32,
-      "status": "request_started"
+      "bytes": 1375,
+      "size": [
+        64,
+        64
+      ],
+      "status": "completed"
     },
     "ukulele_1": {
       "attempt": 7,
