@@ -1,6 +1,6 @@
 # Melody Scanner automated QA
 
-Commit: a5dce57c20e18c57edb776df5bfc4cd2dc41d090
+Commit: 69ca0ae6d72fd702161cbb7cef903c481fe11284
 Node: v22.23.4
 
 | Check | Exit code |
@@ -11,5 +11,5 @@ Node: v22.23.4
 
 ### Gameplay output
 ~~~
-PASS — 19 standalone native pixel PNG sprites, no smoothing, separate family merges, mobile board, scanner and controls
+PASS — 7 unique playable tiers, 12 UI sprites, merges, mobile board and scanner
 ~~~
