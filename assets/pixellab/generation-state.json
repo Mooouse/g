@@ -39,7 +39,12 @@
     },
     "coin": {
       "attempt": 36,
-      "status": "request_started"
+      "bytes": 3000,
+      "size": [
+        64,
+        64
+      ],
+      "status": "completed"
     },
     "drums_1": {
       "attempt": 13,
