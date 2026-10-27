@@ -2,6 +2,7 @@
 (()=>{'use strict';
 const canvas=document.getElementById('game'),$=id=>document.getElementById(id),ART=window.GridMusicArt;
 let ctx=canvas.getContext('2d');
+const ASSET_BUILD='pixel-remaster-20261028-v2'; // bust cached placeholder PNGs
 const KEY='melody-scanner-approved-assets-v1';
 const OLD_KEY='melody-scanner-video-reference-v3';
 const I={
@@ -536,7 +537,7 @@ let gfx={};
 function setupImages(){
  imgs=Array.from({length:ART.total},(_,tier)=>{
   const im=new Image();
-  im.src=ART.src(tier);
+  im.src=ART.src(tier)+'?rev='+ASSET_BUILD;
   return im;
  });
  gfx={};
@@ -546,7 +547,7 @@ function setupImages(){
   if(name==='background_tile'||name==='cell'){
    im.onload=()=>{if(LAY)cacheStaticScene();};
   }
-  im.src=path;
+  im.src=path+'?rev='+ASSET_BUILD;
  }
 }
 class AudioEngine{
