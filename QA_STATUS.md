@@ -1,15 +1,31 @@
 # Melody Scanner automated QA
 
-Commit: 71564845711c795d339d440b5c6d81e9f3e2473c
+Commit: e7a3493d2e72146e165e1abde29ad1a3c2d317f4
 Node: v22.23.3
 
 | Check | Exit code |
 | --- | ---: |
 | Sprite artwork | 0 |
 | Game syntax | 0 |
-| Gameplay / mobile test | 0 |
+| Gameplay / mobile test | 1 |
 
 ### Gameplay output
 ~~~
-PASS — seven pixel-art sprites, independent merges, lightweight sharp canvas, pixel UI and mobile gameplay
+AssertionError [ERR_ASSERTION]: pixel-art sprite id
+    at /home/runner/work/g/g/tests/smoke.cjs:39:27
+    at Object.<anonymous> (/home/runner/work/g/g/tests/smoke.cjs:92:3)
+    at Module._compile (node:internal/modules/cjs/loader:1781:14)
+    at Object..js (node:internal/modules/cjs/loader:1913:10)
+    at Module.load (node:internal/modules/cjs/loader:1505:32)
+    at Function._load (node:internal/modules/cjs/loader:1309:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:254:19)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+    at node:internal/main/run_main_module:36:49 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
 ~~~
