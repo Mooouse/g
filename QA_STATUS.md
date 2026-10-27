@@ -1,15 +1,23 @@
 # Melody Scanner automated QA
 
-Commit: 2c81382c18216af34618cbf6c654074f501806f1
+Commit: 556a94d38089a445c6c34a274039d3d7e4361d46
 Node: v22.23.3
 
 | Check | Exit code |
 | --- | ---: |
 | Sprite artwork | 0 |
 | Game syntax | 0 |
-| Gameplay / mobile test | 0 |
+| Gameplay / mobile test | 1 |
 
 ### Gameplay output
 ~~~
-PASS — seven approved assets, merges, sharp 2K HiDPI canvas, logical pointer mapping and mobile gameplay
+AssertionError [ERR_ASSERTION]: high DPI backing store avoids upscaled blurry canvas
+    at /home/runner/work/g/g/tests/smoke.cjs:58:8 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
 ~~~
