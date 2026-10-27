@@ -12,7 +12,12 @@
     },
     "cell": {
       "attempt": 27,
-      "status": "request_started"
+      "bytes": 4861,
+      "size": [
+        64,
+        64
+      ],
+      "status": "completed"
     },
     "drums_1": {
       "attempt": 13,
