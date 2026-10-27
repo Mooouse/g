@@ -18,8 +18,12 @@
         64
       ],
       "status": "completed"
+    },
+    "keyboard_3": {
+      "attempt": 3,
+      "status": "request_started"
     }
   },
-  "spent_attempts": 2,
+  "spent_attempts": 3,
   "version": 1
 }
