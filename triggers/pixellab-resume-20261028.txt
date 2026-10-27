@@ -1,0 +1,1 @@
+Authorized continuation of the user's 40-generation project: 20 unique images complete, attempt 21 timed out. Resume from checkpoint with one controlled retry using reserved attempts; never repeat already-completed images; keep new artwork staged.
