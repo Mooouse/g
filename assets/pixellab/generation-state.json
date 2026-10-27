@@ -84,7 +84,12 @@
     },
     "ukulele_4": {
       "attempt": 10,
-      "status": "request_started"
+      "bytes": 3592,
+      "size": [
+        64,
+        128
+      ],
+      "status": "completed"
     }
   },
   "spent_attempts": 10,
