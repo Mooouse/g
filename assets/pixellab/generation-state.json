@@ -10,6 +10,10 @@
       ],
       "status": "completed"
     },
+    "cell": {
+      "attempt": 27,
+      "status": "request_started"
+    },
     "drums_1": {
       "attempt": 13,
       "bytes": 2371,
@@ -227,6 +231,6 @@
       "status": "completed"
     }
   },
-  "spent_attempts": 26,
+  "spent_attempts": 27,
   "version": 1
 }
