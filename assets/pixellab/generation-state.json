@@ -208,6 +208,10 @@
       ],
       "status": "completed"
     },
+    "pause_icon": {
+      "attempt": 34,
+      "status": "request_started"
+    },
     "scanner": {
       "attempt": 30,
       "bytes": 4115,
@@ -290,6 +294,6 @@
       "status": "completed"
     }
   },
-  "spent_attempts": 33,
+  "spent_attempts": 34,
   "version": 1
 }
