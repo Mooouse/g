@@ -39,6 +39,9 @@ for(let i=0;i<expected.length;i++){
  const file=a.file;assert.ok(file.startsWith('assets/pixel/'),'individual PNG sprite path');
  const data=fs.readFileSync(file);
  assert.ok(data.length>100,'PNG data not empty: '+id);
+ // Regression guard: don't silently ship the old 200–1000 byte geometry placeholders.
+ const minimumPixels={keyboard_1:2200,keyboard_2:2200,ukulele_1:1500,drums_1:2500,drums_2:9000,guitar_1:4200,guitar_2:4200};
+ assert.ok(data.length>minimumPixels[id],id+' should contain a detailed remastered silhouette, not the previous blocky placeholder');
  assert.equal(data.subarray(0,8).toString('hex'),'89504e470d0a1a0a','valid PNG signature: '+id);
  assert.equal(data.readUInt32BE(16),w*64,'native width: '+id);
  assert.equal(data.readUInt32BE(20),h*64,'native height: '+id);
