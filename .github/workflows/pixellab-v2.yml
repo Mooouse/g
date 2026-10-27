@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - 'triggers/pixellab-full-20261028.txt'
+      - 'triggers/pixellab-resume-20261028.txt'
   workflow_dispatch:
     inputs:
       mode:
@@ -67,7 +68,7 @@ jobs:
         env:
           PIXELLAB_API_KEY: ${{ secrets.PIXELLAB_API_KEY }}
           PIXELLAB_MODE: ${{ github.event_name == 'push' && 'full' || inputs.mode }}
-          PIXELLAB_RETRY_FAILED: ${{ inputs.retry_failed }}
+          PIXELLAB_RETRY_FAILED: ${{ github.event_name == 'push' && 'true' || inputs.retry_failed }}
         run: python tools/generate_pixellab.py
       - name: Validate full set and stage new levels without touching live game
         if: ${{ github.event_name == 'push' || inputs.mode == 'full' }}
