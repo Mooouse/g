@@ -190,7 +190,29 @@ function burst(x,y,value,color){
 }
 function scatter(x,y,color,n){for(let i=0;i<n;i++)fx.push({kind:'particle',x,y,vx:(Math.random()-.5)*310,vy:(Math.random()-.5)*310,life:.45+Math.random()*.47,max:.9,size:2+Math.random()*4,color});}
 function popup(t){toast={t,time:2.3};}
-function setView(){portrait=window.innerHeight>window.innerWidth*1.08;if(portrait){canvas.width=900;canvas.height=1560;LAY={W:900,H:1560,x:76,y:145,step:104,size:99,portrait:true}}else{canvas.width=1650;canvas.height=928;LAY={W:1650,H:928,x:160,y:105,step:103,size:97,portrait:false}}layoutMobile();}
+// Render at the device's actual pixel density, while all gameplay coordinates
+// remain in the same logical 1650x928 / 900x1560 units. This prevents
+// full-screen CSS upscaling from turning the approved art into a blurry mosaic.
+let renderScale=1;
+function setView(){
+ portrait=window.innerHeight>window.innerWidth*1.08;
+ LAY=portrait?{W:900,H:1560,x:76,y:145,step:104,size:99,portrait:true}
+             :{W:1650,H:928,x:160,y:105,step:103,size:97,portrait:false};
+ // DOM rect is CSS pixels, not the backing-store size.
+ const rect=canvas.getBoundingClientRect();
+ const cssW=Math.max(1,rect.width||window.innerWidth),cssH=Math.max(1,rect.height||window.innerHeight);
+ const dpr=Math.min(3,Math.max(1,Number(window.devicePixelRatio)||1));
+ const required=Math.max(1,cssW*dpr/LAY.W,cssH*dpr/LAY.H);
+ // Keep the render target within a reasonable memory/GPU budget.
+ const budgetScale=Math.sqrt(8400000/(LAY.W*LAY.H));
+ renderScale=Math.min(required,budgetScale,3);
+ canvas.width=Math.round(LAY.W*renderScale);
+ canvas.height=Math.round(LAY.H*renderScale);
+ ctx.setTransform(canvas.width/LAY.W,0,0,canvas.height/LAY.H,0,0);
+ ctx.imageSmoothingEnabled=true;
+ ctx.imageSmoothingQuality='high';
+ layoutMobile();
+}
 let mobilePos=[];
 function layoutMobile(){
  mobilePos=[];const used=new Set(['4:0','5:0','4:1','5:1']);
@@ -340,7 +362,7 @@ function drawUnit(u,ghost=false){
    ctx.shadowBlur=0;
  }
  if(ghost)ctx.globalAlpha=.58;
- ctx.translate(cx,cy+float);ctx.scale(scale,scale);ctx.rotate(Math.sin(animClock*1.8+u.id*.71)*.012);
+ ctx.translate(cx,cy+float);ctx.scale(scale,scale); // Keep small approved sprites upright to avoid repeated resampling blur.
  const aura=ctx.createRadialGradient(0,0,5,0,0,Math.max(p.w,p.h)*.53);
  aura.addColorStop(0,'#1df9ff2d');aura.addColorStop(.6,'#63e7fa13');aura.addColorStop(1,'#43daea00');
  ctx.fillStyle=aura;ctx.beginPath();ctx.ellipse(0,0,Math.max(p.w,85)*.56,Math.max(p.h,85)*.53,0,0,Math.PI*2);ctx.fill();
@@ -355,7 +377,8 @@ function drawUnit(u,ghost=false){
    const ratio=im.naturalWidth/im.naturalHeight,maxW=p.w*1.16,maxH=p.h*1.14;
    let drawW=Math.min(maxW,maxH*ratio),drawH=drawW/ratio;
    if(drawH>maxH){drawH=maxH;drawW=drawH*ratio;}
-   ctx.shadowColor='#281b3899';ctx.shadowBlur=7;ctx.shadowOffsetY=3;
+   ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+   ctx.shadowColor='#281b3850';ctx.shadowBlur=3;ctx.shadowOffsetY=1;
    ctx.drawImage(im,-drawW*.5,-drawH*.5,drawW,drawH);
  }else{ctx.font='65px sans-serif';ctx.textAlign='center';ctx.fillStyle='#ffeec5';ctx.fillText('♫',0,0);}
  ctx.restore();
@@ -482,7 +505,7 @@ function loop(now){
  render(dt);
  requestAnimationFrame(loop);
 }
-function worldPoint(e){const box=canvas.getBoundingClientRect();return{x:(e.clientX-box.left)/box.width*canvas.width,y:(e.clientY-box.top)/box.height*canvas.height};}
+function worldPoint(e){const box=canvas.getBoundingClientRect();return{x:(e.clientX-box.left)/Math.max(1,box.width)*LAY.W,y:(e.clientY-box.top)/Math.max(1,box.height)*LAY.H};}
 const inside=(p,r)=>r&&p.x>=r.x&&p.x<=r.x+r.w&&p.y>=r.y&&p.y<=r.y+r.h;
 function pointerDown(e){
  sound.unlock();if(showResult)return;const p=worldPoint(e);let unit=unitAt(p.x,p.y);
@@ -695,6 +718,6 @@ class AudioEngine{
  }
 }
 const sound=new AudioEngine();
-window.GridGameDebug={getState:()=>clone(state),getGeometry:()=>({width:canvas.width,height:canvas.height,portrait,blocks:state.blocks.map(b=>({id:b.id,rect:rectOfBlock(b)})),units:state.units.map(u=>({id:u.id,rect:rectOfUnit(u)}))}),scan:()=>{let n=state.blocks.filter(b=>b.hp>0).length;for(const u of state.units)emitInstrument(u);return{before:n,after:state.blocks.filter(b=>b.hp>0).length,coins:state.coins};},spawn,merge:(a,b)=>merge(state.units[a],state.units[b]),restart:()=>initWorld(false),setCharge:n=>state.charge=n};
+window.GridGameDebug={getState:()=>clone(state),getGeometry:()=>({width:LAY.W,height:LAY.H,renderWidth:canvas.width,renderHeight:canvas.height,renderScale,portrait,blocks:state.blocks.map(b=>({id:b.id,rect:rectOfBlock(b)})),units:state.units.map(u=>({id:u.id,rect:rectOfUnit(u)}))}),scan:()=>{let n=state.blocks.filter(b=>b.hp>0).length;for(const u of state.units)emitInstrument(u);return{before:n,after:state.blocks.filter(b=>b.hp>0).length,coins:state.coins};},spawn,merge:(a,b)=>merge(state.units[a],state.units[b]),restart:()=>initWorld(false),setCharge:n=>state.charge=n};
 sdkInit();
 })();
