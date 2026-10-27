@@ -28,7 +28,9 @@ jobs:
             "guitar_1":(64,128),"guitar_2":(64,128),
             "background_tile":(64,64),"cell":(64,64),
             "metal_block":(64,64),"boss_block":(128,128),
-            "scanner":(16,64),"charge_button":(128,48),"sparkle":(16,16)}
+            "scanner":(16,64),"charge_button":(128,48),"sparkle":(16,16),
+            "settings_icon":(32,32),"shop_icon":(32,32),"pause_icon":(32,32),
+            "coin":(24,24),"result_panel":(128,64)}
           for name,dim in items.items():
             p=Path('assets/pixel')/(name+'.png')
             with Image.open(p) as im:
