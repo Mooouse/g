@@ -38,8 +38,8 @@ jobs:
           set -e
           test -s /tmp/desktop.png
           test -s /tmp/mobile.png
-          ffmpeg -nostdin -loglevel error -y -i /tmp/desktop.png -vf scale=1300:-1 -q:v 4 docs/qa-screenshots/desktop.jpg
-          ffmpeg -nostdin -loglevel error -y -i /tmp/mobile.png -vf scale=480:-1 -q:v 4 docs/qa-screenshots/mobile.jpg
+          cp /tmp/desktop.png docs/qa-screenshots/desktop.png
+          cp /tmp/mobile.png docs/qa-screenshots/mobile.png
           git checkout -- index.html style.css
           printf 'Desktop Chrome exit: %s\nMobile Chrome exit: %s\n' "$D" "$M" > docs/qa-screenshots/status.txt
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
