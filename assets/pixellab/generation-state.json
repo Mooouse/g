@@ -12,7 +12,12 @@
     },
     "boss_block": {
       "attempt": 29,
-      "status": "request_started"
+      "bytes": 20790,
+      "size": [
+        128,
+        128
+      ],
+      "status": "completed"
     },
     "cell": {
       "attempt": 27,
