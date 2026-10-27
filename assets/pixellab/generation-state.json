@@ -264,7 +264,12 @@
     },
     "sparkle": {
       "attempt": 37,
-      "status": "request_started"
+      "bytes": 2979,
+      "size": [
+        64,
+        64
+      ],
+      "status": "completed"
     },
     "ukulele_1": {
       "attempt": 7,
