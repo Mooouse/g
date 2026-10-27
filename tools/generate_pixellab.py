@@ -72,18 +72,20 @@ def main():
         print("Missing GitHub Actions secret PIXELLAB_API_KEY; no requests sent.")
         return 3
     state=load()
+    manual_retry=os.getenv("PIXELLAB_RETRY_FAILED","false").lower()=="true"
     for item in assets:
         p=OUT/(item.name+".png")
         prev=state["requests"].get(item.name)
         if prev and prev["status"]=="completed" and p.exists():
             print("SKIP completed",item.name,flush=True)
             continue
-        if prev:
+        if prev and not (manual_retry and prev["status"]=="needs_review"):
             print("STOP: an existing attempt must be reviewed before any retry:",item.name,
                   "(no extra generation spent)",flush=True)
             return 4
-        if state["spent_attempts"] >= PLANNED:
-            print("STOP: first 36 generations exhausted, 4 reserved.",flush=True)
+        limit=TOTAL_LIMIT if manual_retry else PLANNED
+        if state["spent_attempts"] >= limit:
+            print("STOP: generation budget exhausted; no request sent.",flush=True)
             return 5
         # Journal BEFORE sending the paid request.
         state["spent_attempts"]+=1
