@@ -259,25 +259,37 @@ function textStroke(text,x,y,size,fill='#fff',align='center',stroke='#2c294c',li
  ctx.textAlign=align;ctx.textBaseline='middle';ctx.font='900 '+size+'px monospace';ctx.lineJoin='round';ctx.lineWidth=line;ctx.strokeStyle=stroke;ctx.strokeText(text,x,y);ctx.fillStyle=fill;ctx.fillText(text,x,y);
 }
 const rnd=random(8908),sparkle=Array.from({length:110},()=>({x:rnd(),y:rnd(),r:4+rnd()*25,a:.035+rnd()*.08,angle:rnd()*3})),imgFilter=()=>{};
+function readyImage(im){return !!(im&&im.complete&&im.naturalWidth>0);}
 function drawBackground(t){
  const {W,H}=LAY;
- ctx.fillStyle='#1c1934';ctx.fillRect(0,0,W,H);
- const TILE=32;
- for(let y=0;y<H;y+=TILE)for(let x=0;x<W;x+=TILE){
-  if(((x/TILE|0)+(y/TILE|0))%2===0){ctx.fillStyle='#231e3d';ctx.fillRect(x,y,TILE,TILE);}
+ const im=gfx.background_tile;
+ if(readyImage(im)){
+  for(let y=0;y<H;y+=64)for(let x=0;x<W;x+=64)
+   ctx.drawImage(im,x,y,64,64);
+ }else{
+  ctx.fillStyle='#211c34';ctx.fillRect(0,0,W,H);
+  for(let y=0;y<H;y+=32)for(let x=0;x<W;x+=32){
+   if(((x/32|0)+(y/32|0))%2===0){
+    ctx.fillStyle='#2a2341';ctx.fillRect(x,y,32,32);
+   }
+  }
  }
- // Pixel-art decorative bands at the top and bottom of the field.
- ctx.fillStyle='#44325f';ctx.fillRect(0,76,W,5);ctx.fillRect(0,H-127,W,5);
- ctx.fillStyle='#9476bd';ctx.fillRect(0,76,W,2);
+ ctx.fillStyle='#453152';ctx.fillRect(0,76,W,4);
+ ctx.fillStyle='#bd9a6f';ctx.fillRect(0,H-128,W,4);
 }
 function drawCells(){
  const cols=LAY.portrait?7:13,rows=6;
+ const im=gfx.cell;
  for(let row=0;row<rows;row++)for(let col=0;col<cols;col++){
-  const p=cellRect(col,row),x=Math.round(p.x),y=Math.round(p.y),w=Math.round(p.w),h=Math.round(p.h);
-  ctx.fillStyle='#0f152a';ctx.fillRect(x,y+6,w,h-4);
-  ctx.fillStyle=((row+col)&1)?'#36324f':'#403552';ctx.fillRect(x+3,y+3,w-6,h-8);
-  ctx.fillStyle='#695779';ctx.fillRect(x+3,y+3,w-6,4);
-  ctx.fillStyle='#1c203a';ctx.fillRect(x+3,y+h-7,w-6,3);
+  const p=cellRect(col,row),x=Math.round(p.x),y=Math.round(p.y);
+  const w=Math.round(p.w),h=Math.round(p.h);
+  if(readyImage(im)){
+   ctx.drawImage(im,x,y,w,h);
+  }else{
+   ctx.fillStyle='#101527';ctx.fillRect(x,y+4,w,h-4);
+   ctx.fillStyle='#42384f';ctx.fillRect(x+3,y+2,w-6,h-8);
+   ctx.fillStyle='#82698a';ctx.fillRect(x+3,y+2,w-6,4);
+  }
  }
 }
 function drawBlock(b){
@@ -285,20 +297,24 @@ function drawBlock(b){
  let {x,y,w,h}=rectOfBlock(b);
  x=Math.round(x);y=Math.round(y);w=Math.round(w);h=Math.round(h);
  ctx.save();
- const boss=!!b.boss,main=boss?'#e3a53a':'#74859e',bright=boss?'#ffe394':'#dce5ef',dark=boss?'#64331f':'#343b55';
- ctx.fillStyle='#101526';ctx.fillRect(x+5,y+7,w,h);
- ctx.fillStyle=dark;ctx.fillRect(x,y,w,h);
- ctx.fillStyle=main;ctx.fillRect(x+5,y+5,w-10,h-10);
- ctx.fillStyle=bright;ctx.fillRect(x+5,y+5,w-10,6);
- ctx.fillStyle=dark;ctx.fillRect(x+5,y+h-12,w-10,7);
- ctx.fillStyle=boss?'#87263d':'#262639';ctx.fillRect(x+13,y+16,w-26,h-36);
- ctx.fillStyle=boss?'#b4394e':'#353a53';ctx.fillRect(x+18,y+20,w-36,h-46);
- ctx.fillStyle=bright;
- for(const [xx,yy] of [[x+8,y+8],[x+w-14,y+8],[x+8,y+h-16],[x+w-14,y+h-16]])ctx.fillRect(xx,yy,6,6);
- const value=makeBlockText(b.hp),size=clamp(Math.min(w*(value.length>3?.39:.53),h*.53,75),19,80);
- textStroke(value,x+w*.5,y+h*.52,size,'#fff7da','center','#14182c',Math.max(3,size*.07));
+ const sprite=b.boss?gfx.boss_block:gfx.metal_block;
+ if(readyImage(sprite))ctx.drawImage(sprite,x,y,w,h);
+ else{
+  ctx.fillStyle=b.boss?'#a15e29':'#8190a6';ctx.fillRect(x,y,w,h);
+  ctx.fillStyle=b.boss?'#a5293c':'#2c2d44';ctx.fillRect(x+11,y+13,w-22,h-26);
+ }
+ const v=makeBlockText(b.hp);
+ const size=clamp(Math.min(w*(v.length>3?.39:.53),h*.53,75),19,80);
+ textStroke(v,x+w/2,y+h/2,size,'#fff4d7','center','#202036',Math.max(4,size*.07));
+ if(b.hp/b.max<.25){
+  ctx.globalAlpha=.65;
+  ctx.fillStyle='#6ae3b1';ctx.fillRect(x+8,y+h-13,w-16,5);
+ }
  const hit=blockMotion.get(b.id);
- if(hit){ctx.fillStyle='#ffffff44';ctx.fillRect(x+12,y+14,w-24,h-30);}
+ if(hit){
+  ctx.globalAlpha=Math.min(.45,hit.time/.36*.5);
+  ctx.fillStyle='#ffffff';ctx.fillRect(x+7,y+7,w-14,h-14);
+ }
  ctx.restore();
 }
 function drawUnit(u,ghost=false){
@@ -340,11 +356,14 @@ function drawUnit(u,ghost=false){
 function drawScan(t){
  const x=Math.round(LAY.portrait?LAY.x+((scanner+LAY.step*7)%(LAY.step*7)):LAY.x+scanner);
  const top=LAY.portrait?145:0,bottom=LAY.portrait?LAY.step*6+25:LAY.H;
+ const im=gfx.scanner;
  ctx.save();
- ctx.fillStyle='#4feec644';ctx.fillRect(x-12,top,24,bottom);
- ctx.fillStyle='#65f9cf';ctx.fillRect(x-3,top,6,bottom);
- ctx.fillStyle='#e1fff0';ctx.fillRect(x-1,top,2,bottom);
- for(let y=top;y<bottom;y+=32){ctx.fillStyle='#fff8ba';ctx.fillRect(x-7,y,14,6);}
+ if(readyImage(im)){
+  for(let y=top;y<bottom;y+=64)
+   ctx.drawImage(im,x-9,y,18,Math.min(64,bottom-y));
+ }else{
+  ctx.fillStyle='#64f5d0';ctx.fillRect(x-3,top,6,bottom-top);
+ }
  ctx.restore();
 }
 function drawFx(dt){
@@ -396,7 +415,12 @@ function drawChrome(){
  const bx=W*.5-(LAY.portrait?210:160),by=LAY.portrait?1446:764,bw=LAY.portrait?420:325,bh=LAY.portrait?84:126;
  chargeHitBox={x:bx,y:by,w:bw,h:bh};
  const outer='#e5bb71';
- fillRound(bx-7,by-7,bw+14,bh+13,18,'#393349af');fillRound(bx,by,bw,bh,17,outer);
+ if(readyImage(gfx.charge_button)){
+  ctx.drawImage(gfx.charge_button,Math.round(bx),Math.round(by),Math.round(bw),Math.round(bh));
+ }else{
+  fillRound(bx-7,by-7,bw+14,bh+13,18,'#393349af');
+  fillRound(bx,by,bw,bh,17,outer);
+ }
  fillRound(bx+10,by+9,bw-20,bh-18,10,'#152536');
  ctx.save();rounded(bx+13,by+11,(bw-26)*clamp(state.chargeFill*.65+(.3+Math.min(.45,state.charge/100)),0,1),bh-22,7);ctx.clip();
  ctx.fillStyle='#3ddbb0';ctx.fillRect(bx+12,by+10,bw-24,bh-20);ctx.restore();
@@ -504,9 +528,22 @@ function bind(){
  });
 }
 let instrumentAtlas=null;
+let gfx={};
 function setupImages(){
- imgs=Array.from({length:ART.total},(_,tier)=>{const im=new Image();im.src=ART.src(tier);return im;});
- if(ART.atlasUrl&&ART.frameForTier){instrumentAtlas=new Image();instrumentAtlas.src=ART.atlasUrl;}
+ imgs=Array.from({length:ART.total},(_,tier)=>{
+  const im=new Image();
+  im.src=ART.src(tier);
+  return im;
+ });
+ gfx={};
+ for(const [name,path] of Object.entries(ART.uiAssets||{})){
+  const im=new Image();
+  gfx[name]=im;
+  if(name==='background_tile'||name==='cell'){
+   im.onload=()=>{if(LAY)cacheStaticScene();};
+  }
+  im.src=path;
+ }
 }
 class AudioEngine{
  constructor(){
