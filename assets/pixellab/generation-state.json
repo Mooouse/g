@@ -12,7 +12,12 @@
     },
     "keyboard_2": {
       "attempt": 2,
-      "status": "request_started"
+      "bytes": 1581,
+      "size": [
+        64,
+        64
+      ],
+      "status": "completed"
     }
   },
   "spent_attempts": 2,
