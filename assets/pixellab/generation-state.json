@@ -48,7 +48,12 @@
     },
     "keyboard_6": {
       "attempt": 6,
-      "status": "request_started"
+      "bytes": 13027,
+      "size": [
+        128,
+        128
+      ],
+      "status": "completed"
     }
   },
   "spent_attempts": 6,
