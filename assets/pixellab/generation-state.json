@@ -99,8 +99,12 @@
         128
       ],
       "status": "completed"
+    },
+    "ukulele_6": {
+      "attempt": 12,
+      "status": "request_started"
     }
   },
-  "spent_attempts": 11,
+  "spent_attempts": 12,
   "version": 1
 }
