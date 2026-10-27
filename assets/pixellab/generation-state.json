@@ -37,6 +37,10 @@
       ],
       "status": "completed"
     },
+    "coin": {
+      "attempt": 36,
+      "status": "request_started"
+    },
     "drums_1": {
       "attempt": 13,
       "bytes": 2371,
@@ -308,6 +312,6 @@
       "status": "completed"
     }
   },
-  "spent_attempts": 35,
+  "spent_attempts": 36,
   "version": 1
 }
