@@ -27,8 +27,12 @@
         64
       ],
       "status": "completed"
+    },
+    "keyboard_4": {
+      "attempt": 4,
+      "status": "request_started"
     }
   },
-  "spent_attempts": 3,
+  "spent_attempts": 4,
   "version": 1
 }
