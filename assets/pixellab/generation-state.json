@@ -210,7 +210,12 @@
     },
     "pause_icon": {
       "attempt": 34,
-      "status": "request_started"
+      "bytes": 1528,
+      "size": [
+        64,
+        64
+      ],
+      "status": "completed"
     },
     "scanner": {
       "attempt": 30,
