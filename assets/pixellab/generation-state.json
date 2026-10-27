@@ -1,0 +1,11 @@
+{
+  "limit": 40,
+  "requests": {
+    "keyboard_1": {
+      "attempt": 1,
+      "status": "request_started"
+    }
+  },
+  "spent_attempts": 1,
+  "version": 1
+}
