@@ -829,7 +829,7 @@ function setupImages(){
 }
 // Play the actual recorded instrument family and level from art.js.
 const sound=new window.MelodySampleEngine(()=>state,()=>ART);
-window.GridGameDebug={getState:()=>clone(state),getDamage:(tier)=>unitDamage(tier),getAnimations:()=>Array.from(unitMotion,([id,a])=>({id,kind:a.kind,age:a.age,duration:a.duration,from:a.from,to:a.to})),
+window.GridGameDebug={getState:()=>clone(state),getDragPreview:()=>dragging?.preview?clone(dragging.preview):null,getDamage:(tier)=>unitDamage(tier),getAnimations:()=>Array.from(unitMotion,([id,a])=>({id,kind:a.kind,age:a.age,duration:a.duration,from:a.from,to:a.to})),
 planPlacement:(id,c,r)=>window.GridDragPlanner.create({units:state.units,blocks:state.blocks,spans:ART.spans}).exact(id,c,r),applyPlacement:(id,c,r)=>{const u=state.units.find(x=>x.id===id);const p=window.GridDragPlanner.create({units:state.units,blocks:state.blocks,spans:ART.spans}).exact(id,c,r);return applyDragPlan(u,p);},getGeometry:()=>({width:LAY.W,height:LAY.H,renderWidth:canvas.width,renderHeight:canvas.height,renderScale,portrait,blocks:state.blocks.map(b=>({id:b.id,rect:rectOfBlock(b)})),units:state.units.map(u=>({id:u.id,rect:rectOfUnit(u)}))}),scan:()=>{let n=state.blocks.filter(b=>b.hp>0).length;for(const u of state.units)emitInstrument(u);return{before:n,after:state.blocks.filter(b=>b.hp>0).length,coins:state.coins};},spawn,merge:(a,b)=>merge(state.units[a],state.units[b]),restart:()=>initWorld(false),setCharge:n=>state.charge=n};
 sdkInit();
 })();
