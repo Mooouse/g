@@ -2,7 +2,7 @@
 (()=>{'use strict';
 const canvas=document.getElementById('game'),$=id=>document.getElementById(id),ART=window.GridMusicArt;
 let ctx=canvas.getContext('2d');
-const ASSET_BUILD='pixellab-motion-v5'; // bust cached placeholder PNGs
+const ASSET_BUILD='pixellab-stability-v6'; // bust cached placeholder PNGs
 const KEY='melody-scanner-approved-assets-v1';
 const OLD_KEY='melody-scanner-video-reference-v3';
 const I={
@@ -70,6 +70,32 @@ function animateUnit(id,kind='spawn',from=null){
 }
 function animateHit(id,strength=1){blockMotion.set(id,{time:.36,force:Math.min(5,1+strength/600)});screenShake=Math.min(4,screenShake+.13);}
 
+// Repair saved blocks by their stable ID. Filtering invalid HP used to remove
+// blocks and shift all subsequent block IDs/coordinates on reload.
+function repairBlocks(saved){
+ const factor=1+Math.max(0,state.stage-1)*.14,byId=new Map();
+ if(Array.isArray(saved))for(const b of saved)
+  if(b&&Number.isInteger(b.id)&&b.id>=0&&b.id<configs.length&&!byId.has(b.id))byId.set(b.id,b);
+ return configs.map((base,id)=>{
+  const src=byId.get(id),normalMax=Math.ceil(base.hp*factor);
+  const max=Number.isFinite(src?.max)&&src.max>0?src.max:normalMax;
+  const hp=Number.isFinite(src?.hp)?clamp(src.hp,0,max):normalMax;
+  return {...base,id,max,hp};
+ });
+}
+function repairUnits(){
+ // Occupancy is rebuilt in order, so multi-cell items cannot overlap.
+ if(!Array.isArray(state.units)){state.units=[];return;}
+ const incoming=state.units.slice();
+ state.units=[];
+ for(const u of incoming){
+  if(!u||!Number.isInteger(u.tier)||u.tier<0||u.tier>=ART.total)continue;
+  let pos={c:u.c,r:u.r};
+  if(!Number.isInteger(pos.c)||!Number.isInteger(pos.r)||!canPlace(pos.c,pos.r,u.tier))
+   pos=findFree(u.tier,undefined,{c:Number.isFinite(u.c)?u.c:0,r:Number.isFinite(u.r)?u.r:0});
+  if(pos)state.units.push({tier:u.tier,c:pos.c,r:pos.r,id:uid++});
+ }
+}
 function read(){
  try{
   // The visual/merge overhaul changes the meaning of tiers. Keep resources,
@@ -81,19 +107,22 @@ function read(){
   if(!obj||!Number.isInteger(obj.stage)||obj.stage<1||obj.stage>500)return;
   const base=startState();
   state={...base,...obj,upgrades:{...base.upgrades,...obj.upgrades}};
-  state.coins=clamp(Number(state.coins)||0,0,1e12);
-  state.charge=clamp(Number(state.charge)||0,0,500);
-  state.time=clamp(Number(state.time)||192,0,192);
-  state.volume=clamp(Number(state.volume)||0,0,1);
-  state.music=clamp(Number(state.music)||0,0,1);
+  state.coins=Number.isFinite(state.coins)?clamp(state.coins,0,1e12):base.coins;
+  state.charge=Number.isFinite(state.charge)?clamp(state.charge,0,500):base.charge;
+  state.chargeFill=Number.isFinite(state.chargeFill)?clamp(state.chargeFill,0,1):base.chargeFill;
+  state.time=Number.isFinite(state.time)?clamp(state.time,0,192):base.time;
+  state.volume=Number.isFinite(state.volume)?clamp(state.volume,0,1):base.volume;
+  state.music=Number.isFinite(state.music)?clamp(state.music,0,1):base.music;
+  state.highest=Number.isInteger(state.highest)?clamp(state.highest,0,ART.total-1):0;
+  for(const k of ['power','speed','wealth']){
+   const max=k==='speed'?8:12;
+   state.upgrades[k]=Number.isFinite(state.upgrades[k])?clamp(Math.trunc(state.upgrades[k]),0,max):0;
+  }
   if(!I[state.lang])state.lang='en';
   if(legacy){state.units=[];state.blocks=[];state.highest=6;state.finished=false;}
-  if(!Array.isArray(state.units)||!Array.isArray(state.blocks)||!state.blocks.length){
-    state.units=[];state.blocks=[];
-  }
-  state.units=state.units.filter(u=>Number.isInteger(u.tier)&&u.tier>=0&&u.tier<ART.total);
-  state.units.forEach(u=>u.id=uid++);
-  state.blocks=state.blocks.filter(b=>b&&Number.isFinite(b.hp));
+  state.blocks=repairBlocks(state.blocks);
+  repairUnits();
+
  }catch(e){console.warn('Save unavailable',e);}
 }
 let saveTimer=0;
@@ -105,7 +134,11 @@ async function sdkInit(){
  store=sdk.data?.getItem&&sdk.data?.setItem?sdk.data:localStorage;
  try{const f=s=>sound.setPortalMuted(!!s?.muteAudio);f(sdk.game?.settings);sdk.game?.addSettingsChangeListener?.(f);}catch(e){}
  }}catch(e){console.info('Standalone preview');}
- if(!store)store=localStorage;read();if(!state.blocks.length)initWorld(true);else{state.blocks=state.blocks.map((b,i)=>({...configs[i],...b}));if(state.blocks.length!==configs.length)initWorld(true);}
+ if(!store)store=localStorage;
+ read();
+ if(!state.blocks.length)initWorld(true);
+ else{state.blocks=repairBlocks(state.blocks);repairUnits();}
+ save(); // Persist repaired finite state on the next safe tick.
  setupImages();setView();bind();fillPanel();booted=true;gameEvent('loadingStop');gameEvent('gameplayStart');requestAnimationFrame(loop);
 }
 function canPlace(c,r,tier,ignore){
@@ -132,15 +165,28 @@ function findFree(tier,ignore,near=null){
 function occupiedUnit(c,r){return [...state.units].reverse().find(u=>c>=u.c&&c<u.c+ART.spans(u.tier).w&&r>=u.r&&r<u.r+ART.spans(u.tier).h);}
 function matchAt(x,y){return state.blocks.find(b=>b.hp>0&&x>=b.c&&x<b.c+b.w&&y>=b.r&&y<b.r+b.h);}
 function makeBlockText(v){
- if(v>=99500)return Math.round(v/1000)+'K';if(v>=1000)return (v>=10000?Math.round(v/1000):Number((v/1000).toFixed(v%1000===0?0:1)))+'K';return String(Math.max(0,Math.ceil(v)));
+ if(!Number.isFinite(v))return '—';
+ if(v>=99500)return Math.round(v/1000)+'K';
+ if(v>=1000)return (v>=10000?Math.round(v/1000):Number((v/1000).toFixed(v%1000===0?0:1)))+'K';
+ return String(Math.max(0,Math.ceil(v)));
 }
-function unitDamage(tier){const base=[8,14,22,42,75,116,195,350,610,1040,1680,2640,4180,6550,10100,16000];return Math.ceil(base[tier]*(1+state.upgrades.power*.27));}
+// Damage is keyed by each family's real level, not its position in art.js.
+// The legacy 16-entry lookup produced NaN for PixelLab tiers 16–23.
+function unitDamage(tier){
+ const a=ART.approved[tier];
+ if(!a)return 1;
+ const base={keys:8,ukulele:11,drums:20,guitar:26}[a.family]||8;
+ const level=clamp(Number.isFinite(a.level)?a.level:1,1,6);
+ const power=clamp(Number.isFinite(state.upgrades.power)?state.upgrades.power:0,0,12);
+ return Math.max(1,Math.ceil(base*Math.pow(2.7,level-1)*(1+power*.27)));
+}
 function damageBlock(b,value,p){
- if(!b||b.hp<=0)return;
- const d=Math.max(1,Math.round(value)),before=b.hp;
+ if(!b||!Number.isFinite(b.hp)||b.hp<=0||!Number.isFinite(value)||value<=0)return;
+ const d=clamp(Math.round(value),1,1e8);
  b.hp=Math.max(0,b.hp-d);
  const earned=Math.max(1,Math.round(d*(.018+state.upgrades.wealth*.011)));
- state.coins+=earned;state.chargeFill+=Math.min(.36,d/10000);
+ state.coins=clamp((Number.isFinite(state.coins)?state.coins:0)+earned,0,1e12);
+ state.chargeFill=(Number.isFinite(state.chargeFill)?state.chargeFill:0)+Math.min(.36,d/10000);
  if(state.chargeFill>=1){const a=Math.floor(state.chargeFill);state.charge+=a;state.chargeFill-=a;}
  const point=p||{x:rectOfBlock(b).x+40,y:rectOfBlock(b).y+50};
  animateHit(b.id,d);burst(point.x,point.y,d,b.boss?'#fff9c0':'#74ecff');
@@ -150,7 +196,7 @@ function damageBlock(b,value,p){
    const pos=rectOfBlock(b),x=pos.x+pos.w*.5,y=pos.y+pos.h*.5;
    scatter(x,y,b.boss?'#ffe789':'#d6fbff',28);
    fx.push({kind:'break',x,y,w:pos.w,h:pos.h,life:.62,max:.62,color:b.boss?'#ffd66c':'#dfdeed'});
-   state.coins+=b.boss?1500:Math.max(14,Math.floor(b.max/25));
+   state.coins=clamp(state.coins+(b.boss?1500:Math.max(14,Math.floor(b.max/25))),0,1e12);
    state.charge+=b.boss?20:Math.max(1,Math.floor(b.max/1400));
    sound.breakBox(b.boss);
    if(!b.boss&&Math.random()<.24){const tier=Math.random()<.15?1:0;const f=findFree(tier);if(f){const u={tier,...f,id:uid++};state.units.push(u);animateUnit(u.id);}}
@@ -187,7 +233,7 @@ function spawn(){
  const pos=findFree(tier);if(!pos){popup(txt('noRoom'));return;}
  const freshUnit={...pos,tier,id:uid++};
  state.units.push(freshUnit);animateUnit(freshUnit.id);state.tutorialSeen=true;
- state.charge-=cost;state.coins=Math.max(0,state.coins-8);
+ state.charge-=cost;state.coins=Math.max(0,(Number.isFinite(state.coins)?state.coins:0)-8);
  sound.note(tier);scatter(cellRect(pos.c,pos.r).x+45,cellRect(pos.c,pos.r).y+47,'#adfff1',12);save();
 }
 function merge(a,b){
@@ -222,7 +268,7 @@ function merge(a,b){
  }
  state.highest=Math.max(state.highest,t);
  state.charge=Math.min(999,state.charge+2);
- state.coins+=10*(ART.approved[t]?.level||1);
+ state.coins=clamp((Number.isFinite(state.coins)?state.coins:0)+10*(ART.approved[t]?.level||1),0,1e12);
  sound.merge(t);popup(txt('merged'));save();return true;
 }
 function moveUnit(a,c,r,from=null){
@@ -346,8 +392,10 @@ function drawBlock(b){
  for(const [rx,ry] of [[x+5,y+7],[x+w-12,y+7],[x+5,y+h-15],[x+w-12,y+h-15]])
   ctx.fillRect(rx,ry,4,4);
  const value=makeBlockText(b.hp);
- const sz=clamp(Math.min(w*(value.length>3?.42:.53),h*.49,70),18,70);
- textStroke(value,x+w*.5,y+h*.49,sz,'#f6f1e8','center','#17131d',Math.max(3,sz*.065));
+ const sz=clamp(Math.min((w-24)/Math.max(1,value.length*.65),h*.48,68),15,68);
+ ctx.save();ctx.beginPath();ctx.rect(x+10,y+12,w-20,h-24);ctx.clip();
+ textStroke(value,x+w*.5,y+h*.49,sz,'#f6f1e8','center','#17131d',Math.max(2,sz*.065));
+ ctx.restore();
  if(b.hp<b.max){
    const progress=Math.max(0,Math.min(1,b.hp/b.max));
    ctx.fillStyle='#181520';ctx.fillRect(x+12,y+h-14,w-24,5);
@@ -451,7 +499,7 @@ function drawChrome(){
  const W=LAY.W,H=LAY.H;
  const moneyX=LAY.portrait?W-48:W-148,moneyY=LAY.portrait?57:52;
  if(readyImage(gfx.coin))ctx.drawImage(gfx.coin,moneyX-205,moneyY-19,32,32);
- textStroke(Math.floor(state.coins).toLocaleString('en-US'),moneyX,moneyY,LAY.portrait?44:51,'#f1cc76','right','#1b1722',4);
+ textStroke(Math.floor(Number.isFinite(state.coins)?state.coins:0).toLocaleString('en-US'),moneyX,moneyY,LAY.portrait?44:51,'#f1cc76','right','#1b1722',4);
  const min=Math.floor(Math.max(0,state.time)/60),sec=Math.floor(Math.max(0,state.time)%60);
  textStroke(min+':'+String(sec).padStart(2,'0'),W*.5,LAY.portrait?61:54,LAY.portrait?56:62,'#f4eee6','center','#17141e',4);
  settingsHot={x:15,y:14,w:58,h:58};shopHot={x:78,y:14,w:58,h:58};pauseHot={x:141,y:14,w:58,h:58};
