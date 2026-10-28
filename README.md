@@ -1,5 +1,23 @@
 # Melody Scanner
 
+## Recorded instrument audio (October 2026)
+
+The scanner now plays **18 bundled recordings** of real instruments via `sample-audio.js`, rather than the previous one-size-fits-all oscillator patches. Piano/keyboard, ukulele, electric guitar, and acoustic drum kit have distinct sound banks. Levels 1–6 have progressive articulation (single notes, strums, chords, guitar amplifier drive, and real drum patterns) while retaining the approved 24 instrument sprites.
+
+Audio loads from `assets/audio/` on the game's own origin (no sound CDN or build dependency), begins downloading during boot, and unlocks only after user interaction to respect browser autoplay policies. A short synthesized fallback plays if a sample cannot be decoded. Background accompaniment is kept quieter than the instruments. Sound effects and the portal mute setting are handled separately.
+
+Sound recordings and redistribution licenses: [AUDIO_CREDITS.md](AUDIO_CREDITS.md). Drum samples require attribution: **Drum samples provided by DrumGizmo.org.**
+
+### Audio verification
+
+```sh
+node --check sample-audio.js
+node tests/audio.cjs
+node tests/smoke.cjs
+```
+
+
+
 ## Individually generated image assets
 
 Instead of the previous procedural shapes in JavaScript, the game now reads **19 independent RGBA pixel-art PNGs** from `assets/pixel/` (7 musical instruments, background/board, enemies, scanner, charge button, visual effects and HUD icons). The instrument sprites are now remastered from the user's previously approved glossy art in `assets/approved/` using `tools/remaster_pixel_assets.py`: source silhouette and hardware detail are preserved, then sampled to the native pixel grid with limited palettes and 1-pixel crisp outlines. `tools/paint_assets.py` creates the separate base files for the other UI pieces; the remaster script additionally polishes the background and metal targets. GitHub Actions builds all 19 assets using `.github/workflows/build-pixel-assets.yml`.
@@ -24,12 +42,12 @@ An original HTML5 arcade game rebuilt around the gameplay shown in the supplied 
 
 ## Core mechanics
 - A full-screen musical **13×6 tile grid** with detailed metallic damage blocks of different shapes and values, and a massive red/gold **100K target**.
-- A neon vertical **playhead scanner** sweeps across the grid. When it passes a musical instrument, that instrument plays a synthesized note and damages a corresponding block.
+- A neon vertical **playhead scanner** sweeps across the grid. When it passes a musical instrument, that instrument plays the corresponding recorded instrument sound and damages a corresponding block.
 - Musical instruments range from small keyboards and ukuleles to guitars, synthesizers and harps. They occupy **1×1, 2×1, 1×2 and 2×2** tiles.
 - Drag two matching instruments together, or select the same tier twice, to **merge** them into a more powerful instrument.
 - The lower green button creates new instruments when enough charge is available. Charge builds from scanning and damaging metal targets.
 - Steel blocks lose hit points (10, 20, 40, 50, 600, 800, 1K, 2K, 3K, 4K, 5K, 7K, 9K), revealing more tiles. The huge boss has 100K HP.
-- Countdown timer, money, sound upgrades, fast scanner upgrades, income boost, visual note effects and sound synthesizers.
+- Countdown timer, money, sound upgrades, fast scanner upgrades, income boost, visual note effects and recorded instrument playback.
 - Uses native canvas 2D rendering, carefully cropped instrument sprites from the user-provided gameplay reference video with SVG fallbacks, zero build dependencies, CrazyGames SDK v3, local save, Russian/English/Spanish settings, desktop and portrait layouts.
 - Press **Space** to generate an instrument, **Enter** to restart after a round, click the top-left icons for upgrades/settings.
 - Restarting a timed-out round retains accumulated money, items and HP already taken from the blocks.
@@ -37,7 +55,7 @@ An original HTML5 arcade game rebuilt around the gameplay shown in the supplied 
 ## Why it looks different from previous prototypes
 The game **does not** display a peripheral shop panel or a conventional merge inventory screen. Settings are available by moving the pointer into the upper-left corner or pressing **S**, upgrades by **U**, pause by **P**. The playfield is the entire viewport. In the provided reference video, the scanner moves through a pastel purple/gold board, instruments occupy individual or multiple grid cells, damage appears as floating numbers/music notes, and a large 100K gold target dominates the upper-right. The game's layout was built around those details.
 
-The game code, synthesized sounds, and game systems are independently implemented. The sprite atlas in `sprites/video-instruments.webp` contains cropped visual references from the gameplay recording the user provided. For public distribution or commercial release, confirm you have the appropriate rights to use any original Beat Grid artwork, or replace that atlas with appropriately licensed art.
+The game code, recorded instrument playback, and game systems are independently implemented. The sprite atlas in `sprites/video-instruments.webp` contains cropped visual references from the gameplay recording the user provided. For public distribution or commercial release, confirm you have the appropriate rights to use any original Beat Grid artwork, or replace that atlas with appropriately licensed art.
 
 ## Development
 ```sh
