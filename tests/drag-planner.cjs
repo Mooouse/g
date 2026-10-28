@@ -45,14 +45,16 @@ p=planner(constrained,wall,4,2).exact(1,2,0);
 assert.equal(p.kind,'invalid','reject swap when victim cannot legally fit source and no spare cells exist');
 // An available cell across the grid must be chosen instead of a false
 // "no room" even when every immediate neighbor is blocked.
-const far=[{id:1,tier:'s',c:0,r:0}];let nextId=2;
+const far=[{id:1,tier:'s',c:0,r:0}];
+const farWalls=[];
 for(let row=0;row<3;row++)for(let col=0;col<4;col++)
- if(!(row===0&&col===0)&&!(row===2&&col===3))far.push({id:nextId++,tier:'s',c:col,r:row});
-const farPlan=planner(far,[],4,3).near(1,2,0);
+ if(!(row===0&&col===0)&&!(row===2&&col===3))
+  farWalls.push({c:col,r:row,w:1,h:1,hp:100});
+const farPlan=planner(far,farWalls,4,3).near(1,2,0);
 assert.equal(farPlan.kind,'move','falls back to faraway free cell if no local option');
 assert.deepEqual([farPlan.c,farPlan.r],[3,2],'the only free cell is chosen');
 assert.equal(farPlan.adjusted,true,'previews distinguish adjusted placement');
-assertLegal(far,[],1,farPlan,4,3);
+assertLegal(far,farWalls,1,farPlan,4,3);
 assert.equal(planner(two).exact(1,0,0).kind,'same');
 assert.equal(planner(two).exact(1,20,0).kind,'invalid');
 console.log('PASS — same/normal/swap/multicell reflow/blocked/smart-nearest plans and no illegal overlap');
