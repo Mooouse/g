@@ -49,3 +49,9 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 .tutorial-card .primary-cta{margin:auto}
 @media(max-width:650px){.home-art{opacity:.3}.home-content{width:89vw;padding:22px 17px;gap:12px}.home-content h1{font-size:clamp(44px,11vw,68px)}.home-tagline{font-size:13px}.home-kicker{font-size:11px}.primary-cta{min-height:55px}.panel{padding:20px}.tutorial-card{padding:24px 19px}.menu-footnote{font-size:11px}}
 @media(prefers-reduced-motion:reduce){.home-glow{animation:none}.primary-cta:hover{transform:none}}
+
+/* Real mo.js animations are scoped to the viewport and never receive input.
+   Reusable Shape/Burst nodes stay out of the hit-testing chain. */
+.mojs-effects{position:absolute;inset:0;z-index:5;overflow:hidden;pointer-events:none;contain:layout paint}
+.mojs-effects,.mojs-effects *{pointer-events:none!important}
+@media(prefers-reduced-motion:reduce){.mojs-effects{display:none}}
