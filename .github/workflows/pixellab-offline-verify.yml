@@ -1,0 +1,65 @@
+name: Offline PixelLab Asset Verification — No Credits
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'triggers/pixellab-offline-verify-20261028.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pixellab-offline-verification
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Work on saved PixelLab staging images, never call PixelLab
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin main generated/pixellab-v1
+          git checkout -B staged-pixellab origin/generated/pixellab-v1
+          git merge --no-edit origin/main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Activate staged assets offline and verify game
+        shell: bash
+        run: |
+          python -m pip install Pillow==11.3.0
+          python tools/activate_pixellab.py
+          node --check art.js
+          node --check game.js
+          node tests/smoke.cjs
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          stage=Path('assets/pixellab')
+          state=json.loads((stage/'generation-state.json').read_text())
+          done=[k for k,v in state['requests'].items() if v['status']=='completed']
+          assert len(done)==36, f'Incomplete assets: {len(done)}'
+          assert state['spent_attempts']==37, f'Unexpected credits spent: {state["spent_attempts"]}'
+          assert len(list(stage.glob('*.png')))==36
+          print('PASS: 36 PixelLab PNGs, 24 instrument tiers, 12 UI assets; no new generations.')
+          PY
+      - name: Save updated manifest and tests to staging branch only
+        shell: bash
+        run: |
+          git add art.js game.js index.html assets/pixellab/manifest.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'Verify and stage 24 instrument levels and PixelLab UI — offline'
+          fi
+          git push origin HEAD:generated/pixellab-v1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pixellab-all-36-reviewed-assets
+          path: assets/pixellab/*.png
+          retention-days: 90
