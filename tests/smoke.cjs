@@ -1,11 +1,12 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),vm=require('node:vm');
-const art=fs.readFileSync('art.js','utf8'),game=fs.readFileSync('game.js','utf8'),audio=fs.readFileSync('sample-audio.js','utf8'),planner=fs.readFileSync('drag-planner.js','utf8'),html=fs.readFileSync('index.html','utf8');
-new vm.Script(art,{filename:'art.js'});new vm.Script(game,{filename:'game.js'});new vm.Script(audio,{filename:'sample-audio.js'});new vm.Script(planner,{filename:'drag-planner.js'});
+const art=fs.readFileSync('art.js','utf8'),game=fs.readFileSync('game.js','utf8'),audio=fs.readFileSync('sample-audio.js','utf8'),planner=fs.readFileSync('drag-planner.js','utf8'),rouletteSource=fs.readFileSync('roulette-logic.js','utf8'),theme=fs.readFileSync('concert-theme.js','utf8'),html=fs.readFileSync('index.html','utf8');
+new vm.Script(art,{filename:'art.js'});new vm.Script(game,{filename:'game.js'});new vm.Script(audio,{filename:'sample-audio.js'});new vm.Script(planner,{filename:'drag-planner.js'});new vm.Script(rouletteSource,{filename:'roulette-logic.js'});new vm.Script(theme,{filename:'concert-theme.js'});
 const ids=new Set([...html.matchAll(/id="([^"]+)"/g)].map(m=>m[1]));
 const refs=new Set([...game.matchAll(/\$\('([^']+)'\)/g)].map(m=>m[1]));
 assert.deepEqual([...refs].filter(k=>!ids.has(k)),[],'referenced DOM IDs must exist');
 assert.ok(html.includes('crazygames-sdk-v3.js'));
+assert.ok(html.includes('roulette-logic.js')&&html.includes('concert-theme.js'),'concert resources load');
 assert.ok(html.includes('sample-audio.js')&&html.indexOf('sample-audio.js')<html.indexOf('game.js'),'sample engine loads before game');
 assert.ok(html.includes('drag-planner.js')&&html.indexOf('drag-planner.js')<html.indexOf('game.js'),'drag planner loads before game');
 const noop=()=>{},events={},ui={};const gradient={addColorStop:noop};
@@ -27,7 +28,7 @@ const context={window:win,document,localStorage:store,navigator:{language:'ru-RU
 Image:MockImage,performance:{now:()=>1000},setTimeout(fn){return 1;},clearTimeout:noop,requestAnimationFrame(fn){events.animation=fn;return 1},encodeURIComponent};
 vm.createContext(context);
 (async()=>{
-vm.runInContext(art,context,{filename:'art.js'});vm.runInContext(audio,context,{filename:'sample-audio.js'});vm.runInContext(planner,context,{filename:'drag-planner.js'});const artMeta=context.window.GridMusicArt;
+vm.runInContext(art,context,{filename:'art.js'});vm.runInContext(audio,context,{filename:'sample-audio.js'});vm.runInContext(planner,context,{filename:'drag-planner.js'});vm.runInContext(rouletteSource,context,{filename:'roulette-logic.js'});vm.runInContext(theme,context,{filename:'concert-theme.js'});const artMeta=context.window.GridMusicArt;
 assert.ok([7,24].includes(artMeta.total),'legacy release has seven tiers; PixelLab release has twenty-four');
 const pixellab=artMeta.style==='pixellab-game-assets';
 const expected=[
@@ -159,8 +160,8 @@ const fromPointer={
  clientY:(movingRect.y+movingRect.h/2)/928*canvasBounds.height,pointerId:3
 };
 const toPointer={
- clientX:(160+97/2)/1650*canvasBounds.width,
- clientY:(105+5*103+97/2)/928*canvasBounds.height,pointerId:3
+ clientX:(280+79/2)/1650*canvasBounds.width,
+ clientY:(180+5*84+79/2)/928*canvasBounds.height,pointerId:3
 };
 events['game:pointerdown'](fromPointer);
 events['game:pointermove'](toPointer);
@@ -198,10 +199,23 @@ assert.deepEqual([aAfter.c,aAfter.r],[5,2],'dragged keyboard lands on ukulele ti
 assert.deepEqual([bAfter.c,bAfter.r],[5,3],'ukulele swaps into the previous keyboard tile');
 assert.ok(!dbg.getDragPreview(),'preview disappears after drop');
 
+// Animated roulette must freeze the board and only award the prize after spin.
+const prevRoll=dbg.getState();
+assert.ok(dbg.roll(),'roulette begins when charge and a footprint are available');
+const rollStart=dbg.getRoulette();
+assert.equal(rollStart.phase,'spinning');
+assert.equal(dbg.getState().units.length,prevRoll.units.length,'no instrument leaks before reveal');
+assert.equal(dbg.getState().charge,prevRoll.charge-5,'charge spent exactly once');
+dbg.advanceRoulette(1.6);
+assert.equal(dbg.getRoulette().phase,'reveal','winning instrument is unveiled after spin');
+assert.equal(dbg.getState().units.length,prevRoll.units.length+1,'exactly one prize appears');
+dbg.advanceRoulette(2);
+assert.equal(dbg.getRoulette(),null,'roulette overlay closes after reveal');
+
 const unapprovedIndex=dbg.getState().units.findIndex(u=>u.tier===2);
 const anotherFamilyIndex=dbg.getState().units.findIndex(u=>u.tier===3);
 assert.ok(!dbg.merge(unapprovedIndex,anotherFamilyIndex),'cross-family merge is prohibited');
-const charge=dbg.getState().charge;dbg.spawn();assert.equal(dbg.getState().charge,charge-5);assert.equal(dbg.getState().units.length,fresh.units.length);
+const charge=dbg.getState().charge,beforeInstant=dbg.getState().units.length;dbg.spawn();assert.equal(dbg.getState().charge,charge-5);assert.equal(dbg.getState().units.length,beforeInstant+1);
 win.innerWidth=430;win.innerHeight=850;events['window:resize']();let geometry=dbg.getGeometry();
 assert.equal(geometry.portrait,true);assert.equal(geometry.width,900);
 assert.equal(geometry.height,1560);
@@ -228,7 +242,7 @@ if(pixellab){
  const recoveryContext={...context,window:badWindow,localStorage:brokenStore};
  vm.createContext(recoveryContext);
  vm.runInContext(planner,recoveryContext,{filename:'drag-planner.js'});
-  vm.runInContext(game,recoveryContext,{filename:'game-recovery.js'});
+  vm.runInContext(rouletteSource,recoveryContext,{filename:'roulette-logic.js'});vm.runInContext(theme,recoveryContext,{filename:'concert-theme.js'});vm.runInContext(game,recoveryContext,{filename:'game-recovery.js'});
  for(let i=0;i<10;i++)await Promise.resolve();
  const recovered=badWindow.GridGameDebug;
  assert.ok(recovered,'boot corrupted saved game');
@@ -273,7 +287,7 @@ if(pixellab){
   const w={...win,addEventListener:noop};
   const m=Object.create(Math);m.random=()=>.999; // original buggy spawn always chose 1x2 guitar
   const c={...context,window:w,Math:m,localStorage:local};
-  vm.createContext(c);vm.runInContext(planner,c,{filename:'drag-planner.js'});vm.runInContext(game,c,{filename:'game-crowded.js'});
+  vm.createContext(c);vm.runInContext(planner,c,{filename:'drag-planner.js'});vm.runInContext(rouletteSource,c,{filename:'roulette-logic.js'});vm.runInContext(theme,c,{filename:'concert-theme.js'});vm.runInContext(game,c,{filename:'game-crowded.js'});
   return w;
  }
  const crowdedWindow=makeCrowded(fullBoard);
