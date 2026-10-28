@@ -154,7 +154,9 @@ assert.deepEqual([movedUnit.c,movedUnit.r],[0,5],'unit lands in requested free t
 const moveAnim=dbg.getAnimations().find(m=>m.id===moving.id);
 assert.equal(moveAnim.kind,'move','drop starts a glide transition');
 assert.ok(moveAnim.duration>=.25,'drag release animation lasts long enough to see');
-assert.ok(moveAnim.from.y<moveAnim.to.y,'movement animates from old position to new cell');
+assert.ok(Number.isFinite(moveAnim.from.x)&&Number.isFinite(moveAnim.from.y),'release animation starts from actual pointer position');
+assert.ok(Number.isFinite(moveAnim.to.x)&&Number.isFinite(moveAnim.to.y),'release animation ends at cell center');
+assert.ok(Math.hypot(moveAnim.from.x-moveAnim.to.x,moveAnim.from.y-moveAnim.to.y)<104,'drop snaps only the last short distance, not back to its old cell');
 const unapprovedIndex=dbg.getState().units.findIndex(u=>u.tier===2);
 const anotherFamilyIndex=dbg.getState().units.findIndex(u=>u.tier===3);
 assert.ok(!dbg.merge(unapprovedIndex,anotherFamilyIndex),'cross-family merge is prohibited');
