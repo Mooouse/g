@@ -1,0 +1,236 @@
+{
+  "style": "pixellab-game-assets",
+  "generation_cap": 40,
+  "planned_calls": 36,
+  "reserved_for_corrections": 4,
+  "instruments": [
+    {
+      "id": "keyboard_1",
+      "family": "keys",
+      "level": 1,
+      "w": 1,
+      "h": 1,
+      "file": "assets/pixellab/keyboard_1.png"
+    },
+    {
+      "id": "keyboard_2",
+      "family": "keys",
+      "level": 2,
+      "w": 1,
+      "h": 1,
+      "file": "assets/pixellab/keyboard_2.png"
+    },
+    {
+      "id": "ukulele_1",
+      "family": "ukulele",
+      "level": 1,
+      "w": 1,
+      "h": 1,
+      "file": "assets/pixellab/ukulele_1.png"
+    },
+    {
+      "id": "drums_1",
+      "family": "drums",
+      "level": 1,
+      "w": 1,
+      "h": 1,
+      "file": "assets/pixellab/drums_1.png"
+    },
+    {
+      "id": "drums_2",
+      "family": "drums",
+      "level": 2,
+      "w": 2,
+      "h": 2,
+      "file": "assets/pixellab/drums_2.png"
+    },
+    {
+      "id": "guitar_1",
+      "family": "guitar",
+      "level": 1,
+      "w": 1,
+      "h": 2,
+      "file": "assets/pixellab/guitar_1.png"
+    },
+    {
+      "id": "guitar_2",
+      "family": "guitar",
+      "level": 2,
+      "w": 1,
+      "h": 2,
+      "file": "assets/pixellab/guitar_2.png"
+    },
+    {
+      "id": "keyboard_3",
+      "family": "keys",
+      "level": 3,
+      "w": 2,
+      "h": 1,
+      "file": "assets/pixellab/keyboard_3.png"
+    },
+    {
+      "id": "keyboard_4",
+      "family": "keys",
+      "level": 4,
+      "w": 2,
+      "h": 1,
+      "file": "assets/pixellab/keyboard_4.png"
+    },
+    {
+      "id": "keyboard_5",
+      "family": "keys",
+      "level": 5,
+      "w": 2,
+      "h": 2,
+      "file": "assets/pixellab/keyboard_5.png"
+    },
+    {
+      "id": "keyboard_6",
+      "family": "keys",
+      "level": 6,
+      "w": 2,
+      "h": 2,
+      "file": "assets/pixellab/keyboard_6.png"
+    },
+    {
+      "id": "ukulele_2",
+      "family": "ukulele",
+      "level": 2,
+      "w": 1,
+      "h": 1,
+      "file": "assets/pixellab/ukulele_2.png"
+    },
+    {
+      "id": "ukulele_3",
+      "family": "ukulele",
+      "level": 3,
+      "w": 1,
+      "h": 2,
+      "file": "assets/pixellab/ukulele_3.png"
+    },
+    {
+      "id": "ukulele_4",
+      "family": "ukulele",
+      "level": 4,
+      "w": 1,
+      "h": 2,
+      "file": "assets/pixellab/ukulele_4.png"
+    },
+    {
+      "id": "ukulele_5",
+      "family": "ukulele",
+      "level": 5,
+      "w": 1,
+      "h": 2,
+      "file": "assets/pixellab/ukulele_5.png"
+    },
+    {
+      "id": "ukulele_6",
+      "family": "ukulele",
+      "level": 6,
+      "w": 1,
+      "h": 2,
+      "file": "assets/pixellab/ukulele_6.png"
+    },
+    {
+      "id": "drums_3",
+      "family": "drums",
+      "level": 3,
+      "w": 2,
+      "h": 2,
+      "file": "assets/pixellab/drums_3.png"
+    },
+    {
+      "id": "drums_4",
+      "family": "drums",
+      "level": 4,
+      "w": 2,
+      "h": 2,
+      "file": "assets/pixellab/drums_4.png"
+    },
+    {
+      "id": "drums_5",
+      "family": "drums",
+      "level": 5,
+      "w": 3,
+      "h": 2,
+      "file": "assets/pixellab/drums_5.png"
+    },
+    {
+      "id": "drums_6",
+      "family": "drums",
+      "level": 6,
+      "w": 3,
+      "h": 2,
+      "file": "assets/pixellab/drums_6.png"
+    },
+    {
+      "id": "guitar_3",
+      "family": "guitar",
+      "level": 3,
+      "w": 1,
+      "h": 2,
+      "file": "assets/pixellab/guitar_3.png"
+    },
+    {
+      "id": "guitar_4",
+      "family": "guitar",
+      "level": 4,
+      "w": 1,
+      "h": 2,
+      "file": "assets/pixellab/guitar_4.png"
+    },
+    {
+      "id": "guitar_5",
+      "family": "guitar",
+      "level": 5,
+      "w": 1,
+      "h": 2,
+      "file": "assets/pixellab/guitar_5.png"
+    },
+    {
+      "id": "guitar_6",
+      "family": "guitar",
+      "level": 6,
+      "w": 1,
+      "h": 2,
+      "file": "assets/pixellab/guitar_6.png"
+    }
+  ],
+  "ui_assets": {
+    "background_tile": "assets/pixellab/background_tile.png",
+    "cell": "assets/pixellab/cell.png",
+    "metal_block": "assets/pixellab/metal_block.png",
+    "boss_block": "assets/pixellab/boss_block.png",
+    "scanner": "assets/pixellab/scanner.png",
+    "charge_button": "assets/pixellab/charge_button.png",
+    "settings_icon": "assets/pixellab/settings_icon.png",
+    "shop_icon": "assets/pixellab/shop_icon.png",
+    "pause_icon": "assets/pixellab/pause_icon.png",
+    "result_panel": "assets/pixellab/result_panel.png",
+    "coin": "assets/pixellab/coin.png",
+    "sparkle": "assets/pixellab/sparkle.png"
+  },
+  "next_tier": {
+    "0": 1,
+    "1": 7,
+    "2": 11,
+    "3": 4,
+    "4": 16,
+    "5": 6,
+    "6": 20,
+    "7": 8,
+    "8": 9,
+    "9": 10,
+    "11": 12,
+    "12": 13,
+    "13": 14,
+    "14": 15,
+    "16": 17,
+    "17": 18,
+    "18": 19,
+    "20": 21,
+    "21": 22,
+    "22": 23
+  }
+}

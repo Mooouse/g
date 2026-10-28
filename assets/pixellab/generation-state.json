@@ -1,0 +1,331 @@
+{
+  "limit": 40,
+  "requests": {
+    "background_tile": {
+      "attempt": 26,
+      "bytes": 8607,
+      "size": [
+        64,
+        64
+      ],
+      "status": "completed"
+    },
+    "boss_block": {
+      "attempt": 29,
+      "bytes": 20790,
+      "size": [
+        128,
+        128
+      ],
+      "status": "completed"
+    },
+    "cell": {
+      "attempt": 27,
+      "bytes": 4861,
+      "size": [
+        64,
+        64
+      ],
+      "status": "completed"
+    },
+    "charge_button": {
+      "attempt": 31,
+      "bytes": 12044,
+      "size": [
+        128,
+        64
+      ],
+      "status": "completed"
+    },
+    "coin": {
+      "attempt": 36,
+      "bytes": 3000,
+      "size": [
+        64,
+        64
+      ],
+      "status": "completed"
+    },
+    "drums_1": {
+      "attempt": 13,
+      "bytes": 2371,
+      "size": [
+        64,
+        64
+      ],
+      "status": "completed"
+    },
+    "drums_2": {
+      "attempt": 14,
+      "bytes": 10934,
+      "size": [
+        128,
+        128
+      ],
+      "status": "completed"
+    },
+    "drums_3": {
+      "attempt": 15,
+      "bytes": 11345,
+      "size": [
+        128,
+        128
+      ],
+      "status": "completed"
+    },
+    "drums_4": {
+      "attempt": 16,
+      "bytes": 10059,
+      "size": [
+        128,
+        128
+      ],
+      "status": "completed"
+    },
+    "drums_5": {
+      "attempt": 17,
+      "bytes": 15790,
+      "size": [
+        192,
+        128
+      ],
+      "status": "completed"
+    },
+    "drums_6": {
+      "attempt": 18,
+      "bytes": 22368,
+      "size": [
+        192,
+        128
+      ],
+      "status": "completed"
+    },
+    "guitar_1": {
+      "attempt": 19,
+      "bytes": 4515,
+      "size": [
+        64,
+        128
+      ],
+      "status": "completed"
+    },
+    "guitar_2": {
+      "attempt": 20,
+      "bytes": 4076,
+      "size": [
+        64,
+        128
+      ],
+      "status": "completed"
+    },
+    "guitar_3": {
+      "attempt": 22,
+      "bytes": 4839,
+      "size": [
+        64,
+        128
+      ],
+      "status": "completed"
+    },
+    "guitar_4": {
+      "attempt": 23,
+      "bytes": 4153,
+      "size": [
+        64,
+        128
+      ],
+      "status": "completed"
+    },
+    "guitar_5": {
+      "attempt": 24,
+      "bytes": 3777,
+      "size": [
+        64,
+        128
+      ],
+      "status": "completed"
+    },
+    "guitar_6": {
+      "attempt": 25,
+      "bytes": 5285,
+      "size": [
+        64,
+        128
+      ],
+      "status": "completed"
+    },
+    "keyboard_1": {
+      "attempt": 1,
+      "bytes": 2077,
+      "size": [
+        64,
+        64
+      ],
+      "status": "completed"
+    },
+    "keyboard_2": {
+      "attempt": 2,
+      "bytes": 1581,
+      "size": [
+        64,
+        64
+      ],
+      "status": "completed"
+    },
+    "keyboard_3": {
+      "attempt": 3,
+      "bytes": 5952,
+      "size": [
+        128,
+        64
+      ],
+      "status": "completed"
+    },
+    "keyboard_4": {
+      "attempt": 4,
+      "bytes": 6990,
+      "size": [
+        128,
+        64
+      ],
+      "status": "completed"
+    },
+    "keyboard_5": {
+      "attempt": 5,
+      "bytes": 8789,
+      "size": [
+        128,
+        128
+      ],
+      "status": "completed"
+    },
+    "keyboard_6": {
+      "attempt": 6,
+      "bytes": 13027,
+      "size": [
+        128,
+        128
+      ],
+      "status": "completed"
+    },
+    "metal_block": {
+      "attempt": 28,
+      "bytes": 5199,
+      "size": [
+        64,
+        64
+      ],
+      "status": "completed"
+    },
+    "pause_icon": {
+      "attempt": 34,
+      "bytes": 1528,
+      "size": [
+        64,
+        64
+      ],
+      "status": "completed"
+    },
+    "result_panel": {
+      "attempt": 35,
+      "bytes": 12636,
+      "size": [
+        128,
+        64
+      ],
+      "status": "completed"
+    },
+    "scanner": {
+      "attempt": 30,
+      "bytes": 4115,
+      "size": [
+        64,
+        64
+      ],
+      "status": "completed"
+    },
+    "settings_icon": {
+      "attempt": 32,
+      "bytes": 1375,
+      "size": [
+        64,
+        64
+      ],
+      "status": "completed"
+    },
+    "shop_icon": {
+      "attempt": 33,
+      "bytes": 5102,
+      "size": [
+        64,
+        64
+      ],
+      "status": "completed"
+    },
+    "sparkle": {
+      "attempt": 37,
+      "bytes": 2979,
+      "size": [
+        64,
+        64
+      ],
+      "status": "completed"
+    },
+    "ukulele_1": {
+      "attempt": 7,
+      "bytes": 1730,
+      "size": [
+        64,
+        64
+      ],
+      "status": "completed"
+    },
+    "ukulele_2": {
+      "attempt": 8,
+      "bytes": 1445,
+      "size": [
+        64,
+        64
+      ],
+      "status": "completed"
+    },
+    "ukulele_3": {
+      "attempt": 9,
+      "bytes": 4620,
+      "size": [
+        64,
+        128
+      ],
+      "status": "completed"
+    },
+    "ukulele_4": {
+      "attempt": 10,
+      "bytes": 3592,
+      "size": [
+        64,
+        128
+      ],
+      "status": "completed"
+    },
+    "ukulele_5": {
+      "attempt": 11,
+      "bytes": 4156,
+      "size": [
+        64,
+        128
+      ],
+      "status": "completed"
+    },
+    "ukulele_6": {
+      "attempt": 12,
+      "bytes": 5505,
+      "size": [
+        64,
+        128
+      ],
+      "status": "completed"
+    }
+  },
+  "spent_attempts": 37,
+  "version": 1
+}
