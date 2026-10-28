@@ -1,5 +1,23 @@
 # Melody Scanner
 
+## Motion effects — Mo.js 1.7.1
+
+We use the **real** [Mo.js library](https://mojs.github.io/) (`@mojs/core@1.7.1`), **not** an imitation. Its official UMD bundle and MIT license are checked into [vendor/mojs/](vendor/mojs/) for consistent CrazyGames/browser loading without relying on a third-party runtime CDN.
+
+- [`mojs-game-fx.js`](mojs-game-fx.js) creates real `mojs.Burst` and `mojs.Shape` animations for instrument mergers, swap confirmations, loot reveals, broken blocks, and level completion.
+- Effects render into a noninteractive overlay mapped to the responsive game Canvas, so drag-and-drop remains reliable and no effects leave trails.
+- Emissions are throttled, reused in small per-type pools (no unbounded DOM allocations), and suppressed when `prefers-reduced-motion: reduce` or the tab is hidden.
+- Old `concert-fx.js` imitation was removed; CSS and screenshots remain the same concert theme.
+
+Checks:
+```sh
+node --check mojs-game-fx.js
+node tests/mojs-fx.cjs
+# Real Chrome integration: tests/mojs-browser.html
+```
+
+The Mo.js project and library are MIT-licensed (license preserved in `vendor/mojs/LICENSE.md`).
+
 ## Concert Edition — visual redesign and roulette (October 2026)
 
 The game now uses a concert-stage identity: dark stage backdrop, spotlights, silhouette crowd, glossy HUD and slot grid, themed block armor, and a new title menu and quick first-play tutorial. The original approved PixelLab instrument sprites are retained as individual PNGs. The studio/store mockup was **not** implemented; no instrument shop or individual paid upgrades are exposed.
