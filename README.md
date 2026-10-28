@@ -1,5 +1,33 @@
 # Melody Scanner
 
+## Concert Edition — visual redesign and roulette (October 2026)
+
+The game now uses a concert-stage identity: dark stage backdrop, spotlights, silhouette crowd, glossy HUD and slot grid, themed block armor, and a new title menu and quick first-play tutorial. The original approved PixelLab instrument sprites are retained as individual PNGs. The studio/store mockup was **not** implemented; no instrument shop or individual paid upgrades are exposed.
+
+### Random instrument roulette
+
+Click **КРУТИТЬ РУЛЕТКУ** for **5 charge** to animate a reel. The player cannot know the prize until it stops. It can give an instrument from **any of the four families**, already at levels 1–6.
+
+| Level / rarity | Base chance |
+|---|---:|
+| Common — L1 | 58% |
+| Uncommon — L2 | 25% |
+| Rare — L3 | 11% |
+| Epic — L4 | 4.5% |
+| Legendary — L5 | 1.3% |
+| Mythic — L6 | 0.2% |
+
+The game normalizes these odds over **instruments that currently fit**. No charge is taken if the board has no valid prize position. The awarded object is guaranteed to exist when the animation finishes; no purchases, future-item previews, or monetized spins.
+
+- Same-family equal-level merging and animated drag/swap remain.
+- Upgraded drops always use the appropriate family-specific art and footprint.
+- Scanner gameplay pauses while the reel rolls, so no time is unfairly lost.
+- Guitar samples now use gentler filtering and lower levels instead of excessive waveshaper distortion.
+- [Automated roulette QA](tests/roulette.cjs), [full gameplay QA](tests/smoke.cjs).
+- Desktop and mobile screenshots are kept at [docs/qa-screenshots](docs/qa-screenshots).
+
+
+
 ## Recorded instrument audio (October 2026)
 
 The scanner now plays **18 bundled recordings** of real instruments via `sample-audio.js`, rather than the previous one-size-fits-all oscillator patches. Piano/keyboard, ukulele, electric guitar, and acoustic drum kit have distinct sound banks. Levels 1–6 have progressive articulation (single notes, strums, chords, guitar amplifier drive, and real drum patterns) while retaining the approved 24 instrument sprites.
