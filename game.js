@@ -2,13 +2,13 @@
 (()=>{'use strict';
 const canvas=document.getElementById('game'),$=id=>document.getElementById(id),ART=window.GridMusicArt;
 let ctx=canvas.getContext('2d');
-const ASSET_BUILD='sampled-sound-v1'; // bust cached placeholder PNGs
+const ASSET_BUILD='smart-drag-v1'; // bust cached placeholder PNGs
 const KEY='melody-scanner-approved-assets-v1';
 const OLD_KEY='melody-scanner-video-reference-v3';
 const I={
-ru:{title:'НАСТРОЙКИ',shop:'УЛУЧШЕНИЯ',volume:'ГРОМКОСТЬ',music:'МУЗЫКА',language:'ЯЗЫК',shopText:'Прокачивай звук, монеты и скорость сканера',power:'Сила звука',powerDesc:'Больше урона от инструментов',speed:'Скорость сканера',speedDesc:'Луч проходит чаще',wealth:'Заработок',wealthDesc:'Больше монет от урона',max:'МАКС',paused:'ПАУЗА',time:'ВРЕМЯ ВЫШЛО',retry:'ПОВТОРИТЬ',win:'УРОВЕНЬ ПРОЙДЕН!',next:'ДАЛЕЕ',help:'Перетаскивай одинаковые инструменты друг на друга. Луч запускает музыку и наносит урон. Зелёная кнопка создаёт инструменты.',charge:'Нажми на зелёную кнопку, чтобы получить инструмент!',noRoom:'Нет свободного места!',noCharge:'Недостаточно заряда',merged:'НОВЫЙ ИНСТРУМЕНТ!',money:'МОНЕТЫ',save:'Прогресс сохраняется',restart:'Enter — новый раунд',secret:'ЗОЛОТАЯ ЦЕЛЬ ПОВЕРЖЕНА!',hint:'Объединяй одинаковые инструменты!'},
-en:{title:'SETTINGS',shop:'UPGRADES',volume:'VOLUME',music:'MUSIC',language:'LANGUAGE',shopText:'Improve your music, money and scanner speed',power:'Sound power',powerDesc:'Instruments deal more damage',speed:'Scan speed',speedDesc:'The beam moves faster',wealth:'Income',wealthDesc:'Earn more coins from damage',max:'MAX',paused:'PAUSED',time:"TIME'S UP",retry:'RETRY',win:'LEVEL COMPLETE!',next:'NEXT',help:'Drag matching instruments together to merge them. The scanning beam plays music and damages blocks. Use the green button to create instruments.',charge:'Press the green button to spawn an instrument!',noRoom:'No room for an instrument!',noCharge:'Not enough charge',merged:'NEW INSTRUMENT!',money:'COINS',save:'Progress is saved',restart:'Enter — restart round',secret:'GOLDEN TARGET DEFEATED!',hint:'Merge matching instruments!'},
-es:{title:'AJUSTES',shop:'MEJORAS',volume:'VOLUMEN',music:'MÚSICA',language:'IDIOMA',shopText:'Mejora sonido, monedas y velocidad',power:'Potencia',powerDesc:'Los instrumentos hacen más daño',speed:'Velocidad',speedDesc:'El rayo pasa más rápido',wealth:'Ingresos',wealthDesc:'Gana más monedas por daño',max:'MÁX.',paused:'PAUSA',time:'SE ACABÓ EL TIEMPO',retry:'REINTENTAR',win:'¡NIVEL COMPLETADO!',next:'SIGUIENTE',help:'Arrastra instrumentos iguales para fusionarlos. El rayo musical daña los bloques. El botón verde crea nuevos instrumentos.',charge:'Pulsa el botón verde para crear instrumentos.',noRoom:'¡No hay espacio!',noCharge:'Carga insuficiente',merged:'¡NUEVO INSTRUMENTO!',money:'MONEDAS',save:'Progreso guardado',restart:'Enter — reiniciar',secret:'¡OBJETIVO DORADO DESTRUIDO!',hint:'¡Fusiona instrumentos iguales!'}
+ru:{title:'НАСТРОЙКИ',shop:'УЛУЧШЕНИЯ',volume:'ГРОМКОСТЬ',music:'МУЗЫКА',language:'ЯЗЫК',shopText:'Прокачивай звук, монеты и скорость сканера',power:'Сила звука',powerDesc:'Больше урона от инструментов',speed:'Скорость сканера',speedDesc:'Луч проходит чаще',wealth:'Заработок',wealthDesc:'Больше монет от урона',max:'МАКС',paused:'ПАУЗА',time:'ВРЕМЯ ВЫШЛО',retry:'ПОВТОРИТЬ',win:'УРОВЕНЬ ПРОЙДЕН!',next:'ДАЛЕЕ',help:'Перетаскивай одинаковые инструменты друг на друга. Луч запускает музыку и наносит урон. Зелёная кнопка создаёт инструменты.',charge:'Нажми на зелёную кнопку, чтобы получить инструмент!',noRoom:'Нет свободного места!',invalidDrop:'Нельзя поставить сюда',noCharge:'Недостаточно заряда',merged:'НОВЫЙ ИНСТРУМЕНТ!',money:'МОНЕТЫ',save:'Прогресс сохраняется',restart:'Enter — новый раунд',secret:'ЗОЛОТАЯ ЦЕЛЬ ПОВЕРЖЕНА!',hint:'Объединяй одинаковые инструменты!'},
+en:{title:'SETTINGS',shop:'UPGRADES',volume:'VOLUME',music:'MUSIC',language:'LANGUAGE',shopText:'Improve your music, money and scanner speed',power:'Sound power',powerDesc:'Instruments deal more damage',speed:'Scan speed',speedDesc:'The beam moves faster',wealth:'Income',wealthDesc:'Earn more coins from damage',max:'MAX',paused:'PAUSED',time:"TIME'S UP",retry:'RETRY',win:'LEVEL COMPLETE!',next:'NEXT',help:'Drag matching instruments together to merge them. The scanning beam plays music and damages blocks. Use the green button to create instruments.',charge:'Press the green button to spawn an instrument!',noRoom:'No room for an instrument!',invalidDrop:'Cannot place here',noCharge:'Not enough charge',merged:'NEW INSTRUMENT!',money:'COINS',save:'Progress is saved',restart:'Enter — restart round',secret:'GOLDEN TARGET DEFEATED!',hint:'Merge matching instruments!'},
+es:{title:'AJUSTES',shop:'MEJORAS',volume:'VOLUMEN',music:'MÚSICA',language:'IDIOMA',shopText:'Mejora sonido, monedas y velocidad',power:'Potencia',powerDesc:'Los instrumentos hacen más daño',speed:'Velocidad',speedDesc:'El rayo pasa más rápido',wealth:'Ingresos',wealthDesc:'Gana más monedas por daño',max:'MÁX.',paused:'PAUSA',time:'SE ACABÓ EL TIEMPO',retry:'REINTENTAR',win:'¡NIVEL COMPLETADO!',next:'SIGUIENTE',help:'Arrastra instrumentos iguales para fusionarlos. El rayo musical daña los bloques. El botón verde crea nuevos instrumentos.',charge:'Pulsa el botón verde para crear instrumentos.',noRoom:'¡No hay espacio!',invalidDrop:'No se puede colocar aquí',noCharge:'Carga insuficiente',merged:'¡NUEVO INSTRUMENTO!',money:'MONEDAS',save:'Progreso guardado',restart:'Enter — reiniciar',secret:'¡OBJETIVO DORADO DESTRUIDO!',hint:'¡Fusiona instrumentos iguales!'}
 };
 const txt=(key)=>I[state.lang]?.[key]||I.en[key]||key;
 const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
@@ -343,6 +343,104 @@ function moveUnit(a,c,r,from=null){
  animateUnit(a.id,'move',previous);
  save();return true;
 }
+// Drag preview and commit share a single pure collision planner. That way the
+// highlighted outcome cannot disagree with the actual placement.
+function boardHasPointer(p){
+ if(!LAY.portrait)return p.x>=LAY.x-LAY.step*.4&&p.x<=LAY.x+LAY.step*13+LAY.step*.4&&
+  p.y>=LAY.y-LAY.step*.4&&p.y<=LAY.y+LAY.step*6+LAY.step*.4;
+ const upper=p.x>=LAY.x-40&&p.x<=LAY.x+LAY.step*7+40&&p.y>=LAY.y-40&&p.y<=LAY.y+LAY.step*6+40;
+ const lower=p.x>=LAY.x-40&&p.x<=LAY.x+LAY.step*6+40&&p.y>=885-40&&p.y<=885+LAY.step*6+40;
+ return upper||lower;
+}
+function dragAnchor(unit,drag,target){
+ if(target&&target.id!==unit.id)return {c:target.c,r:target.r};
+ const span=ART.spans(unit.tier),w=LAY.size+(span.w-1)*LAY.step,h=LAY.size+(span.h-1)*LAY.step;
+ const center={x:drag.dx-drag.offsetX,y:drag.dy-drag.offsetY};
+ let col=0,row=0;
+ if(LAY.portrait&&center.y>775){col=7+Math.round((center.x-w*.5-LAY.x)/LAY.step);row=Math.round((center.y-h*.5-885)/LAY.step);}
+ else{col=Math.round((center.x-w*.5-LAY.x)/LAY.step);row=Math.round((center.y-h*.5-LAY.y)/LAY.step);}
+ return {c:col,r:row};
+}
+function planDrag(unit,drag){
+ if(!unit||!boardHasPointer({x:drag.dx,y:drag.dy}))return {kind:'invalid',shifts:[]};
+ const target=unitAt(drag.dx,drag.dy),spot=dragAnchor(unit,drag,target);
+ if(target&&target.id!==unit.id&&unit.tier===target.tier&&Number.isInteger(ART.nextTier?.(unit.tier)))
+  return {kind:'merge',c:target.c,r:target.r,targetId:target.id,shifts:[]};
+ return window.GridDragPlanner.create({units:state.units,blocks:state.blocks,spans:ART.spans}).near(unit.id,spot.c,spot.r);
+}
+function applyDragPlan(unit,plan,from){
+ if(!unit||!plan||plan.kind==='invalid')return false;
+ if(plan.kind==='same')return true;
+ if(plan.kind==='merge'){
+  const target=state.units.find(u=>u.id===plan.targetId);
+  return merge(unit,target);
+ }
+ const original=from||tileCenter(unit.c,unit.r,unit.tier);
+ const moved=[];
+ for(const shift of plan.shifts){
+  const item=state.units.find(u=>u.id===shift.id);
+  if(!item)return false;
+  moved.push({item,from:tileCenter(item.c,item.r,item.tier)});
+ }
+ for(let i=0;i<moved.length;i++){
+  moved[i].item.c=plan.shifts[i].c;
+  moved[i].item.r=plan.shifts[i].r;
+ }
+ unit.c=plan.c;unit.r=plan.r;selected=unit.id;
+ for(const entry of moved)animateUnit(entry.item.id,'move',entry.from);
+ animateUnit(unit.id,'move',original);
+ state.tutorialSeen=true;
+ save();return true;
+}
+function previewRect(c,r,tier,color,fill){
+ const shape=ART.spans(tier);
+ ctx.save();ctx.strokeStyle=color;ctx.lineWidth=4;ctx.fillStyle=fill;
+ for(let yy=0;yy<shape.h;yy++)for(let xx=0;xx<shape.w;xx++){
+  const p=cellRect(c+xx,r+yy);
+  ctx.fillRect(Math.round(p.x+4),Math.round(p.y+4),p.w-8,p.h-8);
+  ctx.strokeRect(Math.round(p.x+3),Math.round(p.y+3),p.w-6,p.h-6);
+ }
+ ctx.restore();
+}
+function drawDragPreview(drag){
+ if(!drag?.moved)return;
+ const unit=state.units.find(u=>u.id===drag.id);if(!unit)return;
+ const plan=planDrag(unit,drag);
+ drag.preview=plan;
+ const valid=plan.kind!=='invalid';
+ const color=!valid?'#ff8588':plan.kind==='merge'?'#ffd77c':plan.kind==='swap'||plan.kind==='reflow'?'#83dcff':'#8af7bb';
+ const source=rectOfUnit(unit);
+ previewRect(unit.c,unit.r,unit.tier,'#ffddb3','#b9a08326');
+ if(Number.isInteger(plan.c)&&Number.isInteger(plan.r)){
+  // Invalid anchors can fall outside the logical grid; never paint there.
+  const dim=ART.spans(unit.tier);
+  if(plan.c>=0&&plan.r>=0&&plan.c+dim.w<=13&&plan.r+dim.h<=6){
+   previewRect(plan.c,plan.r,unit.tier,color,valid?'#54dfa43d':'#f85b6b32');
+   if(valid&&plan.kind!=='same'){
+    const p=rectOfUnit({c:plan.c,r:plan.r,tier:unit.tier});
+    spriteImage(unit.tier,p.x+p.w/2,p.y+p.h/2,p.w,p.h,.32,.95);
+   }
+  }
+ }
+ // Preview each item that will be displaced, including multi-cell items.
+ for(const shift of plan.shifts||[]){
+  const victim=state.units.find(u=>u.id===shift.id);if(!victim)continue;
+  previewRect(shift.c,shift.r,victim.tier,'#85ddff','#6ccdeb2b');
+  const ghost=rectOfUnit({c:shift.c,r:shift.r,tier:victim.tier});
+  spriteImage(victim.tier,ghost.x+ghost.w/2,ghost.y+ghost.h/2,ghost.w,ghost.h,.58,.97);
+  const from=tileCenter(victim.c,victim.r,victim.tier),to=tileCenter(shift.c,shift.r,victim.tier);
+  ctx.save();ctx.strokeStyle='#c2f6ff';ctx.lineWidth=2;ctx.setLineDash([7,6]);
+  ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(to.x,to.y);ctx.stroke();ctx.restore();
+ }
+ const labels={move:'ПЕРЕМЕСТИТЬ',swap:'ОБМЕН',reflow:'ПЕРЕСТАНОВКА',merge:'ОБЪЕДИНИТЬ',invalid:'НЕЛЬЗЯ',same:'НА МЕСТЕ'};
+ const en={move:'MOVE',swap:'SWAP',reflow:'REARRANGE',merge:'MERGE',invalid:'BLOCKED',same:'SAME PLACE'};
+ const es={move:'MOVER',swap:'CAMBIAR',reflow:'REORDENAR',merge:'UNIR',invalid:'BLOQUEADO',same:'SIN CAMBIO'};
+ const label=(state.lang==='ru'?labels:state.lang==='es'?es:en)[plan.kind];
+ const candidate=Number.isInteger(plan.c)&&Number.isInteger(plan.r)&&valid?cellRect(plan.c,plan.r):source;
+ const lx=clamp(candidate.x+55,110,LAY.W-110),ly=clamp(candidate.y-20,92,LAY.H-150);
+ ctx.save();ctx.fillStyle='#241f2cd9';ctx.fillRect(lx-85,ly-14,170,27);
+ textStroke(label,lx,ly,17,color,'center','#1e1b25',2);ctx.restore();
+}
 function burst(x,y,value,color){
  fx.push({kind:'damage',x,y,vx:(Math.random()-.5)*60,vy:-70,life:.8,max:.8,text:'-'+makeBlockText(value),color:'#fcfffe'});
  scatter(x,y,color,Math.min(10,Math.ceil(value/100)+3));
@@ -615,6 +713,7 @@ function render(dt){
  }else{drawBackground(performance.now());drawCells();}
  for(const b of state.blocks)drawBlock(b);
  drawScan(performance.now());
+ if(dragging)drawDragPreview(dragging);
  for(const u of state.units)if(!dragging||dragging.id!==u.id)drawUnit(u);
  if(dragging){
   const u=state.units.find(unit=>unit.id===dragging.id);
@@ -662,14 +761,16 @@ function pointerDown(e){
  sound.unlock();if(showResult||paused)return;const p=worldPoint(e);let unit=unitAt(p.x,p.y);
  if(unit){const box=rectOfUnit(unit);dragging={id:unit.id,sx:p.x,sy:p.y,dx:p.x,dy:p.y,offsetX:p.x-(box.x+box.w/2),offsetY:p.y-(box.y+box.h/2),moved:false};canvas.setPointerCapture?.(e.pointerId);}
 }
-function pointerMove(e){const p=worldPoint(e);hoveredChrome=!LAY.portrait&&p.x<215&&p.y<81;if(dragging){dragging.dx=p.x;dragging.dy=p.y;if(Math.hypot(p.x-dragging.sx,p.y-dragging.sy)>15)dragging.moved=true;}}
+function pointerMove(e){const p=worldPoint(e);hoveredChrome=!LAY.portrait&&p.x<215&&p.y<81;if(dragging){dragging.dx=p.x;dragging.dy=p.y;if(Math.hypot(p.x-dragging.sx,p.y-dragging.sy)>8)dragging.moved=true;}}
 function pointerUp(e){
  const p=worldPoint(e);
  if(dragging){let drag=dragging;dragging=null;let a=state.units.find(u=>u.id===drag.id);if(!a)return;
- if(drag.moved){let target=unitAt(p.x,p.y);if(target&&target.id!==a.id&&target.tier===a.tier&&ART.nextTier?.(a.tier)!=null){merge(a,target);return;}
- const tile=pointCell(p.x,p.y);
- if(tile&&moveUnit(a,tile.c,tile.r,{x:drag.dx-drag.offsetX,y:drag.dy-drag.offsetY}))return;
- popup(txt('noRoom'));return;
+ drag.dx=p.x;drag.dy=p.y;
+ if(drag.moved){
+  const plan=planDrag(a,drag);
+  const from={x:drag.dx-drag.offsetX,y:drag.dy-drag.offsetY};
+  if(applyDragPlan(a,plan,from))return;
+  popup(txt('invalidDrop'));return;
  }else{let b=selected?state.units.find(u=>u.id===selected):null;if(b&&b.id!==a.id&&a.tier===b.tier&&ART.nextTier?.(a.tier)!=null){merge(b,a);return;}selected=a.id;sound.note(a.tier);scatter(p.x,p.y,'#b3ffff',5);return;}}
  if(showResult){if(state.finished){state.stage++;initWorld(false);}else{state.time=192;showResult='';}
  gameEvent('gameplayStart');save();return;}
@@ -729,6 +830,6 @@ function setupImages(){
 // Play the actual recorded instrument family and level from art.js.
 const sound=new window.MelodySampleEngine(()=>state,()=>ART);
 window.GridGameDebug={getState:()=>clone(state),getDamage:(tier)=>unitDamage(tier),getAnimations:()=>Array.from(unitMotion,([id,a])=>({id,kind:a.kind,age:a.age,duration:a.duration,from:a.from,to:a.to})),
-getGeometry:()=>({width:LAY.W,height:LAY.H,renderWidth:canvas.width,renderHeight:canvas.height,renderScale,portrait,blocks:state.blocks.map(b=>({id:b.id,rect:rectOfBlock(b)})),units:state.units.map(u=>({id:u.id,rect:rectOfUnit(u)}))}),scan:()=>{let n=state.blocks.filter(b=>b.hp>0).length;for(const u of state.units)emitInstrument(u);return{before:n,after:state.blocks.filter(b=>b.hp>0).length,coins:state.coins};},spawn,merge:(a,b)=>merge(state.units[a],state.units[b]),restart:()=>initWorld(false),setCharge:n=>state.charge=n};
+planPlacement:(id,c,r)=>window.GridDragPlanner.create({units:state.units,blocks:state.blocks,spans:ART.spans}).exact(id,c,r),applyPlacement:(id,c,r)=>{const u=state.units.find(x=>x.id===id);const p=window.GridDragPlanner.create({units:state.units,blocks:state.blocks,spans:ART.spans}).exact(id,c,r);return applyDragPlan(u,p);},getGeometry:()=>({width:LAY.W,height:LAY.H,renderWidth:canvas.width,renderHeight:canvas.height,renderScale,portrait,blocks:state.blocks.map(b=>({id:b.id,rect:rectOfBlock(b)})),units:state.units.map(u=>({id:u.id,rect:rectOfUnit(u)}))}),scan:()=>{let n=state.blocks.filter(b=>b.hp>0).length;for(const u of state.units)emitInstrument(u);return{before:n,after:state.blocks.filter(b=>b.hp>0).length,coins:state.coins};},spawn,merge:(a,b)=>merge(state.units[a],state.units[b]),restart:()=>initWorld(false),setCharge:n=>state.charge=n};
 sdkInit();
 })();
