@@ -2,7 +2,7 @@
 (()=>{'use strict';
 const canvas=document.getElementById('game'),$=id=>document.getElementById(id),ART=window.GridMusicArt;
 let ctx=canvas.getContext('2d');
-const ASSET_BUILD='concert-roulette-v1'; // bust cached placeholder PNGs
+const ASSET_BUILD='mojs-motion-v1'; // bust cached placeholder PNGs
 const KEY='melody-scanner-approved-assets-v1';
 const OLD_KEY='melody-scanner-video-reference-v3';
 const I={
@@ -36,7 +36,8 @@ const starting=[
  {tier:0,c:3,r:4}
 ];
 const startState=()=>({stage:1,coins:241,time:192,charge:16,chargeFill:.62,highest:6,upgrades:{power:0,speed:0,wealth:0},units:[],blocks:[],volume:.7,music:.46,lang:/^ru/i.test(navigator.language)?'ru':/^es/i.test(navigator.language)?'es':'en',tutorialSeen:false,finished:false,pendingDrop:null});
-let state=startState(),roulette=null,homeOpen=false,selected=null,dragging=null,hovered=null,hoveredChrome=false,paused=false,showResult='',scanner=-50,pass=0,frameLast=performance.now(),fx=[],hints=0,toast=null,checkpoint=0,portrait=false,LAY=null,imgs=[],booted=false,sdkReady=false,store=null,chargeHitBox=null,settingsHot=null,shopHot=null,pauseHot=null;
+const moFx=window.MojsGameFX?new window.MojsGameFX($('mojsEffects'),canvas,()=>LAY):{merge(){},block(){},prize(){},swap(){},victory(){},debug(){return {enabled:false}}};
+ let state=startState(),roulette=null,homeOpen=false,selected=null,dragging=null,hovered=null,hoveredChrome=false,paused=false,showResult='',scanner=-50,pass=0,frameLast=performance.now(),fx=[],hints=0,toast=null,checkpoint=0,portrait=false,LAY=null,imgs=[],booted=false,sdkReady=false,store=null,chargeHitBox=null,settingsHot=null,shopHot=null,pauseHot=null;
 function clone(x){return JSON.parse(JSON.stringify(x));}
 function initWorld(reset=false){
  const factor=1+Math.max(0,state.stage-1)*.14;
@@ -221,13 +222,14 @@ function damageBlock(b,value,p){
  if(b.hp===0){
    const pos=rectOfBlock(b),x=pos.x+pos.w*.5,y=pos.y+pos.h*.5;
    scatter(x,y,b.boss?'#ffe789':'#d6fbff',28);
+    moFx.block(x,y,b.boss);
    fx.push({kind:'break',x,y,w:pos.w,h:pos.h,life:.62,max:.62,color:b.boss?'#ffd66c':'#dfdeed'});
    state.coins=clamp(state.coins+(b.boss?1500:Math.max(14,Math.floor(b.max/25))),0,1e12);
    state.charge=Math.min(999,(Number.isFinite(state.charge)?state.charge:0)+(b.boss?20:Math.max(1,Math.floor(b.max/1400))));
    sound.breakBox(b.boss);
    if(!b.boss&&Math.random()<.24){const tier=Math.random()<.15?1:0;const f=findFree(tier);if(f){const u={tier,...f,id:uid++};state.units.push(u);animateUnit(u.id);}}
  }
- if(state.blocks.every(k=>k.hp<=0)){state.finished=true;showResult=txt('win');gameEvent('gameplayStop');sound.win();if(state.stage%5===0)gameEvent('happytime');save();}
+ if(state.blocks.every(k=>k.hp<=0)){state.finished=true;showResult=txt('win');moFx.victory(LAY.W*.5,LAY.H*.44);gameEvent('gameplayStop');sound.win();if(state.stage%5===0)gameEvent('happytime');save();}
 }
 function emitInstrument(u){
  const p=rectOfUnit(u),cx=p.x+p.w*.5,cy=p.y+p.h*.5;
@@ -259,6 +261,7 @@ function awardInstrument(win){
  const p=tileCenter(unit.c,unit.r,unit.tier);
  fx.push({kind:'arrival',x:p.x,y:p.y,w:ART.spans(unit.tier).w*LAY.step-8,h:ART.spans(unit.tier).h*LAY.step-8,life:1.25,max:1.25});
  selected=unit.id;state.tutorialSeen=true;
+ moFx.prize(p.x,p.y,win.level);
  sound.note(unit.tier);if(win.level>=4)sound.merge(unit.tier);
  save(true);return true;
 }
@@ -287,6 +290,7 @@ function advanceRoulette(dt){
   const prize={...roulette};
   awardInstrument(prize);
   roulette={...prize,phase:'reveal',age:0,duration:prize.level>=5?1.65:prize.level>=4?1.25:.85};
+  if(prize.level>=3)moFx.prize(LAY.W*.5,LAY.H*.5,prize.level);
  }else if(roulette.phase==='reveal'&&roulette.age>=roulette.duration)roulette=null;
 }
 // Reserve the expanded merge footprint and move any displaced items to
@@ -350,6 +354,7 @@ function merge(a,b){
  animateUnit(u.id,'merge',bCenter);
  selected=u.id;
  const dest=tileCenter(u.c,u.r,u.tier);
+ moFx.merge(dest.x,dest.y,ART.approved[t]?.level||1);
  // Tiny incoming old-tier instrument flies to its partner, which then
  // becomes the new tier. Never animate an arbitrary full-screen tracer.
  fx.push({kind:'combine',tier:a.tier,x:aCenter.x,y:aCenter.y,
@@ -420,6 +425,10 @@ function applyDragPlan(unit,plan,from){
  unit.c=plan.c;unit.r=plan.r;selected=unit.id;
  for(const entry of moved)animateUnit(entry.item.id,'move',entry.from);
  animateUnit(unit.id,'move',original);
+ if(plan.kind==='swap'||plan.kind==='reflow'){
+  const landing=tileCenter(unit.c,unit.r,unit.tier);
+  moFx.swap(landing.x,landing.y);
+ }
  state.tutorialSeen=true;
  save();return true;
 }
@@ -796,7 +805,7 @@ function setupImages(){
 }
 // Play the actual recorded instrument family and level from art.js.
 const sound=new window.MelodySampleEngine(()=>state,()=>ART);
-window.GridGameDebug={getState:()=>clone(state),getDragPreview:()=>dragging?.preview?clone(dragging.preview):null,getDamage:(tier)=>unitDamage(tier),getAnimations:()=>Array.from(unitMotion,([id,a])=>({id,kind:a.kind,age:a.age,duration:a.duration,from:a.from,to:a.to})),
+window.GridGameDebug={getState:()=>clone(state),getMojs:()=>moFx.debug(),getDragPreview:()=>dragging?.preview?clone(dragging.preview):null,getDamage:(tier)=>unitDamage(tier),getAnimations:()=>Array.from(unitMotion,([id,a])=>({id,kind:a.kind,age:a.age,duration:a.duration,from:a.from,to:a.to})),
 planPlacement:(id,c,r)=>window.GridDragPlanner.create({units:state.units,blocks:state.blocks,spans:ART.spans}).exact(id,c,r),applyPlacement:(id,c,r)=>{const u=state.units.find(x=>x.id===id);const p=window.GridDragPlanner.create({units:state.units,blocks:state.blocks,spans:ART.spans}).exact(id,c,r);return applyDragPlan(u,p);},getGeometry:()=>({width:LAY.W,height:LAY.H,renderWidth:canvas.width,renderHeight:canvas.height,renderScale,portrait,blocks:state.blocks.map(b=>({id:b.id,rect:rectOfBlock(b)})),units:state.units.map(u=>({id:u.id,rect:rectOfUnit(u)}))}),scan:()=>{let n=state.blocks.filter(b=>b.hp>0).length;for(const u of state.units)emitInstrument(u);return{before:n,after:state.blocks.filter(b=>b.hp>0).length,coins:state.coins};},spawn:()=>spawn(true),getRoulette:()=>roulette?clone(roulette):null,roll:()=>spawn(false),advanceRoulette,merge:(a,b)=>merge(state.units[a],state.units[b]),restart:()=>initWorld(false),setCharge:n=>state.charge=n};
 sdkInit();
 })();
