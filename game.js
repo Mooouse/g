@@ -35,7 +35,7 @@ const starting=[
  {tier:2,c:1,r:4},{tier:3,c:2,r:4},
  {tier:0,c:3,r:4}
 ];
-const startState=()=>({stage:1,coins:241,time:192,charge:16,chargeFill:.62,highest:6,upgrades:{power:0,speed:0,wealth:0},units:[],blocks:[],volume:.7,music:.46,lang:/^ru/i.test(navigator.language)?'ru':/^es/i.test(navigator.language)?'es':'en',tutorialSeen:false,finished:false});
+const startState=()=>({stage:1,coins:241,time:192,charge:16,chargeFill:.62,highest:6,upgrades:{power:0,speed:0,wealth:0},units:[],blocks:[],volume:.7,music:.46,lang:/^ru/i.test(navigator.language)?'ru':/^es/i.test(navigator.language)?'es':'en',tutorialSeen:false,finished:false,pendingDrop:null});
 let state=startState(),roulette=null,homeOpen=false,selected=null,dragging=null,hovered=null,hoveredChrome=false,paused=false,showResult='',scanner=-50,pass=0,frameLast=performance.now(),fx=[],hints=0,toast=null,checkpoint=0,portrait=false,LAY=null,imgs=[],booted=false,sdkReady=false,store=null,chargeHitBox=null,settingsHot=null,shopHot=null,pauseHot=null;
 function clone(x){return JSON.parse(JSON.stringify(x));}
 function initWorld(reset=false){
@@ -129,6 +129,8 @@ function read(){
    state.upgrades[k]=Number.isFinite(state.upgrades[k])?clamp(Math.trunc(state.upgrades[k]),0,max):0;
   }
   if(!I[state.lang])state.lang='en';
+   const d=state.pendingDrop;
+   if(!d||!Number.isInteger(d.tier)||d.tier<0||d.tier>=ART.total||!Number.isInteger(d.c)||!Number.isInteger(d.r))state.pendingDrop=null;
   if(legacy){state.units=[];state.blocks=[];state.highest=6;state.finished=false;}
   state.blocks=repairBlocks(state.blocks);
   repairUnits();
@@ -154,7 +156,9 @@ async function sdkInit(){
  if(!state.blocks.length)initWorld(true);
  else{state.blocks=repairBlocks(state.blocks);repairUnits();}
  save(); // Persist repaired finite state on the next safe tick.
- setupImages();setView();bind();fillPanel();sound.preload();
+ setupImages();setView();
+ if(state.pendingDrop)awardInstrument(state.pendingDrop);
+ bind();fillPanel();sound.preload();
  homeOpen=typeof document.querySelector==='function'&&!!document.querySelector('#homeScreen')&&
   !(window.location?.search||'').includes('preview=1');
  if(!homeOpen&&typeof document.querySelector==='function')
@@ -250,22 +254,26 @@ function awardInstrument(win){
  const pos=canPlace(win.c,win.r,win.tier)?{c:win.c,r:win.r}:findFree(win.tier);
  if(!pos)return false;
  const unit={tier:win.tier,c:pos.c,r:pos.r,id:uid++};
- state.units.push(unit);animateUnit(unit.id,'spawn');
+ state.units.push(unit);state.pendingDrop=null;animateUnit(unit.id,'spawn');
  state.highest=Math.max(state.highest,win.tier);
  const p=tileCenter(unit.c,unit.r,unit.tier);
  fx.push({kind:'arrival',x:p.x,y:p.y,w:ART.spans(unit.tier).w*LAY.step-8,h:ART.spans(unit.tier).h*LAY.step-8,life:1.25,max:1.25});
  selected=unit.id;state.tutorialSeen=true;
  sound.note(unit.tier);if(win.level>=4)sound.merge(unit.tier);
- save();return true;
+ save(true);return true;
 }
 function spawn(instant=false){
  if(state.finished||showResult||paused||homeOpen||roulette)return false;
+ if(state.pendingDrop){
+  if(!awardInstrument(state.pendingDrop))popup(txt('noRoom'));
+  return false;
+ }
  const cost=5;
  if(!Number.isFinite(state.charge))state.charge=0;
  if(state.charge<cost){popup(txt('noCharge'));return false;}
  const prize=window.MelodyRoulette.choose(ART,tier=>findFree(tier),Math.random);
  if(!prize){popup(txt('noRoom'));return false;}
- state.charge-=cost;save();
+ state.charge-=cost;state.pendingDrop={...prize};save(true);
  if(instant===true)return awardInstrument(prize);
  const reel=Array.from({length:33},()=>Math.floor(Math.random()*ART.total));
  reel[reel.length-3]=prize.tier;
