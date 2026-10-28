@@ -7,7 +7,8 @@ const refs=new Set([...game.matchAll(/\$\('([^']+)'\)/g)].map(m=>m[1]));
 assert.deepEqual([...refs].filter(k=>!ids.has(k)),[],'referenced DOM IDs must exist');
 assert.ok(html.includes('crazygames-sdk-v3.js'));
 const noop=()=>{},events={},ui={};const gradient={addColorStop:noop};
-const ctx=new Proxy({createLinearGradient:()=>gradient,createRadialGradient:()=>gradient},{get(o,k){return o[k]??noop},set(o,k,v){o[k]=v;return true;}});
+const frameCounter={clears:0};
+const ctx=new Proxy({clearRect(){frameCounter.clears++},createLinearGradient:()=>gradient,createRadialGradient:()=>gradient},{get(o,k){return o[k]??noop},set(o,k,v){o[k]=v;return true;}});
 function element(id){return ui[id]??(ui[id]={
 id,width:1650,height:928,textContent:'',innerHTML:'',value:'',style:{},
 classList:{add:noop,remove:noop,toggle:noop},
@@ -93,11 +94,9 @@ assert.equal(dbg.getGeometry().portrait,false);
 const desktop=dbg.getGeometry();
 assert.equal(desktop.width,1650,'logical width stays fixed');
 assert.equal(desktop.height,928,'logical height stays fixed');
-assert.ok(desktop.renderWidth>=1900,'keep enough backing pixels for sharp sprites');
-assert.ok(desktop.renderWidth<=2200,'canvas does not exceed performance pixel budget');
-assert.ok(desktop.renderHeight>=1050,'high DPI backing height');
-assert.ok(desktop.renderWidth*desktop.renderHeight<=2600000,'canvas pixel budget protects performance');
-assert.ok(desktop.renderScale>=1.1&&desktop.renderScale<=1.5,'adaptive scale avoids expensive full DPR');
+assert.equal(desktop.renderWidth,1650,'pixel-art canvas renders natively for high FPS');
+assert.equal(desktop.renderHeight,928,'native vertical backing resolution');
+assert.equal(desktop.renderScale,1,'no oversized HiDPI canvas');
 assert.equal(ctx.imageSmoothingEnabled,false,'pixel art is never smoothed');
 assert.equal(ctx.imageSmoothingQuality,'low','no interpolation');
 // Simulated pointer mapping remains in logical coordinates after increasing backing resolution.
@@ -109,6 +108,13 @@ assert.ok(events['game:pointerdown'],'pointer down handler');
 events['game:pointerdown'](mouse);
 events['game:pointerup'](mouse);
 assert.ok(dbg.getState().units.some(u=>u.tier===fresh.units[0].tier),'pointer maps correctly to logical board');
+// Two frames 8 ms apart must both redraw on a 120/144 Hz display.
+const beforeFrames=frameCounter.clears;
+events.animation(1008);
+events.animation(1016);
+assert.equal(frameCounter.clears,beforeFrames+2,'every display frame is rendered; no 40 FPS throttle');
+assert.ok(!game.includes('TARGET_FRAME_MS'),'hard FPS cap removed');
+assert.ok(!game.includes('ctx.globalAlpha=.58'),'old translucent dragged ghost removed');
 events.animation(1020);
 const scan=dbg.scan();assert.ok(scan.coins>fresh.coins,'scan should earn money');
 assert.ok(dbg.getState().blocks.some((b,i)=>b.hp<fresh.blocks[i].hp),'scan must damage metal blocks');
@@ -128,5 +134,5 @@ assert.equal(geometry.height,1560);
 assert.ok(geometry.renderWidth>=900,'mobile backing store not downsampled');
 for(let b of geometry.blocks){assert.ok(b.rect.x>=0&&b.rect.x+b.rect.w<=geometry.width+1,'mobile blocks within viewport '+b.id);assert.ok(b.rect.y>=0&&b.rect.y+b.rect.h<=geometry.height+1,'mobile blocks within height '+b.id);}
 events.animation(1070);
-console.log('PASS — '+artMeta.total+' unique playable tiers, '+Object.keys(artMeta.uiAssets).length+' UI sprites, merges, mobile board and scanner');
+console.log('PASS — '+artMeta.total+' tiers, 12 UI sprites, uncapped refresh, no ghost trails, brighter native pixel-art board, merges and mobile play');
 })().catch(e=>{console.error(e);process.exitCode=1;});
