@@ -22,7 +22,9 @@ jobs:
           set -o pipefail
           node --check art.js
           node --check game.js
+          node --check sample-audio.js
           node tests/smoke.cjs
+          node tests/audio.cjs
       - name: Attach QA summary to this run (no race-prone Git commits)
         if: always()
         shell: bash
