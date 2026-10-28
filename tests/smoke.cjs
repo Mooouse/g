@@ -322,5 +322,23 @@ if(pixellab){
  nearly.spawn();
  assert.equal(nearly.getState().units.length,78,'spawn falls back to a fitting 1x1 model');
 
+// Interrupted roulette: a persisted prize is restored exactly once at boot.
+const queuedWorld={...fresh,
+ charge:11,units:[],blocks:fresh.blocks.map(b=>({...b,hp:0})),
+ pendingDrop:{tier:23,level:6,c:0,r:0,family:'guitar'},finished:false};
+const pendingSave={getItem(){return JSON.stringify(queuedWorld)},setItem:noop};
+const resumeWindow={...win,addEventListener:noop};
+const resumeCtx={...context,window:resumeWindow,localStorage:pendingSave};
+vm.createContext(resumeCtx);
+vm.runInContext(rouletteSource,resumeCtx,{filename:'roulette-logic.js'});
+vm.runInContext(theme,resumeCtx,{filename:'concert-theme.js'});
+vm.runInContext(game,resumeCtx,{filename:'game-pending.js'});
+for(let i=0;i<12;i++)await Promise.resolve();
+const recoveredRoll=resumeWindow.GridGameDebug.getState();
+assert.equal(recoveredRoll.pendingDrop,null,'pending award is cleared after recovery');
+assert.equal(recoveredRoll.charge,11,'recovered prize costs no extra charge');
+assert.equal(recoveredRoll.units.length,1,'queued spin grants exactly one item after page reload');
+assert.equal(recoveredRoll.units[0].tier,23,'original rare prize preserved, not rerolled');
+
 console.log('PASS — '+artMeta.total+' tiers, smooth source-to-target merge, nearest-slot relocation and destination indicator, uncapped FPS, repaired NaN saves, nonoverlapping multi-cell sprites, mobile gameplay');
 })().catch(e=>{console.error(e);process.exitCode=1;});
