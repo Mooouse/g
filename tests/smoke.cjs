@@ -173,6 +173,31 @@ assert.ok(moveAnim.duration>=.25,'drag release animation lasts long enough to se
 assert.ok(Number.isFinite(moveAnim.from.x)&&Number.isFinite(moveAnim.from.y),'release animation starts from actual pointer position');
 assert.ok(Number.isFinite(moveAnim.to.x)&&Number.isFinite(moveAnim.to.y),'release animation ends at cell center');
 assert.ok(Math.hypot(moveAnim.from.x-moveAnim.to.x,moveAnim.from.y-moveAnim.to.y)<104,'drop snaps only the last short distance, not back to its old cell');
+// Real pointer drag: hovering an occupied different-family tile must
+// show the pairwise exchange BEFORE release, then commit exactly that swap.
+const beforeSwap=dbg.getState();
+const draggedUnit=beforeSwap.units.find(u=>u.tier===0&&u.c===5&&u.r===3);
+const swappedUnit=beforeSwap.units.find(u=>u.tier===2&&u.c===5&&u.r===2);
+assert.ok(draggedUnit&&swappedUnit,'swap regression pair exists');
+const startBox=dbg.getGeometry().units.find(u=>u.id===draggedUnit.id).rect;
+const targetBox=dbg.getGeometry().units.find(u=>u.id===swappedUnit.id).rect;
+const pointerAt=box=>({clientX:(box.x+box.w/2)/1650*canvasBounds.width,
+ clientY:(box.y+box.h/2)/928*canvasBounds.height,pointerId:8});
+events['game:pointerdown'](pointerAt(startBox));
+events['game:pointermove'](pointerAt(targetBox));
+events.animation(1024);
+const displayed=dbg.getDragPreview();
+assert.equal(displayed.kind,'swap','occupied tile previews a swap, not no-room');
+assert.equal(displayed.shifts.length,1,'preview shows where the displaced instrument goes');
+assert.deepEqual([displayed.shifts[0].c,displayed.shifts[0].r],[5,3],'ghost instrument points to vacated source');
+events['game:pointerup'](pointerAt(targetBox));
+const afterSwap=dbg.getState();
+const aAfter=afterSwap.units.find(u=>u.id===draggedUnit.id);
+const bAfter=afterSwap.units.find(u=>u.id===swappedUnit.id);
+assert.deepEqual([aAfter.c,aAfter.r],[5,2],'dragged keyboard lands on ukulele tile');
+assert.deepEqual([bAfter.c,bAfter.r],[5,3],'ukulele swaps into the previous keyboard tile');
+assert.ok(!dbg.getDragPreview(),'preview disappears after drop');
+
 const unapprovedIndex=dbg.getState().units.findIndex(u=>u.tier===2);
 const anotherFamilyIndex=dbg.getState().units.findIndex(u=>u.tier===3);
 assert.ok(!dbg.merge(unapprovedIndex,anotherFamilyIndex),'cross-family merge is prohibited');
