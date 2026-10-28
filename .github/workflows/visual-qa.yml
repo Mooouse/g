@@ -42,7 +42,7 @@ jobs:
           D=$?
           timeout 16s "$CHROME" --headless=new --no-sandbox --disable-dev-shm-usage --disable-background-networking --no-first-run --hide-scrollbars --window-size=430,850 --force-device-scale-factor=2 --screenshot=/tmp/mobile.png http://127.0.0.1:8321/?preview=1 >/tmp/mobile.log 2>&1
           M=$?
-          timeout 16s "$CHROME" --headless=new --no-sandbox --disable-dev-shm-usage --disable-background-networking --no-first-run --hide-scrollbars --window-size=1650,928 --force-device-scale-factor=2 --screenshot=/tmp/menu.png http://127.0.0.1:8321/ >/tmp/menu.log 2>&1
+          timeout 16s "$CHROME" --headless=new --no-sandbox --disable-dev-shm-usage --disable-background-networking --no-first-run --hide-scrollbars --window-size=1280,720 --force-device-scale-factor=1 --screenshot=/tmp/menu.png http://127.0.0.1:8321/ >/tmp/menu.log 2>&1
           N=$?
           set -e
           test -s /tmp/desktop.png
