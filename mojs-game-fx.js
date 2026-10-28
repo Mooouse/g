@@ -63,8 +63,8 @@
    const pos=this.at(x,y);if(!pos)return false;
    // Stop scan-induced spam from overwhelming a busy 120/144 Hz screen.
    const now=(this.env.performance?.now?.()||Date.now());
-   if(kind==='block'&&now-(this.lastTimes.get('block')||0)<155){this.skipped++;return false;}
-   if(kind==='swap'&&now-(this.lastTimes.get('swap')||0)<95){this.skipped++;return false;}
+   if(kind==='block'&&this.lastTimes.has('block')&&now-this.lastTimes.get('block')<155){this.skipped++;return false;}
+   if(kind==='swap'&&this.lastTimes.has('swap')&&now-this.lastTimes.get('swap')<95){this.skipped++;return false;}
    this.lastTimes.set(kind,now);
    const rarity=clamp(level|0,1,6);
    const key=kind+':'+(kind==='prize'||kind==='merge'?rarity:1);
