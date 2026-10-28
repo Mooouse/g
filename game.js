@@ -267,7 +267,9 @@ function spawn(instant=false){
  if(!prize){popup(txt('noRoom'));return false;}
  state.charge-=cost;save();
  if(instant===true)return awardInstrument(prize);
- roulette={tier:prize.tier,level:prize.level,c:prize.c,r:prize.r,age:0,duration:1.55,phase:'spinning',lang:state.lang};
+ const reel=Array.from({length:33},()=>Math.floor(Math.random()*ART.total));
+ reel[reel.length-3]=prize.tier;
+ roulette={tier:prize.tier,level:prize.level,c:prize.c,r:prize.r,age:0,duration:1.55,phase:'spinning',lang:state.lang,sequence:reel};
  dragging=null;selected=null;return true;
 }
 function advanceRoulette(dt){
