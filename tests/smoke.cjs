@@ -1,11 +1,12 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),vm=require('node:vm');
-const art=fs.readFileSync('art.js','utf8'),game=fs.readFileSync('game.js','utf8'),html=fs.readFileSync('index.html','utf8');
-new vm.Script(art,{filename:'art.js'});new vm.Script(game,{filename:'game.js'});
+const art=fs.readFileSync('art.js','utf8'),game=fs.readFileSync('game.js','utf8'),audio=fs.readFileSync('sample-audio.js','utf8'),html=fs.readFileSync('index.html','utf8');
+new vm.Script(art,{filename:'art.js'});new vm.Script(game,{filename:'game.js'});new vm.Script(audio,{filename:'sample-audio.js'});
 const ids=new Set([...html.matchAll(/id="([^"]+)"/g)].map(m=>m[1]));
 const refs=new Set([...game.matchAll(/\$\('([^']+)'\)/g)].map(m=>m[1]));
 assert.deepEqual([...refs].filter(k=>!ids.has(k)),[],'referenced DOM IDs must exist');
 assert.ok(html.includes('crazygames-sdk-v3.js'));
+assert.ok(html.includes('sample-audio.js')&&html.indexOf('sample-audio.js')<html.indexOf('game.js'),'sample engine loads before game');
 const noop=()=>{},events={},ui={};const gradient={addColorStop:noop};
 const frameCounter={clears:0};
 const ctx=new Proxy({clearRect(){frameCounter.clears++},createLinearGradient:()=>gradient,createRadialGradient:()=>gradient},{get(o,k){return o[k]??noop},set(o,k,v){o[k]=v;return true;}});
@@ -25,7 +26,7 @@ const context={window:win,document,localStorage:store,navigator:{language:'ru-RU
 Image:MockImage,performance:{now:()=>1000},setTimeout(fn){return 1;},clearTimeout:noop,requestAnimationFrame(fn){events.animation=fn;return 1},encodeURIComponent};
 vm.createContext(context);
 (async()=>{
-vm.runInContext(art,context,{filename:'art.js'});const artMeta=context.window.GridMusicArt;
+vm.runInContext(art,context,{filename:'art.js'});vm.runInContext(audio,context,{filename:'sample-audio.js'});const artMeta=context.window.GridMusicArt;
 assert.ok([7,24].includes(artMeta.total),'legacy release has seven tiers; PixelLab release has twenty-four');
 const pixellab=artMeta.style==='pixellab-game-assets';
 const expected=[
@@ -67,6 +68,20 @@ for(let i=0;i<expected.length;i++){
  assert.equal(artMeta.src(i),file,'image path: '+id);
 }
 assert.ok(['pixel-art-images','pixellab-game-assets'].includes(artMeta.style));
+assert.equal(Object.keys(win.MelodyAudioSamplePaths).length,18,'18 real offline instrument recordings');
+const samplePaths=win.MelodyAudioSamplePaths;
+for(const [key,path] of Object.entries(samplePaths)){
+ assert.ok(path.startsWith('assets/audio/'),'same-origin audio sample '+key);
+ const bytes=fs.readFileSync(path);
+ const magic=bytes.subarray(0,4).toString('ascii');
+ assert.ok(magic==='fLaC'||magic==='OggS','audio content magic for '+path);
+ assert.ok(bytes.length>12000,'recorded instrument has meaningful audio data: '+path);
+}
+const families=new Set(Object.keys(samplePaths).map(k=>k.split(':')[0]));
+assert.deepEqual([...families].sort(),['drum','guitar','piano','ukulele'],'every instrument has a unique real recording family');
+assert.ok(audio.includes('this.buffers.get(key)'),'instrument samples are actually used for voice playback');
+assert.ok(audio.includes('this.drum('),'drums play physical percussion samples');
+
 const uiExpected={background_tile:[64,64],cell:[64,64],metal_block:[64,64],boss_block:[128,128],scanner:[16,64],charge_button:[128,48],sparkle:[16,16],
 settings_icon:[32,32],shop_icon:[32,32],pause_icon:[32,32],coin:[24,24],result_panel:[128,64]};
 for(const [name,legacyDim] of Object.entries(uiExpected)){
