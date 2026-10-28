@@ -8,7 +8,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:no
 .tip{position:absolute;left:50%;bottom:10%;transform:translateX(-50%);padding:9px 14px;border:1px solid #ad8ffd;border-radius:10px;color:white;background:#100f2de6;pointer-events:none;z-index:6}
 button{font:inherit;cursor:pointer}
 button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #9aefff;outline-offset:3px}
-.home-screen{position:absolute;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;isolation:isolate;background:linear-gradient(110deg,#080b1beb 0%,#0d0921d5 44%,#0d0a22ac 100%);overflow:hidden}
+.home-screen{position:absolute;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;isolation:isolate;background:radial-gradient(ellipse at 78% 40%,#212a65 0%,#100c32 42%,transparent 73%),linear-gradient(110deg,#0a061b 0%,#140a33 45%,#080d24 100%);overflow:hidden}
 .home-screen:before{content:"";position:absolute;inset:0;z-index:-2;background:repeating-linear-gradient(90deg,transparent 0,transparent 108px,#986dff08 109px,transparent 110px)}
 .home-glow{position:absolute;inset:-45%;pointer-events:none;z-index:-1;background:radial-gradient(ellipse at 48% 31%,#c42ef528,transparent 44%),radial-gradient(ellipse at 74% 66%,#178ce82c,transparent 46%);animation:stage-ambient 9s ease-in-out infinite alternate}
 @keyframes stage-ambient{from{transform:translateY(0)}to{transform:translateY(-5%)}}
