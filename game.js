@@ -2,7 +2,7 @@
 (()=>{'use strict';
 const canvas=document.getElementById('game'),$=id=>document.getElementById(id),ART=window.GridMusicArt;
 let ctx=canvas.getContext('2d');
-const ASSET_BUILD='pixellab-stability-v6'; // bust cached placeholder PNGs
+const ASSET_BUILD='pixellab-stability-v7'; // bust cached placeholder PNGs
 const KEY='melody-scanner-approved-assets-v1';
 const OLD_KEY='melody-scanner-video-reference-v3';
 const I={
@@ -79,7 +79,17 @@ function repairBlocks(saved){
  return configs.map((base,id)=>{
   const src=byId.get(id),normalMax=Math.ceil(base.hp*factor);
   const max=Number.isFinite(src?.max)&&src.max>0?src.max:normalMax;
-  const hp=Number.isFinite(src?.hp)?clamp(src.hp,0,max):normalMax;
+  // Invalid/missing HP with a saved instrument on these cells means this
+  // target was cleared before the numeric corruption. Never erase that unit.
+  const occupied=Array.isArray(state.units)&&state.units.some(u=>{
+   if(!u||!Number.isInteger(u.tier)||u.tier<0||u.tier>=ART.total||
+      !Number.isInteger(u.c)||!Number.isInteger(u.r))return false;
+   const size=ART.spans(u.tier);
+   return u.c<base.c+base.w&&u.c+size.w>base.c&&
+          u.r<base.r+base.h&&u.r+size.h>base.r;
+  });
+  const recoveredEmpty=Array.isArray(saved)&&saved.length>0&&occupied;
+  const hp=Number.isFinite(src?.hp)?clamp(src.hp,0,max):(recoveredEmpty?0:normalMax);
   return {...base,id,max,hp};
  });
 }
@@ -126,7 +136,12 @@ function read(){
  }catch(e){console.warn('Save unavailable',e);}
 }
 let saveTimer=0;
-function save(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{try{(store||localStorage).setItem(KEY,JSON.stringify(state));}catch(e){}},100);}
+function persist(){try{(store||localStorage).setItem(KEY,JSON.stringify(state));}catch(e){}}
+function save(immediate=false){
+ clearTimeout(saveTimer);
+ if(immediate===true)persist();
+ else saveTimer=setTimeout(persist,100);
+}
 const gameEvent=method=>{try{if(sdkReady)window.CrazyGames?.SDK?.game?.[method]?.();}catch(e){}};
 function gameMode(on){if(paused===!on)return;paused=!on;gameEvent(on?'gameplayStart':'gameplayStop');}
 async function sdkInit(){
@@ -187,7 +202,7 @@ function damageBlock(b,value,p){
  const earned=Math.max(1,Math.round(d*(.018+state.upgrades.wealth*.011)));
  state.coins=clamp((Number.isFinite(state.coins)?state.coins:0)+earned,0,1e12);
  state.chargeFill=(Number.isFinite(state.chargeFill)?state.chargeFill:0)+Math.min(.36,d/10000);
- if(state.chargeFill>=1){const a=Math.floor(state.chargeFill);state.charge+=a;state.chargeFill-=a;}
+ if(state.chargeFill>=1){const a=Math.floor(state.chargeFill);state.charge=Math.min(999,(Number.isFinite(state.charge)?state.charge:0)+a);state.chargeFill-=a;}
  const point=p||{x:rectOfBlock(b).x+40,y:rectOfBlock(b).y+50};
  animateHit(b.id,d);burst(point.x,point.y,d,b.boss?'#fff9c0':'#74ecff');
  if(d>15&&Math.random()<.7)fx.push({kind:'coin',x:point.x+5,y:point.y-14,vx:20,vy:-110,life:1,max:1,text:'+$'+earned,color:'#fff071'});
@@ -197,7 +212,7 @@ function damageBlock(b,value,p){
    scatter(x,y,b.boss?'#ffe789':'#d6fbff',28);
    fx.push({kind:'break',x,y,w:pos.w,h:pos.h,life:.62,max:.62,color:b.boss?'#ffd66c':'#dfdeed'});
    state.coins=clamp(state.coins+(b.boss?1500:Math.max(14,Math.floor(b.max/25))),0,1e12);
-   state.charge+=b.boss?20:Math.max(1,Math.floor(b.max/1400));
+   state.charge=Math.min(999,(Number.isFinite(state.charge)?state.charge:0)+(b.boss?20:Math.max(1,Math.floor(b.max/1400))));
    sound.breakBox(b.boss);
    if(!b.boss&&Math.random()<.24){const tier=Math.random()<.15?1:0;const f=findFree(tier);if(f){const u={tier,...f,id:uid++};state.units.push(u);animateUnit(u.id);}}
  }
@@ -225,16 +240,65 @@ function onScanColumn(c){
 function spawn(){
  if(state.finished||showResult||paused)return;
  const cost=5;
+ if(!Number.isFinite(state.charge))state.charge=0;
  if(state.charge<cost){popup(txt('noCharge'));return;}
  const pool=ART.spawnTiers||[0,2,3,5];
- // Draw one of the independently levelled instrument families.
- const candidate=pool[Math.floor(Math.random()*pool.length)];
- const tier=Number.isInteger(candidate)?candidate:0;
- const pos=findFree(tier);if(!pos){popup(txt('noRoom'));return;}
+ // Preserve weighted randomness, but don't claim a full board merely
+ // because the first random choice was a 1x2 guitar.
+ const choices=[...pool].sort(()=>Math.random()-.5);
+ let tier=null,pos=null;
+ for(const candidate of choices){
+  if(!Number.isInteger(candidate)||candidate<0||candidate>=ART.total)continue;
+  const slot=findFree(candidate);
+  if(slot){tier=candidate;pos=slot;break;}
+ }
+ if(!pos){popup(txt('noRoom'));return;}
  const freshUnit={...pos,tier,id:uid++};
  state.units.push(freshUnit);animateUnit(freshUnit.id);state.tutorialSeen=true;
  state.charge-=cost;state.coins=Math.max(0,(Number.isFinite(state.coins)?state.coins:0)-8);
  sound.note(tier);scatter(cellRect(pos.c,pos.r).x+45,cellRect(pos.c,pos.r).y+47,'#adfff1',12);save();
+}
+// Reserve the expanded merge footprint and move any displaced items to
+// the nearest available cells. Animations follow each actual item, not
+// an unrelated tracer; failed placements are fully rolled back.
+function makeMergeRoom(tier,near){
+ const size=ART.spans(tier),options=[];
+ const intersects=(c,r,w,h,u)=>{
+  const s=ART.spans(u.tier);
+  return c<u.c+s.w&&c+w>u.c&&r<u.r+s.h&&r+h>u.r;
+ };
+ for(let r=0;r<=6-size.h;r++)for(let c=0;c<=13-size.w;c++){
+  if(state.blocks.some(b=>b.hp>0&&c<b.c+b.w&&c+size.w>b.c&&r<b.r+b.h&&r+size.h>b.r))continue;
+  const neighbors=state.units.filter(u=>intersects(c,r,size.w,size.h,u));
+  if(neighbors.length>6)continue;
+  const distance=(c-near.c)**2+(r-near.r)**2;
+  options.push({c,r,neighbors,score:distance+neighbors.length*12});
+ }
+ options.sort((a,b)=>a.score-b.score||a.r-b.r||a.c-b.c);
+ for(const option of options){
+  const originals=option.neighbors.map(u=>({u,c:u.c,r:u.r}));
+  for(const item of originals){item.u.c=-100;item.u.r=-100;}
+  // Reserve destination while relocating all affected neighbors.
+  const reservation={id:-1,tier,c:option.c,r:option.r};
+  state.units.push(reservation);
+  const sorted=[...originals].sort((a,b)=>{
+   const sa=ART.spans(a.u.tier),sb=ART.spans(b.u.tier);
+   return sb.w*sb.h-sa.w*sa.h;
+  });
+  let possible=true;
+  for(const item of sorted){
+   const slot=findFree(item.u.tier,item.u.id,{c:item.c,r:item.r});
+   if(!slot){possible=false;break;}
+   item.u.c=slot.c;item.u.r=slot.r;
+  }
+  state.units.pop();
+  if(possible){
+   for(const item of originals)animateUnit(item.u.id,'move',tileCenter(item.c,item.r,item.u.tier));
+   return {c:option.c,r:option.r};
+  }
+  for(const item of originals){item.u.c=item.c;item.u.r=item.r;}
+ }
+ return null;
 }
 function merge(a,b){
  if(!a||!b||a.id===b.id||a.tier!==b.tier)return false;
@@ -248,6 +312,7 @@ function merge(a,b){
  const candidates=[{c:b.c,r:b.r},{c:a.c,r:a.r}];
  let location=candidates.find(p=>canPlace(p.c,p.r,t));
  if(!location)location=findFree(t,undefined,{c:b.c,r:b.r});
+ if(!location)location=makeMergeRoom(t,{c:b.c,r:b.r});
  if(!location){state.units.push(a,b);popup(txt('noRoom'));return false;}
  const u={...location,tier:t,id:uid++};
  state.units.push(u);
@@ -500,7 +565,8 @@ function drawChrome(){
  const moneyX=LAY.portrait?W-48:W-148,moneyY=LAY.portrait?57:52;
  if(readyImage(gfx.coin))ctx.drawImage(gfx.coin,moneyX-205,moneyY-19,32,32);
  textStroke(Math.floor(Number.isFinite(state.coins)?state.coins:0).toLocaleString('en-US'),moneyX,moneyY,LAY.portrait?44:51,'#f1cc76','right','#1b1722',4);
- const min=Math.floor(Math.max(0,state.time)/60),sec=Math.floor(Math.max(0,state.time)%60);
+ const safeTime=Number.isFinite(state.time)?Math.max(0,state.time):0;
+ const min=Math.floor(safeTime/60),sec=Math.floor(safeTime%60);
  textStroke(min+':'+String(sec).padStart(2,'0'),W*.5,LAY.portrait?61:54,LAY.portrait?56:62,'#f4eee6','center','#17141e',4);
  settingsHot={x:15,y:14,w:58,h:58};shopHot={x:78,y:14,w:58,h:58};pauseHot={x:141,y:14,w:58,h:58};
  for(const [hit,name,glyph] of [[settingsHot,'settings_icon','⚙'],[shopHot,'shop_icon','✦'],[pauseHot,'pause_icon','Ⅱ']]){
@@ -515,10 +581,12 @@ function drawChrome(){
  ctx.fillStyle='#b89966';ctx.fillRect(bx,by,bw,bh);
  ctx.fillStyle='#24332e';ctx.fillRect(bx+6,by+6,bw-12,bh-12);
  ctx.fillStyle='#31554a';ctx.fillRect(bx+10,by+10,bw-20,bh-20);
- const progress=clamp(.12+state.chargeFill*.36+Math.min(.52,state.charge/120),0,1);
+ const safeCharge=Number.isFinite(state.charge)?Math.max(0,state.charge):0;
+ const safeFill=Number.isFinite(state.chargeFill)?clamp(state.chargeFill,0,1):0;
+ const progress=clamp(.12+safeFill*.36+Math.min(.52,safeCharge/120),0,1);
  ctx.fillStyle='#141e1a';ctx.fillRect(bx+18,by+bh-20,bw-36,8);
  ctx.fillStyle='#81e0ba';ctx.fillRect(bx+18,by+bh-20,Math.floor((bw-36)*progress),8);
- textStroke(String(Math.floor(state.charge)),bx+bw/2,by+bh*.45,LAY.portrait?49:66,'#fff5db','center','#1a352b',4);
+ textStroke(String(Math.floor(safeCharge)),bx+bw/2,by+bh*.45,LAY.portrait?49:66,'#fff5db','center','#1a352b',4);
  if(toast)textStroke(toast.t,W*.5,LAY.portrait?1398:730,LAY.portrait?25:30,'#f9dcb4','center','#1b1722',3);
 }
 function drawResult(){
@@ -556,6 +624,11 @@ function render(dt){
  ctx.restore();
 }
 function mainStep(dt){
+ // A single invalid calculation must never poison coins, HP or the HUD.
+ if(!Number.isFinite(state.coins))state.coins=0;
+ if(!Number.isFinite(state.time))state.time=192;
+ if(!Number.isFinite(state.charge))state.charge=0;
+ if(!Number.isFinite(state.chargeFill))state.chargeFill=0;
  animClock+=dt;
  beatVisual=Math.max(0,beatVisual-dt*2.2);
  screenShake=Math.max(0,screenShake-dt*12);
@@ -586,7 +659,7 @@ function loop(now){
 function worldPoint(e){const box=canvas.getBoundingClientRect();return{x:(e.clientX-box.left)/Math.max(1,box.width)*LAY.W,y:(e.clientY-box.top)/Math.max(1,box.height)*LAY.H};}
 const inside=(p,r)=>r&&p.x>=r.x&&p.x<=r.x+r.w&&p.y>=r.y&&p.y<=r.y+r.h;
 function pointerDown(e){
- sound.unlock();if(showResult)return;const p=worldPoint(e);let unit=unitAt(p.x,p.y);
+ sound.unlock();if(showResult||paused)return;const p=worldPoint(e);let unit=unitAt(p.x,p.y);
  if(unit){const box=rectOfUnit(unit);dragging={id:unit.id,sx:p.x,sy:p.y,dx:p.x,dy:p.y,offsetX:p.x-(box.x+box.w/2),offsetY:p.y-(box.y+box.h/2),moved:false};canvas.setPointerCapture?.(e.pointerId);}
 }
 function pointerMove(e){const p=worldPoint(e);hoveredChrome=!LAY.portrait&&p.x<215&&p.y<81;if(dragging){dragging.dx=p.x;dragging.dy=p.y;if(Math.hypot(p.x-dragging.sx,p.y-dragging.sy)>15)dragging.moved=true;}}
@@ -626,7 +699,7 @@ function bind(){
  $('language').addEventListener('change',e=>{state.lang=e.target.value;fillPanel();save();});
  $('upgradeOptions').addEventListener('click',e=>{const k=e.target.closest('[data-upgrade]')?.dataset.upgrade;if(!k)return;const cost=upgradeCost(k);if(state.coins<cost)return;state.coins-=cost;state.upgrades[k]++;fillPanel();save();});
  document.addEventListener('visibilitychange',()=>{if(document.hidden)gameEvent('gameplayStop');else if(!paused&&!showResult){frameLast=performance.now();gameEvent('gameplayStart');}});
- window.addEventListener('pagehide',save);
+ window.addEventListener('pagehide',()=>save(true));
  window.addEventListener('keydown',e=>{if(e.code==='Enter'&&showResult){if(state.finished)state.stage++;initWorld(false);gameEvent('gameplayStart');save();}
  if(e.code==='Space'&&!e.repeat){e.preventDefault();spawn();}
  if(e.code==='KeyS')openPanel('settings');
