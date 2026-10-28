@@ -215,5 +215,54 @@ if(pixellab){
  assert.ok(Number.isFinite(after.coins),'scanning high-tier instruments never breaks coins');
  assert.ok(after.blocks.every(b=>Number.isFinite(b.hp)),'scanning high-tier instruments never breaks HP');
 }
+
+ // Crowded-grid regression: merging two nonadjacent 1x1 keyboards into
+ // a 2x1 synth must slide a neighbor to the vacated source, not fail.
+ // All 78 cells are occupied, so no plain findFree(2x1) can work.
+ const fullBoard=[];
+ for(let r=0;r<6;r++)for(let c=0;c<13;c++)
+  fullBoard.push({tier:r===0&&(c===1||c===3)?1:0,c,r,id:r*13+c+1});
+ const emptyBlocks=fresh.blocks.map(b=>({...b,hp:0}));
+ function makeCrowded(units){
+  const crowdedSave={...fresh,charge:30,blocks:emptyBlocks,units,finished:false};
+  const local={getItem(){return JSON.stringify(crowdedSave)},setItem:noop};
+  const w={...win,addEventListener:noop};
+  const m=Object.create(Math);m.random=()=>.999; // original buggy spawn always chose 1x2 guitar
+  const c={...context,window:w,Math:m,localStorage:local};
+  vm.createContext(c);vm.runInContext(game,c,{filename:'game-crowded.js'});
+  return w;
+ }
+ const crowdedWindow=makeCrowded(fullBoard);
+ for(let i=0;i<10;i++)await Promise.resolve();
+ const crowded=crowdedWindow.GridGameDebug;
+ const full=crowded.getState();
+ assert.equal(full.units.length,78,'full-board fixture contains all occupied tiles');
+ const x=full.units.findIndex(u=>u.tier===1&&u.c===1&&u.r===0);
+ const y=full.units.findIndex(u=>u.tier===1&&u.c===3&&u.r===0);
+ assert.ok(crowded.merge(x,y),'adjacent movement makes room for a larger merged synth');
+ const compact=crowded.getState();
+ assert.equal(compact.units.length,77,'two sources become one upgraded instrument');
+ assert.equal(compact.units.filter(u=>u.tier===7).length,1,'merge uses keyboard level 3');
+ assert.ok(crowded.getAnimations().some(a=>a.kind==='move'),'neighbor reflow uses visible smooth motion');
+ const occupied=new Set();
+ for(const u of compact.units){
+  const span=artMeta.spans(u.tier);
+  for(let dy=0;dy<span.h;dy++)for(let dx=0;dx<span.w;dx++){
+   const key=(u.c+dx)+':'+(u.r+dy);
+   assert.ok(!occupied.has(key),'merged cells never overlap: '+key);
+   occupied.add(key);
+  }
+ }
+ assert.equal(occupied.size,78,'no item lost and every occupied tile remains valid');
+ // One free 1x1 cell is enough to spawn a smaller instrument even when a
+ // randomly selected two-cell guitar cannot fit.
+ const nearlyFull=fullBoard.filter(u=>!(u.c===12&&u.r===5));
+ const spawnWindow=makeCrowded(nearlyFull);
+ for(let i=0;i<10;i++)await Promise.resolve();
+ const nearly=spawnWindow.GridGameDebug;
+ assert.equal(nearly.getState().units.length,77);
+ nearly.spawn();
+ assert.equal(nearly.getState().units.length,78,'spawn falls back to a fitting 1x1 model');
+
 console.log('PASS — '+artMeta.total+' tiers, smooth source-to-target merge, nearest-slot relocation and destination indicator, uncapped FPS, repaired NaN saves, nonoverlapping multi-cell sprites, mobile gameplay');
 })().catch(e=>{console.error(e);process.exitCode=1;});
