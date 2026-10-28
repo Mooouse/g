@@ -134,6 +134,27 @@ assert.ok(Number.isFinite(mergeMotions[0].from.x)&&Number.isFinite(mergeMotions[
 assert.ok(game.includes('findFree(t,undefined,{c:b.c,r:b.r})'),'upgraded item selects nearest available slot');
 assert.ok(game.includes("kind:'destination'"),'remote merges highlight their destination');
 assert.ok(game.includes("kind:'combine'"),'two original instruments converge visibly');
+// Pointer-based relocation of a 1x1 instrument must visibly glide, not teleport.
+const moving=dbg.getState().units.find(u=>u.tier===0&&u.c===0&&u.r===4);
+assert.ok(moving,'movement regression fixture exists at column 0 row 4');
+const movingRect=dbg.getGeometry().units.find(u=>u.id===moving.id).rect;
+const fromPointer={
+ clientX:(movingRect.x+movingRect.w/2)/1650*canvasBounds.width,
+ clientY:(movingRect.y+movingRect.h/2)/928*canvasBounds.height,pointerId:3
+};
+const toPointer={
+ clientX:(160+97/2)/1650*canvasBounds.width,
+ clientY:(105+5*103+97/2)/928*canvasBounds.height,pointerId:3
+};
+events['game:pointerdown'](fromPointer);
+events['game:pointermove'](toPointer);
+events['game:pointerup'](toPointer);
+const movedUnit=dbg.getState().units.find(u=>u.id===moving.id);
+assert.deepEqual([movedUnit.c,movedUnit.r],[0,5],'unit lands in requested free tile');
+const moveAnim=dbg.getAnimations().find(m=>m.id===moving.id);
+assert.equal(moveAnim.kind,'move','drop starts a glide transition');
+assert.ok(moveAnim.duration>=.25,'drag release animation lasts long enough to see');
+assert.ok(moveAnim.from.y<moveAnim.to.y,'movement animates from old position to new cell');
 const unapprovedIndex=dbg.getState().units.findIndex(u=>u.tier===2);
 const anotherFamilyIndex=dbg.getState().units.findIndex(u=>u.tier===3);
 assert.ok(!dbg.merge(unapprovedIndex,anotherFamilyIndex),'cross-family merge is prohibited');
