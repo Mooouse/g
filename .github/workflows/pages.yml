@@ -22,7 +22,9 @@ jobs:
         run: |
           node --check art.js
           node --check game.js
+          node --check sample-audio.js
           node tests/smoke.cjs
+          node tests/audio.cjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
