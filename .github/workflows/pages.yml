@@ -26,6 +26,9 @@ jobs:
           node --check drag-planner.js
           node --check roulette-logic.js
           node --check concert-theme.js
+          node --check vendor/mojs/mo.umd.js
+          node --check mojs-game-fx.js
+          node tests/mojs-fx.cjs
           node tests/roulette.cjs
           node tests/drag-planner.cjs
           node tests/smoke.cjs
