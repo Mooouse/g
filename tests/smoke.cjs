@@ -167,5 +167,53 @@ assert.equal(geometry.height,1560);
 assert.ok(geometry.renderWidth>=900,'mobile backing store not downsampled');
 for(let b of geometry.blocks){assert.ok(b.rect.x>=0&&b.rect.x+b.rect.w<=geometry.width+1,'mobile blocks within viewport '+b.id);assert.ok(b.rect.y>=0&&b.rect.y+b.rect.h<=geometry.height+1,'mobile blocks within height '+b.id);}
 events.animation(1070);
-console.log('PASS — '+artMeta.total+' tiers, smooth source-to-target merge, nearest-slot relocation and destination indicator, uncapped FPS, mobile gameplay');
+// A regression scenario based on the reported screenshot: the obsolete
+// 16-element damage table let tiers 16–23 produce NaN block HP and coin totals.
+// JSON.stringify(NaN) persists these as null. Restore *by ID*, not array index.
+for(let i=0;i<artMeta.total;i++){
+ const d=dbg.getDamage(i);
+ assert.ok(Number.isFinite(d)&&d>0,'finite damage for tier '+i);
+}
+if(pixellab){
+ const damaged=fresh.blocks.map(b=>({...b}));
+ damaged[2].hp=null;damaged[2].max=null; // corrupted damage or max
+ const omitted=damaged.filter(b=>b.id!==8); // older code had dropped invalid blocks
+ const saved={
+  ...fresh,coins:null,chargeFill:null,blocks:omitted,
+  units:[{tier:23,c:1,r:2,id:201},{tier:23,c:1,r:2,id:202},{tier:0,c:1,r:2,id:203}]
+ };
+ const brokenStore={getItem(){return JSON.stringify(saved)},setItem:noop};
+ const badWindow={...win,GridMusicArt:artMeta,addEventListener:noop};
+ const recoveryContext={...context,window:badWindow,localStorage:brokenStore};
+ vm.createContext(recoveryContext);
+ vm.runInContext(game,recoveryContext,{filename:'game-recovery.js'});
+ for(let i=0;i<10;i++)await Promise.resolve();
+ const recovered=badWindow.GridGameDebug;
+ assert.ok(recovered,'boot corrupted saved game');
+ const fixed=recovered.getState();
+ assert.ok(Number.isFinite(fixed.coins)&&fixed.coins>=0,'currency recovered from NaN/null');
+ assert.ok(Number.isFinite(fixed.chargeFill),'charge-fill recovered from null');
+ assert.equal(fixed.blocks.length,20,'all HP blocks preserved after restoring deleted entries');
+ for(let id=0;id<20;id++){
+  const b=fixed.blocks[id],original=fresh.blocks[id];
+  assert.equal(b.id,id,'block id stays stable');
+  assert.deepEqual([b.c,b.r,b.w,b.h],[original.c,original.r,original.w,original.h],'HP block grid geometry unchanged: '+id);
+  assert.ok(Number.isFinite(b.hp)&&Number.isFinite(b.max),'no invalid HP or max: '+id);
+ }
+ assert.equal(fixed.blocks[2].hp,fresh.blocks[2].hp,'damaged block is safely restored');
+ const hits=(a,b)=>a.c<b.c+b.w&&a.c+a.w>b.c&&a.r<b.r+b.h&&a.r+a.h>b.r;
+ const footprints=fixed.units.map(u=>({...u,...artMeta.spans(u.tier)}));
+ for(let i=0;i<footprints.length;i++){
+  const a=footprints[i];
+  for(let j=i+1;j<footprints.length;j++)
+   assert.ok(!hits(a,footprints[j]),'restored multi-cell instruments must not overlap');
+  for(const block of fixed.blocks.filter(b=>b.hp>0))
+   assert.ok(!hits(a,block),'restored instrument must not overlap metal block');
+ }
+ recovered.scan();
+ const after=recovered.getState();
+ assert.ok(Number.isFinite(after.coins),'scanning high-tier instruments never breaks coins');
+ assert.ok(after.blocks.every(b=>Number.isFinite(b.hp)),'scanning high-tier instruments never breaks HP');
+}
+console.log('PASS — '+artMeta.total+' tiers, smooth source-to-target merge, nearest-slot relocation and destination indicator, uncapped FPS, repaired NaN saves, nonoverlapping multi-cell sprites, mobile gameplay');
 })().catch(e=>{console.error(e);process.exitCode=1;});
