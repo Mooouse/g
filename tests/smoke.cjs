@@ -180,7 +180,7 @@ if(pixellab){
  const omitted=damaged.filter(b=>b.id!==8); // older code had dropped invalid blocks
  const saved={
   ...fresh,coins:null,chargeFill:null,blocks:omitted,
-  units:[{tier:23,c:1,r:2,id:201},{tier:23,c:1,r:2,id:202},{tier:0,c:1,r:2,id:203}]
+  units:[{tier:23,c:1,r:2,id:201},{tier:23,c:1,r:2,id:202},{tier:0,c:1,r:2,id:203},{tier:0,c:9,r:0,id:204}]
  };
  const brokenStore={getItem(){return JSON.stringify(saved)},setItem:noop};
  const badWindow={...win,GridMusicArt:artMeta,addEventListener:noop};
@@ -201,6 +201,8 @@ if(pixellab){
   assert.ok(Number.isFinite(b.hp)&&Number.isFinite(b.max),'no invalid HP or max: '+id);
  }
  assert.equal(fixed.blocks[2].hp,fresh.blocks[2].hp,'damaged block is safely restored');
+  assert.equal(fixed.blocks[8].hp,0,'missing HP block stays destroyed when a saved item occupies it');
+  assert.ok(fixed.units.some(u=>u.tier===0&&u.c===9&&u.r===0),'valid item survives a corrupted block save');
  const hits=(a,b)=>a.c<b.c+b.w&&a.c+a.w>b.c&&a.r<b.r+b.h&&a.r+a.h>b.r;
  const footprints=fixed.units.map(u=>({...u,...artMeta.spans(u.tier)}));
  for(let i=0;i<footprints.length;i++){
