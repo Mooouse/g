@@ -85,6 +85,7 @@
    spots.sort((a,b)=>a.distance-b.distance||a.r-b.r||a.c-b.c);
    const others=all.filter(u=>u.id!==id);
    for(const spot of spots){
+    if(spot.c===actor.c&&spot.r===actor.r)continue;
     const candidate={...actor,c:spot.c,r:spot.r};
     if(legal(candidate,others))
      return {kind:'move',c:spot.c,r:spot.r,shifts:[],adjusted:true};
