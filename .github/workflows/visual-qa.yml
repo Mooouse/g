@@ -13,6 +13,9 @@ on:
       - 'index.html'
       - '.github/workflows/visual-qa.yml'
   workflow_dispatch:
+concurrency:
+  group: browser-visual-qa
+  cancel-in-progress: true
 permissions:
   contents: write
 jobs:
@@ -51,18 +54,21 @@ jobs:
           path: docs/qa-screenshots/
           retention-days: 14
 
-      - name: Save real gameplay screenshots for review
+      - name: Save latest visual QA screenshots without binary merge conflicts
         shell: bash
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add docs/qa-screenshots/desktop.png docs/qa-screenshots/mobile.png docs/qa-screenshots/status.txt
-          if git diff --cached --quiet; then exit 0; fi
-          git commit -m "Capture desktop and mobile Concert Edition game boards"
+          # HTML/CSS are modified in-place only for the offline capture.
           git restore -- index.html style.css
           for retry in 1 2 3 4 5; do
             git fetch origin main
-            git rebase origin/main || { git rebase --abort; exit 1; }
+            # Keep the newly generated PNGs in the working tree, base the
+            # commit directly on the latest branch; never rebase binary PNGs.
+            git reset --mixed origin/main
+            git add docs/qa-screenshots/desktop.png docs/qa-screenshots/mobile.png docs/qa-screenshots/status.txt
+            if git diff --cached --quiet; then exit 0; fi
+            git commit -m "Capture desktop and mobile Concert Edition game boards"
             if git push origin HEAD:main; then exit 0; fi
             sleep 2
           done
