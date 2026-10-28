@@ -23,6 +23,8 @@ jobs:
           node --check art.js
           node --check game.js
           node --check sample-audio.js
+          node --check drag-planner.js
+          node tests/drag-planner.cjs
           node tests/smoke.cjs
           node tests/audio.cjs
       - name: Attach QA summary to this run (no race-prone Git commits)
