@@ -1,0 +1,49 @@
+name: Vendor pinned mo.js for offline CrazyGames builds
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/vendor-mojs.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fetch official pinned distributable, not a tracking CDN
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmp=$(mktemp -d)
+          pushd "$tmp"
+          npm pack @mojs/core@1.7.1 --silent > filename
+          tar -xzf "$(cat filename)"
+          test -s package/dist/mo.umd.js
+          test -s package/LICENSE.md
+          popd
+          mkdir -p vendor/mojs
+          cp "$tmp/package/dist/mo.umd.js" vendor/mojs/mo.umd.js
+          cp "$tmp/package/LICENSE.md" vendor/mojs/LICENSE.md
+          node --check vendor/mojs/mo.umd.js
+          wc -c vendor/mojs/*
+      - name: Commit bundled library with preserved attribution
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for retry in 1 2 3 4 5; do
+            git fetch origin main
+            git reset --mixed origin/main
+            git add vendor/mojs/mo.umd.js vendor/mojs/LICENSE.md
+            if git diff --cached --quiet; then exit 0; fi
+            git commit -m "Bundle official @mojs/core 1.7.1 UMD and MIT license"
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          exit 1
