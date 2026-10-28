@@ -155,7 +155,10 @@ async function sdkInit(){
  else{state.blocks=repairBlocks(state.blocks);repairUnits();}
  save(); // Persist repaired finite state on the next safe tick.
  setupImages();setView();bind();fillPanel();sound.preload();
- homeOpen=typeof document.querySelector==='function'&&!!document.querySelector('#homeScreen');
+ homeOpen=typeof document.querySelector==='function'&&!!document.querySelector('#homeScreen')&&
+  !(window.location?.search||'').includes('preview=1');
+ if(!homeOpen&&typeof document.querySelector==='function')
+  document.querySelector('#homeScreen')?.classList.add('hidden');
  booted=true;gameEvent('loadingStop');
  if(homeOpen)gameEvent('gameplayStop');else gameEvent('gameplayStart');
  requestAnimationFrame(loop);
