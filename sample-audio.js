@@ -42,11 +42,7 @@ class MelodySampleEngine {
    this.noiseBuffer=a.createBuffer(1,len,a.sampleRate);
    const channel=this.noiseBuffer.getChannelData(0);
    for(let i=0;i<len;i++)channel[i]=Math.random()*2-1;
-   this.driveCurve=new Float32Array(2048);
-   for(let i=0;i<this.driveCurve.length;i++){
-    const x=(i/1023.5)-1;
-    this.driveCurve[i]=Math.tanh(x*3.6)/Math.tanh(3.6);
-   }
+   // No hard waveshaping: it made the guitar painfully harsh at high levels.
    this.levels();return true;
   }catch(e){console.warn('Audio setup unavailable',e);return false;}
  }
@@ -109,19 +105,18 @@ class MelodySampleEngine {
   const now=Math.max(a.currentTime+.003,at);
   filter.type='lowpass';
   filter.frequency.value=family==='ukulele'?clamp(5000+level*280,2500,8000):
-   family==='guitar'?(level>=3?clamp(2200+level*280,2800,5300):7200):7800;
+   family==='guitar'?clamp(2500+level*110,2400,3200):7800;
+  // Recorded electric guitar was mastered much louder than other families.
+  // Reduce its level and soften pluck transients before the shared bus.
+  const gain=family==='guitar'?Math.min(.13,velocity*.40):velocity;
   envelope.gain.setValueAtTime(.0001,now);
-  envelope.gain.linearRampToValueAtTime(Math.max(.0002,velocity),now+.008);
+  envelope.gain.linearRampToValueAtTime(Math.max(.0002,gain),now+(family==='guitar'?.028:.008));
   const maxSound=buffer.duration/Math.max(.25,rate);
   const duration=Math.max(.08,Math.min(seconds,maxSound-.012));
   const stop=now+duration;
-  envelope.gain.setValueAtTime(Math.max(.0002,velocity)*.77,Math.max(now+.014,stop-.12));
+  envelope.gain.setValueAtTime(Math.max(.0002,gain)*.63,Math.max(now+.04,stop-.14));
   envelope.gain.exponentialRampToValueAtTime(.0001,stop);
-  if(family==='guitar'&&level>=3){
-   const drive=a.createWaveShaper();drive.curve=this.driveCurve;drive.oversample='2x';
-   const pre=a.createGain();pre.gain.value=level>=5?1.4:.88;
-   source.connect(pre);pre.connect(drive);drive.connect(filter);
-  }else source.connect(filter);
+  source.connect(filter);
   filter.connect(envelope);envelope.connect(this.instrumentBus);
   this.active++;
   source.onended=()=>{this.active=Math.max(0,this.active-1);try{source.disconnect();filter.disconnect();envelope.disconnect();}catch(e){}};
@@ -132,10 +127,10 @@ class MelodySampleEngine {
   // Only used while samples are still downloading or audio decoding fails.
   if(!this.ctx||this.active>=LIMIT)return false;
   const a=this.ctx,t=Math.max(a.currentTime+.003,at),osc=a.createOscillator(),g=a.createGain();
-  osc.type=family==='ukulele'?'triangle':family==='guitar'?'sawtooth':'sine';
+  osc.type=family==='ukulele'?'triangle':family==='guitar'?'triangle':'sine';
   osc.frequency.value=440*Math.pow(2,(midi-69)/12);
   g.gain.setValueAtTime(.0001,t);
-  g.gain.exponentialRampToValueAtTime(Math.max(.001,velocity*.4),t+.009);
+  g.gain.exponentialRampToValueAtTime(Math.max(.001,velocity*(family==='guitar'?.12:.4)),t+.009);
   const end=t+Math.min(.26,seconds);
   g.gain.exponentialRampToValueAtTime(.0001,end);
   osc.connect(g);g.connect(this.instrumentBus);this.active++;
@@ -194,11 +189,10 @@ class MelodySampleEngine {
    // Early models play a brighter clean lead; advanced guitars play
    // lower power-chord roots through the amplifier stage.
    const tone=level>=3?root:root+12;
-   const power=level>=3;
-   this.voice('guitar',tone,now,power?.28:.30,power?.85:.62,level);
-   if(level>=2)this.voice('guitar',tone+7,now+.038,power?.17:.16,.7,level);
-   if(level>=4)this.voice('guitar',tone+12,now+.078,.13,.78,level);
-   if(level>=6)this.voice('guitar',tone+4,now+.11,.10,.72,level);
+   this.voice('guitar',tone,now,.19,.49,level);
+   if(level>=2)this.voice('guitar',tone+7,now+.075,.095,.43,level);
+   if(level>=4)this.voice('guitar',tone+12,now+.14,.075,.42,level);
+   if(level>=6)this.voice('guitar',tone+4,now+.20,.068,.4,level);
   }else if(family==='drums'){
    this.drumStep++;const beat=this.drumStep;
    const kick=beat%4===1||beat%8===4;
