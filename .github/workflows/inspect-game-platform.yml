@@ -1,0 +1,65 @@
+name: Inspect Uploaded Game Platform Archive
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/inspect-game-platform.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Inspect ZIP without executing archive code
+        run: |
+          python3 - <<'PY'
+          import zipfile, pathlib, collections, json
+          p=pathlib.Path('game_platform-claude-sleepy-cannon-xcyut8.zip')
+          target=pathlib.Path('docs/ARCHIVE_INSPECTION.md')
+          with zipfile.ZipFile(p) as z:
+              entries=[x for x in z.infolist() if not x.is_dir()]
+              suffix=collections.Counter(pathlib.PurePosixPath(x.filename).suffix.lower() or '(none)' for x in entries)
+              out=['# Game platform ZIP inspection', '', 'Source: `'+p.name+'` (inspected as data; no archive code executed)', '',
+                   '## Overview', '', f'- Files: {len(entries)}', f'- Uncompressed bytes: {sum(x.file_size for x in entries):,}',
+                   '- Extensions: '+', '.join(f'`{k}` ({v})' for k,v in suffix.most_common(25)), '', '## File list', '']
+              for x in entries[:450]:
+                  name=x.filename.replace('`','')
+                  out.append(f'- `{name}` ({x.file_size:,} bytes)')
+              if len(entries)>450:out.append(f'- ... +{len(entries)-450} more files')
+              out.extend(['', '## Selected text manifest and documentation excerpts', ''])
+              names=[x for x in entries if pathlib.PurePosixPath(x.filename).name.lower() in
+                  ('readme.md','package.json','index.html','vite.config.ts','vite.config.js','game.json','tsconfig.json','composer.json','requirements.txt','project.godot','cargo.toml','manifest.json')]
+              for x in names[:25]:
+                  if x.file_size>250000:continue
+                  txt=z.read(x).decode('utf-8','replace')
+                  txt=txt.replace('\\x00','')
+                  if pathlib.PurePosixPath(x.filename).name.lower()=='package.json':
+                      try:
+                          obj=json.loads(txt)
+                          obj={k:obj.get(k) for k in ('name','version','description','scripts','dependencies','devDependencies') if k in obj}
+                          txt=json.dumps(obj,ensure_ascii=False,indent=2)
+                      except Exception:pass
+                  txt=txt[:7500].replace('```','[fence]')
+                  out.extend(['### `'+x.filename.replace('`','')+'`','', '```text',txt,'```', ''])
+              target.parent.mkdir(exist_ok=True)
+              target.write_text('\n'.join(out),encoding='utf-8')
+              print('Wrote',target,len(entries),'entries')
+          PY
+      - name: Commit report
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/ARCHIVE_INSPECTION.md
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Document uploaded game platform archive structure and capabilities'
+          for n in 1 2 3 4 5; do
+            git fetch origin main
+            git rebase origin/main || { git rebase --abort; exit 1; }
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          exit 1
