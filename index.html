@@ -1,17 +1,49 @@
 <!doctype html><html lang="ru"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="theme-color" content="#7452c9"><meta name="description" content="Собирай музыкальные инструменты, запускай звуковой сканер, разрушай металлические блоки.">
+<meta name="theme-color" content="#100d2a"><meta name="description" content="Собирай музыкальные инструменты, запускай звуковой сканер, разрушай металлические блоки.">
 <title>Melody Scanner — Musical Merge Arcade</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="style.css?rev=pixellab-stability-v7">
+<link rel="stylesheet" href="style.css?rev=concert-v1">
 <script defer src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>
 <script defer src="art.js?rev=pixellab-stability-v7"></script>
-<script defer src="sample-audio.js?rev=recordings-v1"></script>
+<script defer src="sample-audio.js?rev=guitar-soft-v1"></script>
 <script defer src="drag-planner.js?rev=smart-drag-v2"></script>
-<script defer src="game.js?rev=smart-drag-v2"></script>
+<script defer src="roulette-logic.js?rev=concert-v1"></script>
+<script defer src="concert-theme.js?rev=concert-v1"></script>
+<script defer src="game.js?rev=concert-v1"></script>
 </head>
 <body><div id="viewport">
-<canvas id="game" width="1650" height="928" role="application" aria-label="Musical grid game"></canvas>
+<canvas id="game" width="1650" height="928" role="application" aria-label="Melody Scanner Concert Edition"></canvas>
+<div id="homeScreen" class="home-screen">
+  <div class="home-glow"></div>
+  <div class="home-art" aria-hidden="true">
+   <img class="stage-guitar left" src="assets/pixellab/guitar_2.png" alt="">
+   <img class="stage-guitar right" src="assets/pixellab/guitar_1.png" alt="">
+   <img class="stage-drum" src="assets/pixellab/drums_2.png" alt="">
+   <img class="stage-keys" src="assets/pixellab/keyboard_3.png" alt="">
+  </div>
+  <div class="home-content">
+   <div class="home-kicker">✦ CONCERT EDITION ✦</div>
+   <h1>MELODY <span>SCANNER</span></h1>
+   <p class="home-tagline">Создай свою музыку. Собери легендарную сцену.</p>
+   <button id="menuPlay" class="primary-cta">▶ &nbsp; ИГРАТЬ</button>
+   <button id="menuHow" class="secondary-cta">♫ &nbsp; КАК ИГРАТЬ</button>
+   <button id="menuSettings" class="secondary-cta">⚙ &nbsp; НАСТРОЙКИ</button>
+   <p class="menu-footnote">24 инструмента • 6 уровней редкости • случайная рулетка</p>
+  </div>
+ </div>
+ <div id="tutorialScreen" class="tutorial-screen hidden">
+  <div class="tutorial-card">
+   <span class="tutorial-kicker">ДОБРО ПОЖАЛОВАТЬ НА СЦЕНУ</span>
+   <h2>СОБЕРИ СВОЙ ЗВУК!</h2>
+   <div class="tutorial-steps">
+    <p><strong>01</strong> Крути рулетку за заряд. Выпадает случайный инструмент — иногда уже улучшенный.</p>
+    <p><strong>02</strong> Перетаскивай одинаковые инструменты друг на друга, чтобы объединять их.</p>
+    <p><strong>03</strong> Музыкальный сканер разрушает блоки. Освобождай поле и проходи уровни!</p>
+   </div>
+   <button id="tutorialGo" class="primary-cta">▶ &nbsp; НАЧАТЬ ВЫСТУПЛЕНИЕ</button>
+  </div>
+ </div>
 <div id="tapHint" class="tip hidden"></div>
 <div id="panel" class="panel hidden"><div class="panel-header"><h2 id="panelTitle">Настройки</h2><button id="closePanel" aria-label="Закрыть">✕</button></div>
 <div id="settingsContent" class="settings-content">
