@@ -362,19 +362,11 @@ function drawScan(t){
 }
 // Only understated, short-lived feedback remains. Disable giant neon rings.
 function drawFx(dt){
- // Bright blinking rings, particles and moving trails are intentionally disabled.
- // Damage feedback uses one steady label; audio and gameplay remain unchanged.
+ // Preserve effect lifetimes for gameplay but don't flash or paint floating
+ // text across instruments / HP labels. HP and money still update normally.
  for(let i=fx.length-1;i>=0;i--){
-  const p=fx[i];p.life-=dt;
-  if(p.life<=0){fx.splice(i,1);continue;}
-  if(p.kind!=='damage'&&p.kind!=='coin')continue;
-  const alpha=Math.min(.8,p.life/(p.max||1));
-  p.x+=(p.vx||0)*dt;p.y+=(p.vy||-32)*dt;
-  ctx.save();ctx.globalAlpha=alpha;
-  ctx.font='800 23px monospace';ctx.textAlign='center';
-  ctx.fillStyle=p.kind==='damage'?'#fff3cf':'#fbe89e';
-  ctx.fillText(p.text||'',p.x,p.y);
-  ctx.restore();
+  fx[i].life-=dt;
+  if(fx[i].life<=0)fx.splice(i,1);
  }
 }
 function drawChrome(){
