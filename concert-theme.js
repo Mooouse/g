@@ -182,27 +182,37 @@ function rouletteFrame(ctx,L,roll,art,images){
  type(ctx,reveal?'ТВОЙ ИНСТРУМЕНТ':'СЛУЧАЙНОЕ ВЫПАДЕНИЕ',W*.5,y+54,P?34:38,'#f4eaff');
  type(ctx,reveal?'РЕДКОСТЬ ОПРЕДЕЛЕНА':'КРУТИМ РУЛЕТКУ...',W*.5,y+102,P?22:24,'#a6b9e3');
  const box=P?150:170,gap=P?6:16,total=box*5+gap*4,start=W*.5-total/2;
- const sampleCount=art.total;
- for(let k=0;k<5;k++){
-  const at=(Math.floor((t*t*(3-2*t))*31)+k*7)%sampleCount;
-  const tier=reveal?(k===2?roll.tier:((roll.tier+k*7+sampleCount)%sampleCount)):at;
+ // Carousel actually moves and decelerates; the chosen prize ends in
+ // the exact center rather than jumping to a different item on reveal.
+ const reel=roll.sequence||[0,1,2,3,roll.tier,4,5];
+ const travel=(reel.length-5)*(1-Math.pow(1-t,2.6));
+ const base=reveal?reel.length-5:Math.floor(travel);
+ const fraction=reveal?0:travel-base;
+ const cy=y+(P?170:142),step=box+gap;
+ ctx.save();ctx.beginPath();ctx.rect(start,cy,total,box+13);ctx.clip();
+ for(let k=0;k<6;k++){
+  const tier=reel[base+k];
+  if(!Number.isInteger(tier)||tier<0||tier>=art.total)continue;
   const item=art.approved[tier];if(!item)continue;
-  const level=bounded(item.level,1,6),clr=COLORS[level-1],cx=start+k*(box+gap),cy=y+(P?170:142);
-  const highlight=k===2;
+  const level=bounded(item.level,1,6),clr=COLORS[level-1],cx=start+(k-fraction)*step;
+  const highlight=reveal&&k===2;
   ctx.save();
-  if(highlight){ctx.shadowColor=reveal?clr:'#a466ff';ctx.shadowBlur=30;}
-  fill(ctx,cx,cy,box,box+10,gradient(ctx,cx,cy,box,box+10,[[0,highlight?'#33316b':'#1c203c'],[1,'#0d1730']]),17);
-  outline(ctx,cx,cy,box,box+10,reveal&&highlight?clr:highlight?'#df97ff':'#545d83',17,highlight?4:2);
+  if(highlight){ctx.shadowColor=clr;ctx.shadowBlur=26;}
+  fill(ctx,cx,cy,box,box+10,gradient(ctx,cx,cy,box,box+10,[[0,highlight?'#36316e':'#1d213c'],[1,'#0e1730']]),17);
+  outline(ctx,cx,cy,box,box+10,highlight?clr:'#656e99',17,highlight?4:2);
   ctx.restore();
   const img=images[tier];
   if(img?.complete&&img.naturalWidth>0){
-   const aspect=img.naturalWidth/img.naturalHeight,maxW=box*.78,maxH=box*.74;
+   const aspect=img.naturalWidth/img.naturalHeight,maxW=box*.8,maxH=box*.74;
    const dw=Math.min(maxW,maxH*aspect),dh=dw/aspect;
    ctx.imageSmoothingEnabled=false;
    ctx.drawImage(img,cx+(box-dw)/2,cy+7+(box-dh)/2,dw,dh);
   }
   type(ctx,'LV '+level,cx+box/2,cy+box-1,P?18:19,clr);
  }
+ ctx.restore();
+ // Fixed selection window stays put while the cards slide behind it.
+ outline(ctx,start+2*step-2,cy-2,box+4,box+14,reveal?COLORS[(art.approved[roll.tier]?.level||1)-1]:'#d29aff',18,4);
  type(ctx,'▼',W*.5,y+(P?154:132),32,'#ffe0a8');
  const lvl=art.approved[roll.tier]?.level||1;
  const name=(roll.lang==='en'?RARITY_EN:RARITY)[lvl-1];
