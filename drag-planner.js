@@ -76,6 +76,19 @@
     if(next.kind==='move'||next.kind==='swap'||next.kind==='reflow')
      return {...next,adjusted:true};
    }
+   // If no neighboring cell fits the instrument, pick the closest genuinely
+   // free footprint anywhere on the board. An existing free slot should never
+   // be reported as "no room". Avoid costly distant relocation searches.
+   const spots=[];
+   for(let row=0;row<=rows-actor.h;row++)for(let col=0;col<=cols-actor.w;col++)
+    spots.push({c:col,r:row,distance:(col-c)**2+(row-r)**2});
+   spots.sort((a,b)=>a.distance-b.distance||a.r-b.r||a.c-b.c);
+   const others=all.filter(u=>u.id!==id);
+   for(const spot of spots){
+    const candidate={...actor,c:spot.c,r:spot.r};
+    if(legal(candidate,others))
+     return {kind:'move',c:spot.c,r:spot.r,shifts:[],adjusted:true};
+   }
    return original;
   }
   return {exact,near};
