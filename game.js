@@ -2,7 +2,7 @@
 (()=>{'use strict';
 const canvas=document.getElementById('game'),$=id=>document.getElementById(id),ART=window.GridMusicArt;
 let ctx=canvas.getContext('2d');
-const ASSET_BUILD='pixellab-stability-v7'; // bust cached placeholder PNGs
+const ASSET_BUILD='sampled-sound-v1'; // bust cached placeholder PNGs
 const KEY='melody-scanner-approved-assets-v1';
 const OLD_KEY='melody-scanner-video-reference-v3';
 const I={
@@ -154,7 +154,7 @@ async function sdkInit(){
  if(!state.blocks.length)initWorld(true);
  else{state.blocks=repairBlocks(state.blocks);repairUnits();}
  save(); // Persist repaired finite state on the next safe tick.
- setupImages();setView();bind();fillPanel();booted=true;gameEvent('loadingStop');gameEvent('gameplayStart');requestAnimationFrame(loop);
+ setupImages();setView();bind();fillPanel();sound.preload();booted=true;gameEvent('loadingStop');gameEvent('gameplayStart');requestAnimationFrame(loop);
 }
 function canPlace(c,r,tier,ignore){
  const {w,h}=ART.spans(tier);if(c<0||r<0||c+w>13||r+h>6)return false;
@@ -726,163 +726,8 @@ function setupImages(){
   im.src=path+'?rev='+ASSET_BUILD;
  }
 }
-class AudioEngine{
- constructor(){
-  this.ctx=null;this.main=null;this.bg=null;this.fx=null;this.reverb=null;this.muted=false;
-  this.step=0;this.nextBeat=0;this.noteCount=0;this.lastHit=0;this.noiseBuffer=null;
- }
- unlock(){
-  try{
-   if(!this.ctx){
-    const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
-    const a=this.ctx=new AC(),limiter=a.createDynamicsCompressor();
-    limiter.threshold.value=-15;limiter.knee.value=13;limiter.ratio.value=3.5;
-    limiter.attack.value=.003;limiter.release.value=.24;
-    this.main=a.createGain();this.main.gain.value=.7;
-    this.main.connect(limiter);limiter.connect(a.destination);
-    this.bg=a.createGain();this.fx=a.createGain();
-    this.bg.connect(this.main);this.fx.connect(this.main);
-    // Compact room reverb gives strings/harps depth without masking the beat.
-    const length=Math.round(a.sampleRate*.67),imp=a.createBuffer(2,length,a.sampleRate);
-    for(let channel=0;channel<2;channel++){
-     const data=imp.getChannelData(channel);
-     for(let k=0;k<length;k++)data[k]=(Math.random()*2-1)*Math.pow(1-k/length,2.9);
-    }
-    this.reverb=a.createConvolver();this.reverb.buffer=imp;
-    const wet=a.createGain();wet.gain.value=.15;
-    this.fx.connect(this.reverb);this.reverb.connect(wet);wet.connect(this.main);
-    this.noiseBuffer=a.createBuffer(1,Math.round(a.sampleRate*.24),a.sampleRate);
-    const data=this.noiseBuffer.getChannelData(0);
-    for(let k=0;k<data.length;k++)data[k]=Math.random()*2-1;
-    this.nextBeat=a.currentTime+.02;
-    this.levels();
-   }
-   if(this.ctx.state==='suspended'){const resume=this.ctx.resume();resume?.catch?.(()=>{});}
-  }catch(e){console.info('Music audio unavailable');}
- }
- levels(){
-  if(!this.ctx)return;
-  const now=this.ctx.currentTime;
-  this.main.gain.setTargetAtTime(this.muted?0:Math.min(1,state.volume),now,.055);
-  this.bg.gain.setTargetAtTime(state.music*.29,now,.07);
-  this.fx.gain.setTargetAtTime(.39,now,.07);
- }
- setPortalMuted(v){this.muted=!!v;this.levels();}
- noteFreq(midi){return 440*Math.pow(2,(midi-69)/12);}
- osc(freq,start,len,vol,type='sine',target='fx',filter=4500,attack=.008,detune=0){
-  if(!this.ctx)return;
-  const a=this.ctx,o=a.createOscillator(),g=a.createGain(),f=a.createBiquadFilter();
-  o.type=type;o.frequency.setValueAtTime(freq,start);o.detune.value=detune;
-  f.type='lowpass';f.frequency.value=filter;f.Q.value=.5;
-  g.gain.setValueAtTime(.00008,start);
-  g.gain.exponentialRampToValueAtTime(Math.max(vol,.0001),start+Math.min(attack,len*.4));
-  g.gain.exponentialRampToValueAtTime(.00008,start+len);
-  o.connect(f);f.connect(g);g.connect(target==='bg'?this.bg:this.fx);o.start(start);o.stop(start+len+.03);
- }
- noise(start,len,vol,cut=3000,target='bg'){
-  if(!this.ctx||!this.noiseBuffer)return;
-  const a=this.ctx,s=a.createBufferSource(),filter=a.createBiquadFilter(),g=a.createGain();
-  s.buffer=this.noiseBuffer;filter.type='highpass';filter.frequency.value=cut;
-  g.gain.setValueAtTime(Math.max(vol,.0001),start);g.gain.exponentialRampToValueAtTime(.00008,start+len);
-  s.connect(filter);filter.connect(g);g.connect(target==='bg'?this.bg:this.fx);
-  s.start(start);s.stop(start+Math.min(len,.22));
- }
- instrumentPatch(tier,midi,start,vol=.18){
-  if(!this.ctx)return;
-  const f=this.noteFreq(midi),patch=tier%16;
-  if([0,1,3,7,11,14].includes(patch)){
-   // Bright mini-keyboard and full-sized polyphonic synth.
-   this.osc(f,start,.33,vol*.65,'triangle','fx',5700);
-   this.osc(f*2,start,.22,vol*.28,'sine','fx',5500);
-   if(patch>=7)this.osc(f*.998,start,.52,vol*.24,'sawtooth','fx',3100,.03,-4);
-  }else if([2,4,5,6,8,10].includes(patch)){
-   // Steel / nylon guitar, ukulele: plucked fundamental + short string overtones.
-   this.osc(f,start,.55,vol*.80,'triangle','fx',3700,.003);
-   this.osc(f*2,start,.24,vol*.22,'sine','fx',6100,.003);
-   this.osc(f*3,start,.14,vol*.1,'sine','fx',6700,.002);
-   this.noise(start,.024,vol*.08,4700,'fx');
-  }else if([9,12,15].includes(patch)){
-   // Harp: glass-like transient followed by slowly decaying soft body.
-   this.osc(f,start,.96,vol*.62,'sine','fx',6200,.002);
-   this.osc(f*2.01,start,.47,vol*.32,'triangle','fx',5300,.002);
-   this.osc(f*3.0,start,.2,vol*.12,'sine','fx',6300,.002);
-  }else if(patch===13){
-   this.osc(f,start,.17,vol*.5,'triangle','fx',1750);
-   this.noise(start,.11,vol*.15,1400,'fx');
-  }else{
-   this.osc(f,start,.85,vol*.42,'sine','fx',2600,.12);
-   this.osc(f*2,start,.68,vol*.2,'triangle','fx',2200,.1);
-  }
- }
- note(tier){
-  this.unlock();if(!this.ctx)return;
-  const a=this.ctx,t=a.currentTime+.006;
-  const roots=[60,57,65,62],root=roots[Math.floor(this.step/16)%4],scale=[0,2,4,7,9,12,14,16,19];
-  const midi=root+scale[(tier*2+this.noteCount)%scale.length]+(tier>=9?12:0);
-  this.noteCount++;
-  this.instrumentPatch(ART.approved[tier]?.family==='drums'?13:tier,midi,t,.22+Math.min(.06,tier*.005));
- }
- merge(tier){
-  this.unlock();if(!this.ctx)return;
-  const t=this.ctx.currentTime+.006,root=60+(state.stage%3)*2;
-  [0,4,7,12,19].forEach((interval,i)=>this.instrumentPatch(ART.approved[tier]?.family==='drums'?13:Math.min(15,tier+4),root+interval,t+i*.075,.2));
- }
- hit(damage,boss){
-  if(!this.ctx||state.volume<=0)return;
-  const now=this.ctx.currentTime;if(now-this.lastHit<.035)return;
-  this.lastHit=now;
-  const f=80+Math.min(140,Math.log2(damage+1)*13);
-  this.osc(f,now,.07,boss?.10:.053,'sine','fx',950,.003);
- }
- breakBox(boss){
-  if(!this.ctx)return;
-  const t=this.ctx.currentTime;
-  this.osc(boss?155:350,t,.25,boss?.24:.12,'triangle','fx',1400,.004);
-  this.osc(boss?233:523,t+.08,.32,boss?.21:.1,'sine','fx',3200);
-  if(boss)this.merge(12);
- }
- kick(t){
-  if(!this.ctx)return;
-  const a=this.ctx,o=a.createOscillator(),g=a.createGain();o.type='sine';
-  o.frequency.setValueAtTime(144,t);o.frequency.exponentialRampToValueAtTime(44,t+.15);
-  g.gain.setValueAtTime(.29,t);g.gain.exponentialRampToValueAtTime(.0001,t+.19);
-  o.connect(g);g.connect(this.bg);o.start(t);o.stop(t+.2);
- }
- snare(t){this.noise(t,.14,.17,1300,'bg');this.osc(188,t,.09,.09,'triangle','bg',850);}
- rhythm(dt){
-  if(!this.ctx||this.ctx.state!=='running'||this.muted||state.music<=0)return;
-  const a=this.ctx,now=a.currentTime;
-  if(this.nextBeat<now-.22)this.nextBeat=now+.008;
-  let scheduled=0;
-  const chords=[[48,55,60,64],[45,52,57,60],[53,60,65,69],[43,50,55,59]];
-  while(this.nextBeat<now+.13&&scheduled++<4){
-   const t=this.nextBeat,step=this.step++,bar=Math.floor(step/16)%4;
-   const chord=chords[bar],half=60/112/2;
-   if(step%4===0)this.kick(t);
-   if(step%8===4)this.snare(t);
-   if(step%2===0)this.noise(t,.047,.055,6500,'bg');
-   if(step%8===0){
-    for(let i=0;i<chord.length;i++)
-      this.osc(this.noteFreq(chord[i]),t,1.32,.058,'sine','bg',1500,.16);
-   }
-   if(step%2===0){
-    let bass=chord[0]+(step%8===6?7:0);
-    this.osc(this.noteFreq(bass-12),t,.29,.11,'triangle','bg',900,.006);
-   }
-   const melody=[0,null,2,4,3,null,1,2,4,3,2,null,1,2,0,null];
-   if(melody[step%16]!==null){
-    const pitch=chord[0]+12+[0,2,4,7,9][melody[step%16]]+(step%32>=16?0:0);
-    this.osc(this.noteFreq(pitch),t,.19,.067,'sine','bg',3600,.012);
-    this.osc(this.noteFreq(pitch)*2,t,.1,.015,'triangle','bg',4200,.01);
-   }
-   this.nextBeat+=half;
-  }
- }
- win(){this.unlock();if(!this.ctx)return;const t=this.ctx.currentTime+.025;
-  [60,64,67,72,76,79,84].forEach((m,i)=>this.instrumentPatch(12,m,t+i*.105,.21));
- }
-}
-const sound=new AudioEngine();
+// Play the actual recorded instrument family and level from art.js.
+const sound=new window.MelodySampleEngine(()=>state,()=>ART);
 window.GridGameDebug={getState:()=>clone(state),getDamage:(tier)=>unitDamage(tier),getAnimations:()=>Array.from(unitMotion,([id,a])=>({id,kind:a.kind,age:a.age,duration:a.duration,from:a.from,to:a.to})),
 getGeometry:()=>({width:LAY.W,height:LAY.H,renderWidth:canvas.width,renderHeight:canvas.height,renderScale,portrait,blocks:state.blocks.map(b=>({id:b.id,rect:rectOfBlock(b)})),units:state.units.map(u=>({id:u.id,rect:rectOfUnit(u)}))}),scan:()=>{let n=state.blocks.filter(b=>b.hp>0).length;for(const u of state.units)emitInstrument(u);return{before:n,after:state.blocks.filter(b=>b.hp>0).length,coins:state.coins};},spawn,merge:(a,b)=>merge(state.units[a],state.units[b]),restart:()=>initWorld(false),setCharge:n=>state.charge=n};
 sdkInit();
