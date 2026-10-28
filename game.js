@@ -2,7 +2,7 @@
 (()=>{'use strict';
 const canvas=document.getElementById('game'),$=id=>document.getElementById(id),ART=window.GridMusicArt;
 let ctx=canvas.getContext('2d');
-const ASSET_BUILD='pixellab-clarity-v2'; // bust cached placeholder PNGs
+const ASSET_BUILD='pixellab-responsive-v3'; // bust cached placeholder PNGs
 const KEY='melody-scanner-approved-assets-v1';
 const OLD_KEY='melody-scanner-video-reference-v3';
 const I={
@@ -196,8 +196,8 @@ function popup(t){toast={t,time:2.3};}
 // remain in the same logical 1650x928 / 900x1560 units. This prevents
 // full-screen CSS upscaling from turning the approved art into a blurry mosaic.
 let renderScale=1,staticScene=null;
-const DRAW_PIXEL_BUDGET=2500000; // 2.5 MP instead of the previous 8.4 MP on HiDPI screens
-const TARGET_FRAME_MS=1000/40; // cap Canvas redraws to 40 FPS
+// The game is pixel art: native logical resolution is both sharp and lightweight.
+// No 40 FPS limiter. Render each browser animation frame (60/120/144 Hz).
 function cacheStaticScene(){
  staticScene=null;
  if(typeof document.createElement!=='function')return;
@@ -214,11 +214,10 @@ function setView(){
  // DOM rect is CSS pixels, not the backing-store size.
  const rect=canvas.getBoundingClientRect();
  const cssW=Math.max(1,rect.width||window.innerWidth),cssH=Math.max(1,rect.height||window.innerHeight);
- const dpr=Math.min(3,Math.max(1,Number(window.devicePixelRatio)||1));
- const required=Math.max(1,cssW*dpr/LAY.W,cssH*dpr/LAY.H);
- // Keep the render target within a reasonable memory/GPU budget.
- const budgetScale=Math.sqrt(DRAW_PIXEL_BUDGET/(LAY.W*LAY.H));
- renderScale=Math.min(required,budgetScale,1.5);
+ // A 64-pixel native sprite is pixelated by design. Draw the board once at
+ // logical resolution instead of using a huge HiDPI backing store.
+ // Browsers nearest-neighbor upscale the finished frame to the display.
+ renderScale=1;
  canvas.width=Math.round(LAY.W*renderScale);
  canvas.height=Math.round(LAY.H*renderScale);
  ctx.setTransform(canvas.width/LAY.W,0,0,canvas.height/LAY.H,0,0);
@@ -265,11 +264,11 @@ function readyImage(im){return !!(im&&im.complete&&im.naturalWidth>0);}
 // not behind every cell. One rendered layer is cached by cacheStaticScene().
 function drawBackground(t){
  const {W,H}=LAY;
- ctx.fillStyle='#17151d';ctx.fillRect(0,0,W,H);
- ctx.fillStyle='#201c28';ctx.fillRect(0,0,W,83);
- ctx.fillStyle='#26212e';ctx.fillRect(0,H-138,W,138);
- ctx.fillStyle='#59475c';ctx.fillRect(0,82,W,2);
- ctx.fillStyle='#59475c';ctx.fillRect(0,H-138,W,2);
+ ctx.fillStyle='#716a83';ctx.fillRect(0,0,W,H);
+ ctx.fillStyle='#575268';ctx.fillRect(0,0,W,83);
+ ctx.fillStyle='#5c576d';ctx.fillRect(0,H-138,W,138);
+ ctx.fillStyle='#a99ab6';ctx.fillRect(0,82,W,2);
+ ctx.fillStyle='#a99ab6';ctx.fillRect(0,H-138,W,2);
 }
 // Simple matte slots: no repeated colorful ornament.
 function drawCells(){
@@ -277,11 +276,11 @@ function drawCells(){
  for(let row=0;row<rows;row++)for(let col=0;col<cols;col++){
   const p=cellRect(col,row);
   const x=Math.round(p.x),y=Math.round(p.y),w=Math.round(p.w),h=Math.round(p.h);
-  ctx.fillStyle='#15131b';ctx.fillRect(x+1,y+2,w-2,h-2);
-  ctx.fillStyle=((row+col)&1)?'#302a37':'#342d3c';
+  ctx.fillStyle='#534c61';ctx.fillRect(x+1,y+2,w-2,h-2);
+  ctx.fillStyle=((row+col)&1)?'#80768e':'#897e96';
   ctx.fillRect(x+4,y+4,w-8,h-10);
-  ctx.fillStyle='#4c4054';ctx.fillRect(x+5,y+4,w-10,3);
-  ctx.fillStyle='#24202c';ctx.fillRect(x+5,y+h-8,w-10,3);
+  ctx.fillStyle='#a99cb4';ctx.fillRect(x+5,y+4,w-10,3);
+  ctx.fillStyle='#5a536a';ctx.fillRect(x+5,y+h-8,w-10,3);
  }
 }
 // Metal targets have their own visual hierarchy: big HP, little decoration.
@@ -309,45 +308,46 @@ function drawBlock(b){
    ctx.fillStyle=boss?'#e3b46b':'#68bdad';
    ctx.fillRect(x+12,y+h-14,Math.round((w-24)*progress),5);
  }
- const hit=blockMotion.get(b.id);
- if(hit){
-   ctx.fillStyle='#ffffff18';ctx.fillRect(x+10,y+12,w-20,h-26);
- }
+ // Damage affects HP only. Flashing entire tiles at scanner speed is disabled.
  ctx.restore();
 }
-function drawUnit(u,ghost=false){
- let p=rectOfUnit(u),im=imgs[u.tier],cx=p.x+p.w/2,cy=p.y+p.h/2;
- const anim=unitMotion.get(u.id);
+function drawUnit(u,draggingCenter=null){
+ const p=rectOfUnit(u),im=imgs[u.tier];
+ const cx=draggingCenter?draggingCenter.x:p.x+p.w/2;
+ const cy=draggingCenter?draggingCenter.y:p.y+p.h/2;
+ const anim=draggingCenter?null:unitMotion.get(u.id);
  let scale=1;
- if(anim){const t=clamp(anim.age/anim.duration,0,1);scale=.27+.73*easeOutBack(t);}
- // Keep grounded illustrations static enough to read; the scanner gives them a soft bounce.
- const float=0;
- ctx.save();
- if(selected===u.id){
-  ctx.fillStyle='#eece79';
-  ctx.fillRect(p.x+5,p.y+5,p.w-10,3);
-  ctx.fillRect(p.x+5,p.y+p.h-8,p.w-10,3);
-  ctx.fillRect(p.x+5,p.y+5,3,p.h-10);
-  ctx.fillRect(p.x+p.w-8,p.y+5,3,p.h-10);
+ if(anim){
+  const t=clamp(anim.age/anim.duration,0,1);
+  scale=.90+.10*t; // no dramatic brightness/size flicker when spawning
  }
- if(ghost)ctx.globalAlpha=.58;
- ctx.translate(Math.round(cx),Math.round(cy));ctx.scale(scale,scale); // pixel art remains axis aligned
- 
+ ctx.save();
+ // A selection frame must follow its item; never leave it at the old tile.
+ if(selected===u.id&&!draggingCenter){
+  ctx.strokeStyle='#ffdf9d';ctx.lineWidth=3;
+  ctx.strokeRect(Math.round(p.x+5),Math.round(p.y+5),Math.round(p.w-10),Math.round(p.h-10));
+ }
+ ctx.translate(Math.round(cx),Math.round(cy));
+ ctx.scale(scale,scale);
  if(instrumentAtlas?.complete&&instrumentAtlas.naturalWidth>0&&ART.frameForTier){
-   const [sx,sy,sw,sh]=ART.frameForTier(u.tier);
-   const ratio=sw/sh,maxW=p.w*1.2,maxH=p.h*1.18;
-   let drawW=Math.min(maxW,maxH*ratio),drawH=drawW/ratio;
-   if(drawH>maxH){drawH=maxH;drawW=drawH*ratio;}
-   ctx.shadowColor='#26123199';ctx.shadowBlur=5;ctx.shadowOffsetY=3;
-   ctx.drawImage(instrumentAtlas,sx,sy,sw,sh,-drawW*.5,-drawH*.5,drawW,drawH);
+  const [sx,sy,sw,sh]=ART.frameForTier(u.tier);
+  const ratio=sw/sh,maxW=p.w*.94,maxH=p.h*.94;
+  let w=Math.min(maxW,maxH*ratio),h=w/ratio;
+  if(h>maxH){h=maxH;w=h*ratio;}
+  ctx.imageSmoothingEnabled=false;
+  ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+  ctx.drawImage(instrumentAtlas,sx,sy,sw,sh,-Math.round(w/2),-Math.round(h/2),Math.round(w),Math.round(h));
  }else if(im?.complete&&im.naturalWidth>0){
-   const ratio=im.naturalWidth/im.naturalHeight,maxW=p.w*.94,maxH=p.h*.94;
-   let drawW=Math.min(maxW,maxH*ratio),drawH=drawW/ratio;
-   if(drawH>maxH){drawH=maxH;drawW=drawH*ratio;}
-   ctx.imageSmoothingEnabled=false;ctx.imageSmoothingQuality='low';
-   ctx.shadowColor='#21162f';ctx.shadowBlur=0;ctx.shadowOffsetY=3;
-   ctx.drawImage(im,-drawW*.5,-drawH*.5,drawW,drawH);
- }else{ctx.font='65px sans-serif';ctx.textAlign='center';ctx.fillStyle='#ffeec5';ctx.fillText('♫',0,0);}
+  const ratio=im.naturalWidth/im.naturalHeight,maxW=p.w*.94,maxH=p.h*.94;
+  let w=Math.min(maxW,maxH*ratio),h=w/ratio;
+  if(h>maxH){h=maxH;w=h*ratio;}
+  // Opaque original-color sprite at the dragged position. No ghost/trail.
+  ctx.globalAlpha=1;ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+  ctx.imageSmoothingEnabled=false;
+  ctx.drawImage(im,-Math.round(w/2),-Math.round(h/2),Math.round(w),Math.round(h));
+ }else{
+  ctx.fillStyle='#ffeec5';ctx.font='65px sans-serif';ctx.textAlign='center';ctx.fillText('♫',0,0);
+ }
  ctx.restore();
 }
 // Scanner should indicate the active column without hiding instruments.
@@ -362,28 +362,21 @@ function drawScan(t){
 }
 // Only understated, short-lived feedback remains. Disable giant neon rings.
 function drawFx(dt){
+ // Bright blinking rings, particles and moving trails are intentionally disabled.
+ // Damage feedback uses one steady label; audio and gameplay remain unchanged.
  for(let i=fx.length-1;i>=0;i--){
-  const p=fx[i];p.life-=dt;if(p.life<=0){fx.splice(i,1);continue;}
-  const a=clamp(p.life/(p.max||1),0,1);
-  if(p.kind==='halo'||p.kind==='aura'||p.kind==='break'||p.kind==='merge')continue;
-  ctx.save();ctx.globalAlpha=Math.min(.78,a);
-  if(p.kind==='beam'){
-   ctx.strokeStyle='#6dd8c7';ctx.lineWidth=2;
-   ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x2,p.y2);ctx.stroke();
-  }else if(p.kind==='particle'){
-   p.x+=p.vx*dt;p.y+=p.vy*dt;
-   ctx.fillStyle='#a6e7ce';ctx.fillRect(Math.round(p.x),Math.round(p.y),3,3);
-  }else{
-   p.x+=(p.vx||0)*dt;p.y+=(p.vy||-45)*dt;
-   if(p.kind==='note')continue;
-   ctx.font='800 24px monospace';ctx.textAlign='center';ctx.textBaseline='middle';
-   ctx.fillStyle=p.kind==='damage'?'#ebc4b0':'#c9e6c6';
-   ctx.fillText(p.text||'',p.x,p.y);
-  }
+  const p=fx[i];p.life-=dt;
+  if(p.life<=0){fx.splice(i,1);continue;}
+  if(p.kind!=='damage'&&p.kind!=='coin')continue;
+  const alpha=Math.min(.8,p.life/(p.max||1));
+  p.x+=(p.vx||0)*dt;p.y+=(p.vy||-32)*dt;
+  ctx.save();ctx.globalAlpha=alpha;
+  ctx.font='800 23px monospace';ctx.textAlign='center';
+  ctx.fillStyle=p.kind==='damage'?'#fff3cf':'#fbe89e';
+  ctx.fillText(p.text||'',p.x,p.y);
   ctx.restore();
  }
 }
-// Quiet HUD with solid button and visible charge meter.
 function drawChrome(){
  const W=LAY.W,H=LAY.H;
  const moneyX=LAY.portrait?W-48:W-148,moneyY=LAY.portrait?57:52;
@@ -423,13 +416,26 @@ function drawResult(){
  ctx.restore();
 }
 function render(dt){
- if(staticScene){ctx.imageSmoothingEnabled=false;ctx.drawImage(staticScene,0,0,LAY.W,LAY.H);}
- else{drawBackground(performance.now());drawCells();}
+ // Reset transient rendering state and redraw the *entire* opaque frame.
+ // A previous pointer frame can never remain as a trailing duplicate.
+ ctx.save();
+ ctx.setTransform(canvas.width/LAY.W,0,0,canvas.height/LAY.H,0,0);
+ ctx.globalCompositeOperation='source-over';
+ ctx.globalAlpha=1;ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+ ctx.clearRect(0,0,LAY.W,LAY.H);
+ if(staticScene){
+  ctx.imageSmoothingEnabled=false;
+  ctx.drawImage(staticScene,0,0,LAY.W,LAY.H);
+ }else{drawBackground(performance.now());drawCells();}
  for(const b of state.blocks)drawBlock(b);
  drawScan(performance.now());
  for(const u of state.units)if(!dragging||dragging.id!==u.id)drawUnit(u);
- if(dragging){let u=state.units.find(u=>u.id===dragging.id);if(u){const p=rectOfUnit(u);ctx.save();ctx.translate(dragging.dx-p.x-p.w/2,dragging.dy-p.y-p.h/2);drawUnit(u,true);ctx.restore();}}
+ if(dragging){
+  const u=state.units.find(unit=>unit.id===dragging.id);
+  if(u)drawUnit(u,{x:dragging.dx-dragging.offsetX,y:dragging.dy-dragging.offsetY});
+ }
  drawFx(dt);drawChrome();drawResult();
+ ctx.restore();
 }
 function mainStep(dt){
  animClock+=dt;
@@ -450,11 +456,10 @@ function mainStep(dt){
  }
  if(toast){toast.time-=dt;if(toast.time<=0)toast=null;}
 }
-let lastPaint=0;
 function loop(now){
- if(lastPaint&&now-lastPaint<TARGET_FRAME_MS-1){requestAnimationFrame(loop);return;}
- lastPaint=now;
- let dt=clamp((now-frameLast)/1000,0,.085);
+ // No artificial FPS cap: one game update and one full redraw per rAF.
+ // Browsers pace requestAnimationFrame at the actual display refresh rate.
+ const dt=clamp((now-frameLast)/1000,0,.085);
  frameLast=now;
  if(booted)mainStep(dt);
  render(dt);
@@ -464,7 +469,7 @@ function worldPoint(e){const box=canvas.getBoundingClientRect();return{x:(e.clie
 const inside=(p,r)=>r&&p.x>=r.x&&p.x<=r.x+r.w&&p.y>=r.y&&p.y<=r.y+r.h;
 function pointerDown(e){
  sound.unlock();if(showResult)return;const p=worldPoint(e);let unit=unitAt(p.x,p.y);
- if(unit){dragging={id:unit.id,sx:p.x,sy:p.y,dx:p.x,dy:p.y,moved:false};canvas.setPointerCapture?.(e.pointerId);}
+ if(unit){const box=rectOfUnit(unit);dragging={id:unit.id,sx:p.x,sy:p.y,dx:p.x,dy:p.y,offsetX:p.x-(box.x+box.w/2),offsetY:p.y-(box.y+box.h/2),moved:false};canvas.setPointerCapture?.(e.pointerId);}
 }
 function pointerMove(e){const p=worldPoint(e);hoveredChrome=!LAY.portrait&&p.x<215&&p.y<81;if(dragging){dragging.dx=p.x;dragging.dy=p.y;if(Math.hypot(p.x-dragging.sx,p.y-dragging.sy)>15)dragging.moved=true;}}
 function pointerUp(e){
