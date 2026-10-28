@@ -5,6 +5,9 @@ on:
     paths:
       - 'game.js'
       - 'concert-theme.js'
+      - 'mojs-game-fx.js'
+      - 'vendor/mojs/**'
+      - 'tests/mojs-browser.*'
       - 'roulette-logic.js'
       - 'art.js'
       - 'assets/pixel/**'
@@ -37,6 +40,9 @@ jobs:
           sleep 2
           mkdir -p docs/qa-screenshots
           CHROME="${{ steps.chrome.outputs.chrome-path }}"
+          # Verify real mo.js UMD and live Burst/Shape constructors before screenshot capture.
+          timeout 16s "$CHROME" --headless=new --no-sandbox --disable-dev-shm-usage --disable-background-networking --no-first-run --virtual-time-budget=1500 --dump-dom http://127.0.0.1:8321/tests/mojs-browser.html >/tmp/mojs-browser.html 2>/tmp/mojs-browser.log
+          grep -q 'MOJS_READY' /tmp/mojs-browser.html || { tail -n 45 /tmp/mojs-browser.log; tail -n 25 /tmp/mojs-browser.html; exit 1; }
           set +e
           timeout 16s "$CHROME" --headless=new --no-sandbox --disable-dev-shm-usage --disable-background-networking --no-first-run --hide-scrollbars --window-size=1650,928 --force-device-scale-factor=2 --screenshot=/tmp/desktop.png http://127.0.0.1:8321/?preview=1 >/tmp/desktop.log 2>&1
           D=$?
