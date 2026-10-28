@@ -636,7 +636,7 @@ function drawFx(dt){
  }
 }
 function drawChrome(){
- const hits=window.ConcertTheme.hud(ctx,LAY,state,toast);
+ const hits=window.ConcertTheme.hud(ctx,LAY,state,toast,paused);
  settingsHot=hits.settings;pauseHot=hits.pause;shopHot=null;chargeHitBox=hits.charge;
 }
 function drawResult(){
@@ -662,7 +662,7 @@ function render(dt){
   const u=state.units.find(unit=>unit.id===dragging.id);
   if(u)drawUnit(u,{x:dragging.dx-dragging.offsetX,y:dragging.dy-dragging.offsetY});
  }
- drawFx(dt);drawChrome();drawResult();
+ drawFx(dt);if(paused&&!homeOpen&&!showResult&&!roulette)window.ConcertTheme.pause(ctx,LAY);drawChrome();drawResult();
  if(roulette)window.ConcertTheme.rouletteFrame(ctx,LAY,roulette,ART,imgs);
  ctx.restore();
 }
@@ -762,9 +762,9 @@ function bind(){
  window.addEventListener('pagehide',()=>save(true));
  window.addEventListener('keydown',e=>{if(e.code==='Enter'&&showResult){if(state.finished)state.stage++;initWorld(false);gameEvent('gameplayStart');save();}
  if(e.code==='Space'&&!e.repeat&&!homeOpen){e.preventDefault();spawn();}
- if(e.code==='KeyS')openPanel('settings');
+ if(e.code==='KeyS'&&!roulette)openPanel('settings');
  // Instrument tiers are obtained from the roulette or combining.
- if(e.code==='KeyP'){paused=!paused;gameEvent(paused?'gameplayStop':'gameplayStart');}
+ if(e.code==='KeyP'&&!roulette&&!homeOpen){paused=!paused;gameEvent(paused?'gameplayStop':'gameplayStart');}
  if(e.code==='Escape')closePanel();
  });
 }
