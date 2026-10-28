@@ -23,3 +23,10 @@
 .panel-header button,.settings-content select,.upgrade{background:#36303f;border-color:#817083;}
 .upgrade:hover{background:#443b50;}
 .tip{background:#282330e8;border-color:#655469;box-shadow:none;color:#f4eee4;}
+
+/* Responsive v3: medium-light lilac/slate backdrop with clean opaque slots. */
+html,body{background:#716a83;}
+#viewport{background:#716a83!important;}
+.panel{background:#474053;border-color:#c8ab8a;box-shadow:5px 5px 0 #383243;}
+.panel-header button,.settings-content select,.upgrade{background:#61566f;border-color:#ad9bbd;color:#fff9ee;}
+.tip{background:#51495fcf;border:2px solid #b4a0c3;box-shadow:none;color:#fff7ee;}
