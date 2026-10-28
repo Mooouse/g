@@ -42,11 +42,15 @@ jobs:
           D=$?
           timeout 16s "$CHROME" --headless=new --no-sandbox --disable-dev-shm-usage --disable-background-networking --no-first-run --hide-scrollbars --window-size=430,850 --force-device-scale-factor=2 --screenshot=/tmp/mobile.png http://127.0.0.1:8321/?preview=1 >/tmp/mobile.log 2>&1
           M=$?
+          timeout 16s "$CHROME" --headless=new --no-sandbox --disable-dev-shm-usage --disable-background-networking --no-first-run --hide-scrollbars --window-size=1650,928 --force-device-scale-factor=2 --screenshot=/tmp/menu.png http://127.0.0.1:8321/ >/tmp/menu.log 2>&1
+          N=$?
           set -e
           test -s /tmp/desktop.png
           test -s /tmp/mobile.png
+          test -s /tmp/menu.png
           cp /tmp/desktop.png docs/qa-screenshots/desktop.png
           cp /tmp/mobile.png docs/qa-screenshots/mobile.png
+          cp /tmp/menu.png docs/qa-screenshots/menu.png
           printf 'Desktop Chrome exit: %s\nMobile Chrome exit: %s\n' "$D" "$M" > docs/qa-screenshots/status.txt
       - uses: actions/upload-artifact@v4
         with:
@@ -66,7 +70,7 @@ jobs:
             # Keep the newly generated PNGs in the working tree, base the
             # commit directly on the latest branch; never rebase binary PNGs.
             git reset --mixed origin/main
-            git add docs/qa-screenshots/desktop.png docs/qa-screenshots/mobile.png docs/qa-screenshots/status.txt
+            git add docs/qa-screenshots/desktop.png docs/qa-screenshots/mobile.png docs/qa-screenshots/menu.png docs/qa-screenshots/status.txt
             if git diff --cached --quiet; then exit 0; fi
             git commit -m "Capture desktop and mobile Concert Edition game boards"
             if git push origin HEAD:main; then exit 0; fi
