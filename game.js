@@ -2,7 +2,7 @@
 (()=>{'use strict';
 const canvas=document.getElementById('game'),$=id=>document.getElementById(id),ART=window.GridMusicArt;
 let ctx=canvas.getContext('2d');
-const ASSET_BUILD='pixellab-responsive-v3'; // bust cached placeholder PNGs
+const ASSET_BUILD='pixellab-motion-v5'; // bust cached placeholder PNGs
 const KEY='melody-scanner-approved-assets-v1';
 const OLD_KEY='melody-scanner-video-reference-v3';
 const I={
@@ -51,8 +51,23 @@ let uid=1;
 const unitMotion=new Map();
 const blockMotion=new Map();
 let animClock=0, screenShake=0, beatVisual=0;
-const easeOutBack=t=>{const p=1.70158;return 1+(p+1)*Math.pow(t-1,3)+p*Math.pow(t-1,2)};
-function animateUnit(id,kind='spawn'){unitMotion.set(id,{kind,age:0,duration:kind==='merge'?.65:.48});}
+const easeOutBack=t=>{const p=1.14;return 1+(p+1)*Math.pow(t-1,3)+p*Math.pow(t-1,2)};
+const easeOutCubic=t=>1-Math.pow(1-t,3);
+const easeInOutCubic=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+const tileCenter=(c,r,tier)=>{const span=ART.spans(tier),a=cellRect(c,r);return{x:a.x+(a.w+(span.w-1)*LAY.step)/2,y:a.y+(a.h+(span.h-1)*LAY.step)/2};};
+function animateUnit(id,kind='spawn',from=null){
+ const unit=state.units.find(u=>u.id===id);
+ const dest=unit?tileCenter(unit.c,unit.r,unit.tier):null;
+ const distance=from&&dest?Math.hypot(dest.x-from.x,dest.y-from.y):0;
+ const duration=kind==='merge'?Math.min(1.15,Math.max(.44,.3+distance/950)):
+                kind==='move'?Math.min(.7,Math.max(.27,.19+distance/1150)):.4;
+ unitMotion.set(id,{kind,age:0,duration,from:from||dest,to:dest});
+ if(kind==='merge'&&dest){
+  fx.push({kind:'arrival',x:dest.x,y:dest.y,
+   w:ART.spans(unit.tier).w*LAY.step-8,h:ART.spans(unit.tier).h*LAY.step-8,
+   life:duration+.82,max:duration+.82});
+ }
+}
 function animateHit(id,strength=1){blockMotion.set(id,{time:.36,force:Math.min(5,1+strength/600)});screenShake=Math.min(4,screenShake+.13);}
 
 function read(){
@@ -100,9 +115,19 @@ function canPlace(c,r,tier,ignore){
  if(state.units.some(u=>u.id!==ignore&&x>=u.c&&x<u.c+ART.spans(u.tier).w&&y>=u.r&&y<u.r+ART.spans(u.tier).h))return false;
  }return true;
 }
-function findFree(tier,ignore){
- const rs=[];for(let r=0;r<6;r++)for(let c=0;c<13;c++)if(canPlace(c,r,tier,ignore))rs.push({c,r});
- if(!rs.length)return null;rs.sort((a,b)=>(a.c>6?40:0)+a.c*.2+a.r*.03-((b.c>6?40:0)+b.c*.2+b.r*.03));return rs[Math.floor(Math.random()*Math.min(7,rs.length))];
+function findFree(tier,ignore,near=null){
+ const rs=[];
+ for(let r=0;r<6;r++)for(let c=0;c<13;c++)if(canPlace(c,r,tier,ignore))rs.push({c,r});
+ if(!rs.length)return null;
+ if(near){
+  // When upgrading into a larger footprint, search *closest* valid slot
+  // before moving across the board. Stable tie-breaking avoids random jumps.
+  const cost=p=>(p.c-near.c)**2+(p.r-near.r)**2;
+  rs.sort((a,b)=>cost(a)-cost(b)||Math.abs(a.r-near.r)-Math.abs(b.r-near.r)||a.c-b.c||a.r-b.r);
+  return rs[0];
+ }
+ rs.sort((a,b)=>(a.c>6?40:0)+a.c*.2+a.r*.03-((b.c>6?40:0)+b.c*.2+b.r*.03));
+ return rs[Math.floor(Math.random()*Math.min(7,rs.length))];
 }
 function occupiedUnit(c,r){return [...state.units].reverse().find(u=>c>=u.c&&c<u.c+ART.spans(u.tier).w&&r>=u.r&&r<u.r+ART.spans(u.tier).h);}
 function matchAt(x,y){return state.blocks.find(b=>b.hp>0&&x>=b.c&&x<b.c+b.w&&y>=b.r&&y<b.r+b.h);}
@@ -168,24 +193,45 @@ function spawn(){
 function merge(a,b){
  if(!a||!b||a.id===b.id||a.tier!==b.tier)return false;
  const t=ART.nextTier?.(a.tier);
- if(!Number.isInteger(t))return false; // no approved next sprite in that family
+ if(!Number.isInteger(t))return false;
+ // Keep both original screen positions for a legible convergence animation.
+ const aCenter=tileCenter(a.c,a.r,a.tier),bCenter=tileCenter(b.c,b.r,b.tier);
  state.tutorialSeen=true;
  state.units=state.units.filter(u=>u.id!==a.id&&u.id!==b.id);
+ unitMotion.delete(a.id);unitMotion.delete(b.id);
  const candidates=[{c:b.c,r:b.r},{c:a.c,r:a.r}];
  let location=candidates.find(p=>canPlace(p.c,p.r,t));
- if(!location)location=findFree(t);
+ if(!location)location=findFree(t,undefined,{c:b.c,r:b.r});
  if(!location){state.units.push(a,b);popup(txt('noRoom'));return false;}
  const u={...location,tier:t,id:uid++};
- state.units.push(u);animateUnit(u.id,'merge');selected=u.id;
+ state.units.push(u);
+ animateUnit(u.id,'merge',bCenter);
+ selected=u.id;
+ const dest=tileCenter(u.c,u.r,u.tier);
+ // Tiny incoming old-tier instrument flies to its partner, which then
+ // becomes the new tier. Never animate an arbitrary full-screen tracer.
+ fx.push({kind:'combine',tier:a.tier,x:aCenter.x,y:aCenter.y,
+          x2:bCenter.x,y2:bCenter.y,life:.29,max:.29});
+ fx.push({kind:'merge-ring',x:bCenter.x,y:bCenter.y,life:.44,max:.44});
+ if(Math.hypot(dest.x-bCenter.x,dest.y-bCenter.y)>36){
+  // Mark *where* a displaced upgrade is going to land, then keep it marked
+  // briefly after arrival, so the player can always find it.
+  fx.push({kind:'destination',x:dest.x,y:dest.y,
+   w:ART.spans(t).w*LAY.step-12,h:ART.spans(t).h*LAY.step-12,
+   life:unitMotion.get(u.id).duration+.8,max:unitMotion.get(u.id).duration+.8});
+ }
  state.highest=Math.max(state.highest,t);
  state.charge=Math.min(999,state.charge+2);
  state.coins+=10*(ART.approved[t]?.level||1);
- const p=rectOfUnit(u);
- scatter(p.x+p.w*.5,p.y+p.h*.5,'#fff0a4',22);
- fx.push({kind:'merge',x:p.x+p.w*.5,y:p.y+p.h*.5,life:.8,max:.8});
  sound.merge(t);popup(txt('merged'));save();return true;
 }
-function moveUnit(a,c,r){if(!a||!canPlace(c,r,a.tier,a.id))return false;a.c=c;a.r=r;selected=a.id;save();return true;}
+function moveUnit(a,c,r,from=null){
+ if(!a||!canPlace(c,r,a.tier,a.id))return false;
+ const previous=from||tileCenter(a.c,a.r,a.tier);
+ a.c=c;a.r=r;selected=a.id;
+ animateUnit(a.id,'move',previous);
+ save();return true;
+}
 function burst(x,y,value,color){
  fx.push({kind:'damage',x,y,vx:(Math.random()-.5)*60,vy:-70,life:.8,max:.8,text:'-'+makeBlockText(value),color:'#fcfffe'});
  scatter(x,y,color,Math.min(10,Math.ceil(value/100)+3));
@@ -311,44 +357,45 @@ function drawBlock(b){
  // Damage affects HP only. Flashing entire tiles at scanner speed is disabled.
  ctx.restore();
 }
+// All movement is visual only: the logical grid updates instantly for collision
+// correctness, while the sprite glides from its previous rendered position.
+function spriteImage(tier,x,y,width,height,alpha=1,scale=1){
+ const im=imgs[tier];
+ if(!im?.complete||im.naturalWidth<=0)return;
+ const aspect=im.naturalWidth/im.naturalHeight;
+ const maxW=width*.94,maxH=height*.94;
+ let w=Math.min(maxW,maxH*aspect),h=w/aspect;
+ if(h>maxH){h=maxH;w=h*aspect;}
+ ctx.save();ctx.globalAlpha=alpha;
+ ctx.translate(x,y);ctx.scale(scale,scale);
+ ctx.imageSmoothingEnabled=false;ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+ ctx.drawImage(im,-Math.round(w*.5),-Math.round(h*.5),Math.round(w),Math.round(h));
+ ctx.restore();
+}
 function drawUnit(u,draggingCenter=null){
- const p=rectOfUnit(u),im=imgs[u.tier];
- const cx=draggingCenter?draggingCenter.x:p.x+p.w/2;
- const cy=draggingCenter?draggingCenter.y:p.y+p.h/2;
+ const p=rectOfUnit(u),dest=tileCenter(u.c,u.r,u.tier);
  const anim=draggingCenter?null:unitMotion.get(u.id);
- let scale=1;
+ let center=draggingCenter||dest,scale=1;
  if(anim){
   const t=clamp(anim.age/anim.duration,0,1);
-  scale=.90+.10*t; // no dramatic brightness/size flicker when spawning
+  if(anim.from&&anim.to){
+   const k=easeInOutCubic(t);
+   center={x:anim.from.x+(anim.to.x-anim.from.x)*k,
+           y:anim.from.y+(anim.to.y-anim.from.y)*k};
+  }
+  if(anim.kind==='spawn')scale=.66+.34*easeOutBack(t);
+  if(anim.kind==='merge')scale=.84+.16*easeOutBack(t);
+  if(anim.kind==='move')scale=.97+.03*Math.sin(t*Math.PI);
  }
- ctx.save();
- // A selection frame must follow its item; never leave it at the old tile.
+ // Selection follows moving item rather than highlighting its previous tile.
  if(selected===u.id&&!draggingCenter){
-  ctx.strokeStyle='#ffdf9d';ctx.lineWidth=3;
-  ctx.strokeRect(Math.round(p.x+5),Math.round(p.y+5),Math.round(p.w-10),Math.round(p.h-10));
+  ctx.save();ctx.globalAlpha=anim&&anim.kind==='merge'?.65:.9;
+  ctx.strokeStyle='#f9deb0';ctx.lineWidth=3;
+  const w=p.w-12,h=p.h-12;
+  ctx.strokeRect(Math.round(center.x-w/2),Math.round(center.y-h/2),Math.round(w),Math.round(h));
+  ctx.restore();
  }
- ctx.translate(Math.round(cx),Math.round(cy));
- ctx.scale(scale,scale);
- if(instrumentAtlas?.complete&&instrumentAtlas.naturalWidth>0&&ART.frameForTier){
-  const [sx,sy,sw,sh]=ART.frameForTier(u.tier);
-  const ratio=sw/sh,maxW=p.w*.94,maxH=p.h*.94;
-  let w=Math.min(maxW,maxH*ratio),h=w/ratio;
-  if(h>maxH){h=maxH;w=h*ratio;}
-  ctx.imageSmoothingEnabled=false;
-  ctx.shadowBlur=0;ctx.shadowOffsetY=0;
-  ctx.drawImage(instrumentAtlas,sx,sy,sw,sh,-Math.round(w/2),-Math.round(h/2),Math.round(w),Math.round(h));
- }else if(im?.complete&&im.naturalWidth>0){
-  const ratio=im.naturalWidth/im.naturalHeight,maxW=p.w*.94,maxH=p.h*.94;
-  let w=Math.min(maxW,maxH*ratio),h=w/ratio;
-  if(h>maxH){h=maxH;w=h*ratio;}
-  // Opaque original-color sprite at the dragged position. No ghost/trail.
-  ctx.globalAlpha=1;ctx.shadowBlur=0;ctx.shadowOffsetY=0;
-  ctx.imageSmoothingEnabled=false;
-  ctx.drawImage(im,-Math.round(w/2),-Math.round(h/2),Math.round(w),Math.round(h));
- }else{
-  ctx.fillStyle='#ffeec5';ctx.font='65px sans-serif';ctx.textAlign='center';ctx.fillText('♫',0,0);
- }
- ctx.restore();
+ spriteImage(u.tier,Math.round(center.x),Math.round(center.y),p.w,p.h,1,scale);
 }
 // Scanner should indicate the active column without hiding instruments.
 function drawScan(t){
@@ -361,12 +408,43 @@ function drawScan(t){
  ctx.restore();
 }
 // Only understated, short-lived feedback remains. Disable giant neon rings.
+// Small local highlights, not full-screen flashes. Short-lived animated
+// motion is always tied to the object being upgraded or relocated.
 function drawFx(dt){
- // Preserve effect lifetimes for gameplay but don't flash or paint floating
- // text across instruments / HP labels. HP and money still update normally.
  for(let i=fx.length-1;i>=0;i--){
-  fx[i].life-=dt;
-  if(fx[i].life<=0)fx.splice(i,1);
+  const p=fx[i];
+  p.life-=dt;
+  if(p.life<=0){fx.splice(i,1);continue;}
+  const t=1-p.life/(p.max||1);
+  ctx.save();
+  if(p.kind==='combine'){
+   const k=easeInOutCubic(t);
+   spriteImage(p.tier,
+    Math.round(p.x+(p.x2-p.x)*k),Math.round(p.y+(p.y2-p.y)*k),
+    LAY.step*.76,LAY.step*.76,(1-t)*.8,.95-.22*t);
+  }else if(p.kind==='merge-ring'){
+   const radius=15+t*55;
+   ctx.globalAlpha=(1-t)*.45;
+   ctx.strokeStyle='#fff0bd';ctx.lineWidth=3;
+   ctx.beginPath();ctx.arc(p.x,p.y,radius,0,Math.PI*2);ctx.stroke();
+  }else if(p.kind==='arrival'||p.kind==='destination'){
+   const pulse=.50+.5*Math.sin(t*Math.PI*3);
+   ctx.globalAlpha=p.kind==='destination'?.32+.32*pulse:.18+.16*pulse;
+   const w=p.w||LAY.size,h=p.h||LAY.size;
+   const x=Math.round(p.x-w/2),y=Math.round(p.y-h/2);
+   ctx.strokeStyle=p.kind==='destination'?'#fff0bd':'#c7f5dc';
+   ctx.lineWidth=4;
+   const length=15;
+   for(const [cx,cy,dx,dy] of [[x,y,1,1],[x+w,y,-1,1],[x,y+h,1,-1],[x+w,y+h,-1,-1]]){
+    ctx.beginPath();ctx.moveTo(cx+dx*length,cy);ctx.lineTo(cx,cy);ctx.lineTo(cx,cy+dy*length);ctx.stroke();
+   }
+  }else if(p.kind==='particle'){
+   // A handful of clean sparkles; no long tracer when dragging.
+   p.x+=p.vx*dt;p.y+=p.vy*dt;
+   ctx.fillStyle='#f4e5b7';ctx.globalAlpha=(1-t)*.7;
+   ctx.fillRect(Math.round(p.x),Math.round(p.y),3,3);
+  }
+  ctx.restore();
  }
 }
 function drawChrome(){
@@ -433,7 +511,7 @@ function mainStep(dt){
  animClock+=dt;
  beatVisual=Math.max(0,beatVisual-dt*2.2);
  screenShake=Math.max(0,screenShake-dt*12);
- for(const [id,a] of unitMotion){a.age+=dt;if(a.age>a.duration)unitMotion.delete(id);}
+ for(const [id,a] of unitMotion){a.age+=dt;if(a.age>=a.duration)unitMotion.delete(id);}
  for(const [id,a] of blockMotion){a.time-=dt;if(a.time<=0)blockMotion.delete(id);}
  sound.rhythm(dt);
  if(!paused&&!showResult&&!state.finished){
@@ -468,7 +546,8 @@ function pointerUp(e){
  const p=worldPoint(e);
  if(dragging){let drag=dragging;dragging=null;let a=state.units.find(u=>u.id===drag.id);if(!a)return;
  if(drag.moved){let target=unitAt(p.x,p.y);if(target&&target.id!==a.id&&target.tier===a.tier&&ART.nextTier?.(a.tier)!=null){merge(a,target);return;}
- const tile=pointCell(p.x,p.y);if(tile&&moveUnit(a,tile.c,tile.r))return;
+ const tile=pointCell(p.x,p.y);
+ if(tile&&moveUnit(a,tile.c,tile.r,{x:drag.dx-drag.offsetX,y:drag.dy-drag.offsetY}))return;
  popup(txt('noRoom'));return;
  }else{let b=selected?state.units.find(u=>u.id===selected):null;if(b&&b.id!==a.id&&a.tier===b.tier&&ART.nextTier?.(a.tier)!=null){merge(b,a);return;}selected=a.id;sound.note(a.tier);scatter(p.x,p.y,'#b3ffff',5);return;}}
  if(showResult){if(state.finished){state.stage++;initWorld(false);}else{state.time=192;showResult='';}
@@ -683,6 +762,7 @@ class AudioEngine{
  }
 }
 const sound=new AudioEngine();
-window.GridGameDebug={getState:()=>clone(state),getGeometry:()=>({width:LAY.W,height:LAY.H,renderWidth:canvas.width,renderHeight:canvas.height,renderScale,portrait,blocks:state.blocks.map(b=>({id:b.id,rect:rectOfBlock(b)})),units:state.units.map(u=>({id:u.id,rect:rectOfUnit(u)}))}),scan:()=>{let n=state.blocks.filter(b=>b.hp>0).length;for(const u of state.units)emitInstrument(u);return{before:n,after:state.blocks.filter(b=>b.hp>0).length,coins:state.coins};},spawn,merge:(a,b)=>merge(state.units[a],state.units[b]),restart:()=>initWorld(false),setCharge:n=>state.charge=n};
+window.GridGameDebug={getState:()=>clone(state),getAnimations:()=>Array.from(unitMotion,([id,a])=>({id,kind:a.kind,age:a.age,duration:a.duration,from:a.from,to:a.to})),
+getGeometry:()=>({width:LAY.W,height:LAY.H,renderWidth:canvas.width,renderHeight:canvas.height,renderScale,portrait,blocks:state.blocks.map(b=>({id:b.id,rect:rectOfBlock(b)})),units:state.units.map(u=>({id:u.id,rect:rectOfUnit(u)}))}),scan:()=>{let n=state.blocks.filter(b=>b.hp>0).length;for(const u of state.units)emitInstrument(u);return{before:n,after:state.blocks.filter(b=>b.hp>0).length,coins:state.coins};},spawn,merge:(a,b)=>merge(state.units[a],state.units[b]),restart:()=>initWorld(false),setCharge:n=>state.charge=n};
 sdkInit();
 })();
