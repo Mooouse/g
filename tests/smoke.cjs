@@ -38,6 +38,12 @@ if(pixellab){
  for(const a of artMeta.approved){assert.ok(a.family in counts);counts[a.family]++;}
  assert.deepEqual({...counts},{keys:6,ukulele:6,drums:6,guitar:6});
  assert.equal(artMeta.total,24,'24 separately generated models');
+ for(const a of artMeta.approved){
+   const bytes=fs.readFileSync(a.file);
+   assert.equal(bytes.subarray(0,8).toString('hex'),'89504e470d0a1a0a','PNG '+a.id);
+   assert.equal(bytes.readUInt32BE(16),a.w*64,'width '+a.id);
+   assert.equal(bytes.readUInt32BE(20),a.h*64,'height '+a.id);
+ }
  for(let i=0;i<24;i++){
   const a=artMeta.approved[i],b=artMeta.approved[artMeta.nextTier(i)];
   if(a.level<6){assert.ok(b&&a.family===b.family&&b.level===a.level+1,'correct family upgrade for '+a.id);}
@@ -63,7 +69,11 @@ assert.ok(['pixel-art-images','pixellab-game-assets'].includes(artMeta.style));
 const uiExpected={background_tile:[64,64],cell:[64,64],metal_block:[64,64],boss_block:[128,128],scanner:[16,64],charge_button:[128,48],sparkle:[16,16],
 settings_icon:[32,32],shop_icon:[32,32],pause_icon:[32,32],coin:[24,24],result_panel:[128,64]};
 for(const [name,legacyDim] of Object.entries(uiExpected)){
- const dim=pixellab?[artMeta.uiAssets[name].includes('pixellab/')?(name==='charge_button'||name==='result_panel'?128:64):legacyDim[0],artMeta.uiAssets[name].includes('pixellab/')?64:legacyDim[1]]:legacyDim;
+ // PixelLab images use 64 native pixels per game-grid cell.
+ // The boss occupies 2x2, while charge and results panels are 2x1.
+ // Never assume every UI graphic is square.
+ const pixelLabDimensions={boss_block:[128,128],charge_button:[128,64],result_panel:[128,64]};
+ const dim=pixellab?(pixelLabDimensions[name]||[64,64]):legacyDim;
  const file=artMeta.uiAssets[name];assert.ok(file,'UI asset path: '+name);
  const bytes=fs.readFileSync(file);
  assert.equal(bytes.subarray(0,8).toString('hex'),'89504e470d0a1a0a','UI PNG signature: '+name);

@@ -1,0 +1,4 @@
+Offline revalidation request after image-size test bug on 2026-10-28.
+Do not run PixelLab requests or consume credits.
+Input: 36 completed PixelLab images, 37 recorded attempts, 3 reserved.
+Expected: correct 2x2 boss, 2x1 button/panel dimensions, 24-tier staging branch and test results.
