@@ -154,7 +154,11 @@ async function sdkInit(){
  if(!state.blocks.length)initWorld(true);
  else{state.blocks=repairBlocks(state.blocks);repairUnits();}
  save(); // Persist repaired finite state on the next safe tick.
- setupImages();setView();bind();fillPanel();sound.preload();booted=true;gameEvent('loadingStop');gameEvent('gameplayStart');requestAnimationFrame(loop);
+ setupImages();setView();bind();fillPanel();sound.preload();
+ homeOpen=typeof document.querySelector==='function'&&!!document.querySelector('#homeScreen');
+ booted=true;gameEvent('loadingStop');
+ if(homeOpen)gameEvent('gameplayStop');else gameEvent('gameplayStart');
+ requestAnimationFrame(loop);
 }
 function canPlace(c,r,tier,ignore){
  const {w,h}=ART.spans(tier);if(c<0||r<0||c+w>13||r+h>6)return false;
@@ -721,14 +725,27 @@ function pointerUp(e){
 function openPanel(name){
  paused=true;gameEvent('gameplayStop');$('panel').classList.remove('hidden');$('panelTitle').textContent=txt(name==='shop'?'shop':'title');$('settingsContent').classList.toggle('hidden',name!=='settings');$('shopContent').classList.toggle('hidden',name!=='shop');fillPanel();
 }
-function closePanel(){paused=false;$('panel').classList.add('hidden');frameLast=performance.now();if(!showResult)gameEvent('gameplayStart');}
+function closePanel(){paused=homeOpen;$('panel').classList.add('hidden');frameLast=performance.now();if(!showResult&&!homeOpen)gameEvent('gameplayStart');}
 const upgradeCost=type=>Math.ceil(({power:125,speed:170,wealth:140})[type]*Math.pow(1.85,state.upgrades[type]));
 function fillPanel(){
  $('volText').textContent=txt('volume');$('musicText').textContent=txt('music');$('langText').textContent=txt('language');$('shopSubtitle').textContent=txt('shopText');
  $('volume').value=Math.round(state.volume*100);$('music').value=Math.round(state.music*100);$('language').value=state.lang;
  $('upgradeOptions').innerHTML=['power','speed','wealth'].map(type=>{const lv=state.upgrades[type],cost=upgradeCost(type),max=type==='speed'?8:12;return '<button class="upgrade" data-upgrade="'+type+'" '+(lv>=max||state.coins<cost?'disabled':'')+'><span><b class="name">'+txt(type)+' · '+lv+'/'+max+'</b><small class="desc">'+txt(type+'Desc')+'</small></span><b class="cost">'+(lv>=max?txt('max'):'$'+cost)+'</b></button>';}).join('');
 }
+function leaveMenu(){
+ homeOpen=false;
+ const menu=document.querySelector?.('#homeScreen'),tutorial=document.querySelector?.('#tutorialScreen');
+ menu?.classList.add('hidden');tutorial?.classList.add('hidden');
+ paused=false;frameLast=performance.now();sound.unlock();gameEvent('gameplayStart');
+}
 function bind(){
+ if(typeof document.querySelector==='function'&&document.querySelector('#homeScreen')){
+  const play=()=>{sound.unlock();if(!state.tutorialSeen)document.querySelector('#tutorialScreen')?.classList.remove('hidden');else leaveMenu();};
+  $('menuPlay').addEventListener('click',play);
+  $('menuHow').addEventListener('click',()=>document.querySelector('#tutorialScreen')?.classList.remove('hidden'));
+  $('menuSettings').addEventListener('click',()=>openPanel('settings'));
+  $('tutorialGo').addEventListener('click',()=>{state.tutorialSeen=true;save(true);leaveMenu();});
+ }
  canvas.addEventListener('pointerdown',pointerDown);canvas.addEventListener('pointermove',pointerMove);canvas.addEventListener('pointerup',pointerUp);canvas.addEventListener('pointercancel',()=>dragging=null);
  window.addEventListener('resize',setView);
  $('closePanel').addEventListener('click',closePanel);
@@ -739,7 +756,7 @@ function bind(){
  document.addEventListener('visibilitychange',()=>{if(document.hidden)gameEvent('gameplayStop');else if(!paused&&!showResult){frameLast=performance.now();gameEvent('gameplayStart');}});
  window.addEventListener('pagehide',()=>save(true));
  window.addEventListener('keydown',e=>{if(e.code==='Enter'&&showResult){if(state.finished)state.stage++;initWorld(false);gameEvent('gameplayStart');save();}
- if(e.code==='Space'&&!e.repeat){e.preventDefault();spawn();}
+ if(e.code==='Space'&&!e.repeat&&!homeOpen){e.preventDefault();spawn();}
  if(e.code==='KeyS')openPanel('settings');
  // Instrument tiers are obtained from the roulette or combining.
  if(e.code==='KeyP'){paused=!paused;gameEvent(paused?'gameplayStop':'gameplayStart');}
