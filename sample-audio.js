@@ -191,7 +191,9 @@ class MelodySampleEngine {
    if(level>=5)this.voice('ukulele',root+12,now+.12,.13,.48,level);
   }else if(family==='guitar'){
    const root=52+([0,3,5,7,10][step%5]);
-   const tone=level>=3?root+12:root+12;
+   // Early models play a brighter clean lead; advanced guitars play
+   // lower power-chord roots through the amplifier stage.
+   const tone=level>=3?root:root+12;
    const power=level>=3;
    this.voice('guitar',tone,now,power?.28:.30,power?.85:.62,level);
    if(level>=2)this.voice('guitar',tone+7,now+.038,power?.17:.16,.7,level);
