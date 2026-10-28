@@ -1,12 +1,13 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),vm=require('node:vm');
-const art=fs.readFileSync('art.js','utf8'),game=fs.readFileSync('game.js','utf8'),audio=fs.readFileSync('sample-audio.js','utf8'),html=fs.readFileSync('index.html','utf8');
-new vm.Script(art,{filename:'art.js'});new vm.Script(game,{filename:'game.js'});new vm.Script(audio,{filename:'sample-audio.js'});
+const art=fs.readFileSync('art.js','utf8'),game=fs.readFileSync('game.js','utf8'),audio=fs.readFileSync('sample-audio.js','utf8'),planner=fs.readFileSync('drag-planner.js','utf8'),html=fs.readFileSync('index.html','utf8');
+new vm.Script(art,{filename:'art.js'});new vm.Script(game,{filename:'game.js'});new vm.Script(audio,{filename:'sample-audio.js'});new vm.Script(planner,{filename:'drag-planner.js'});
 const ids=new Set([...html.matchAll(/id="([^"]+)"/g)].map(m=>m[1]));
 const refs=new Set([...game.matchAll(/\$\('([^']+)'\)/g)].map(m=>m[1]));
 assert.deepEqual([...refs].filter(k=>!ids.has(k)),[],'referenced DOM IDs must exist');
 assert.ok(html.includes('crazygames-sdk-v3.js'));
 assert.ok(html.includes('sample-audio.js')&&html.indexOf('sample-audio.js')<html.indexOf('game.js'),'sample engine loads before game');
+assert.ok(html.includes('drag-planner.js')&&html.indexOf('drag-planner.js')<html.indexOf('game.js'),'drag planner loads before game');
 const noop=()=>{},events={},ui={};const gradient={addColorStop:noop};
 const frameCounter={clears:0};
 const ctx=new Proxy({clearRect(){frameCounter.clears++},createLinearGradient:()=>gradient,createRadialGradient:()=>gradient},{get(o,k){return o[k]??noop},set(o,k,v){o[k]=v;return true;}});
@@ -26,7 +27,7 @@ const context={window:win,document,localStorage:store,navigator:{language:'ru-RU
 Image:MockImage,performance:{now:()=>1000},setTimeout(fn){return 1;},clearTimeout:noop,requestAnimationFrame(fn){events.animation=fn;return 1},encodeURIComponent};
 vm.createContext(context);
 (async()=>{
-vm.runInContext(art,context,{filename:'art.js'});vm.runInContext(audio,context,{filename:'sample-audio.js'});const artMeta=context.window.GridMusicArt;
+vm.runInContext(art,context,{filename:'art.js'});vm.runInContext(audio,context,{filename:'sample-audio.js'});vm.runInContext(planner,context,{filename:'drag-planner.js'});const artMeta=context.window.GridMusicArt;
 assert.ok([7,24].includes(artMeta.total),'legacy release has seven tiers; PixelLab release has twenty-four');
 const pixellab=artMeta.style==='pixellab-game-assets';
 const expected=[
@@ -201,7 +202,8 @@ if(pixellab){
  const badWindow={...win,GridMusicArt:artMeta,addEventListener:noop};
  const recoveryContext={...context,window:badWindow,localStorage:brokenStore};
  vm.createContext(recoveryContext);
- vm.runInContext(game,recoveryContext,{filename:'game-recovery.js'});
+ vm.runInContext(planner,recoveryContext,{filename:'drag-planner.js'});
+  vm.runInContext(game,recoveryContext,{filename:'game-recovery.js'});
  for(let i=0;i<10;i++)await Promise.resolve();
  const recovered=badWindow.GridGameDebug;
  assert.ok(recovered,'boot corrupted saved game');
@@ -246,7 +248,7 @@ if(pixellab){
   const w={...win,addEventListener:noop};
   const m=Object.create(Math);m.random=()=>.999; // original buggy spawn always chose 1x2 guitar
   const c={...context,window:w,Math:m,localStorage:local};
-  vm.createContext(c);vm.runInContext(game,c,{filename:'game-crowded.js'});
+  vm.createContext(c);vm.runInContext(planner,c,{filename:'drag-planner.js'});vm.runInContext(game,c,{filename:'game-crowded.js'});
   return w;
  }
  const crowdedWindow=makeCrowded(fullBoard);
